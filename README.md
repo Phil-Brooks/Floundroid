@@ -7,30 +7,20 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
-
 <p align="center">
 
 &#x20; <img src="logo.png" alt="Floundroid Logo" width="300">
 
-&#x20; <br>
-
 &#x20; <i>"Functional. Robotic. Fishy."</i>
-
-&#x20; <br>
 
 &#x20; <strong>Floundroid</strong> is a chess engine built in F#, designed to move from clean functional abstractions to high-performance bit-twiddling.
 
 </p>
 
 
-
 ## 🌊 Why Floundroid?
 
-
-
 The name **Floundroid** represents the intersection of the natural (Flounder/Stockfish heritage) and the synthetic (Android/Functional logic). By leveraging F#’s powerful type system, Floundroid aims to make "impossible chess states unrepresentable" while eventually competing with the strongest engines in the .NET ecosystem.
-
 
 
 ---
