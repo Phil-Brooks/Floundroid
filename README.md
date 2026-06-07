@@ -1,8 +1,7 @@
-# Floundroid 🐟🤖
+# Floundroid
 
 
-
-[![Build Status](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/download)
+[![Build Status](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)
 
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)
 
@@ -94,7 +93,7 @@ Focus: **Performance and Strength**.
 
 ### Prerequisites
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download)
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
 
 
 
@@ -106,7 +105,7 @@ Clone the repository and run the engine locally:
 
 ```bash
 
-git clone https://github.com/yourusername/Floundroid.git
+git clone https://github.com/Phil-Brooks/Floundroid.git
 
 cd Floundroid
 
