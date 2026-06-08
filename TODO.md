@@ -3,8 +3,7 @@
 
 # ✅ **TODO.md (Detailed Project Task List)**
 
-```markdown
-# Floundroid — TODO List
+# Floundroid — TODO List 
 
 A detailed, structured task list aligned with the project roadmap.
 
