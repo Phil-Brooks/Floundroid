@@ -1,3 +1,12 @@
 <Solution>
-  <Project Path="Floundroid.fsproj" />
+  <Folder Name="/src/">
+    <Project Path="src/Floundroid.App/Floundroid.App.fsproj" />
+    <Project Path="src/Floundroid.Bitboard/Floundroid.Bitboard.fsproj" />
+    <Project Path="src/Floundroid.Core/Floundroid.Core.fsproj" />
+    <Project Path="src/Floundroid.Search/Floundroid.Search.fsproj" />
+    <Project Path="src/Floundroid.UCI/Floundroid.UCI.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Floundroid.Tests/Floundroid.Tests.fsproj" />
+  </Folder>
 </Solution>

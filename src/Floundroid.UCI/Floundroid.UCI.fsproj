@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Floundroid.Core\Floundroid.Core.fsproj" />
+    <ProjectReference Include="..\Floundroid.Search\Floundroid.Search.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CommandParser.fs" />
+    <Compile Include="UciProtocol.fs" />
+    <Compile Include="UciLoop.fs" />
+  </ItemGroup>
+</Project>

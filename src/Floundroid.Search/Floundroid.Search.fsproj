@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Floundroid.Core\Floundroid.Core.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Evaluation.fs" />
+    <Compile Include="MoveOrdering.fs" />
+    <Compile Include="AlphaBeta.fs" />
+    <Compile Include="TimeManager.fs" />
+    <Compile Include="Search.fs" />
+  </ItemGroup>
+</Project>
