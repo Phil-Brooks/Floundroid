@@ -1,8 +1,10 @@
 # Floundroid
 
-[![Build Status](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)
-[![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
+[![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
+![Lines of Code](https://img.shields.io/badge/LOC-auto-lightgrey)  
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
 <p align="center">
   <img src="logo.png" alt="Floundroid Logo" width="300">
@@ -14,14 +16,63 @@
 
 ---
 
-## 🌊 Why Floundroid?
+## 🌊 Why “Floundroid”?
 
-Floundroid sits at the intersection of the natural (Flounder/Stockfish heritage) and the synthetic (Android/functional logic).  
-The goal is simple:
+Floundroid reflects the hybrid nature of the project:  
+a traditional handcrafted chess engine built **side‑by‑side with AI assistance**.
+
+The *droid* suffix is a deliberate nod to the fact that **Copilot and other AI tools actively support the development process** — from scaffolding the architecture to refining move generation, debugging perft mismatches, and exploring search optimisations.
+
+This is still a human‑driven engine, but it embraces AI as a collaborative tool rather than a replacement for engineering skill.
+
+---
+
+## 🧠 Philosophy
 
 > **Make impossible chess states unrepresentable, then make the engine fast enough to matter.**
 
-F#’s type system and functional purity make it ideal for correctness-first development, while .NET’s performance primitives allow a later transition to bitboards and low‑level optimisation.
+Floundroid begins with strong functional modelling, then transitions into a highly optimised bitboard engine.  
+F#’s type system ensures correctness; .NET’s performance primitives ensure speed.
+
+---
+
+## ⭐ Features
+
+### **Core Engine**
+- Strong F# domain modelling  
+- Fully typed board, move, and piece representations  
+- FEN parsing and board visualisation  
+- Deterministic, testable architecture  
+
+### **Move Generation**
+- Pseudo‑legal and legal move generation  
+- Sliding and non‑sliding piece logic  
+- Perft validation suite  
+
+### **Search**
+- Alpha‑beta search  
+- Iterative deepening  
+- Quiescence search  
+- Move ordering (TT move, killers, history)  
+- Transposition table  
+- Zobrist hashing  
+
+### **UCI Support**
+- Full UCI protocol  
+- Async search loop  
+- Compatible with Arena, CuteChess, Banksia  
+
+### **Performance**
+- Bitboard representation  
+- Magic bitboards or lookup tables  
+- Struct‑based hot paths  
+- SIMD/HW intrinsic‑friendly layout  
+
+### **Future / Experimental**
+- NNUE‑style evaluation  
+- Tapered evaluation  
+- LMR, null‑move pruning, aspiration windows  
+- Opening book + endgame tablebase probing  
 
 ---
 
@@ -35,11 +86,11 @@ Floundroid is built in **five deliberate stages**, moving from correctness → p
 
 Focus: **Correctness, purity, and domain modelling**
 
-- Strong types for pieces, squares, moves, and board state
-- Pure functional move generation (pseudo‑legal + legal)
-- FEN parsing and board visualisation
-- Full Perft test suite for correctness
-- Internal debugging tools
+- Strong types for pieces, squares, moves, and board state  
+- Pure functional move generation (pseudo‑legal + legal)  
+- FEN parsing and board visualisation  
+- Full Perft test suite  
+- Internal debugging tools  
 
 ---
 
@@ -47,11 +98,11 @@ Focus: **Correctness, purity, and domain modelling**
 
 Focus: **Playability**
 
-- Full UCI protocol implementation
-- Async search loop using F# `async`
-- Basic alpha‑beta search
-- Simple evaluation (material + PSTs)
-- Integration with Arena, CuteChess, Banksia
+- Full UCI protocol implementation  
+- Async search loop  
+- Basic alpha‑beta search  
+- Simple evaluation (material + PSTs)  
+- GUI integration  
 
 ---
 
@@ -59,24 +110,24 @@ Focus: **Playability**
 
 Focus: **Performance**
 
-- Bitboard representation (12 piece boards + occupancy)
-- Magic bitboards or lookup tables for sliding pieces
-- Zobrist hashing
-- Transposition table
-- Move ordering (TT move, killers, history)
-- Quiescence search
+- Bitboards  
+- Magic bitboards / lookup tables  
+- Zobrist hashing  
+- Transposition table  
+- Move ordering heuristics  
+- Quiescence search  
 
 ---
 
 ### **Stage 4 — Strength Phase 🔵**
 
-Focus: **Modern engine heuristics**
+Focus: **Modern heuristics**
 
-- Null‑move pruning
-- Late Move Reductions (LMR)
-- Aspiration windows
-- Tapered evaluation (MG/EG blend)
-- King safety, pawn structure, mobility
+- Null‑move pruning  
+- LMR  
+- Aspiration windows  
+- Tapered eval  
+- King safety, pawn structure, mobility  
 
 ---
 
@@ -84,20 +135,20 @@ Focus: **Modern engine heuristics**
 
 Focus: **Identity**
 
-- Hybrid functional/imperative core
-- Struct‑based hot paths
-- SIMD/HW intrinsics for bitboard ops
-- Optional NNUE‑style evaluation
-- Experimental search techniques
+- Hybrid functional/imperative core  
+- Struct‑based hot paths  
+- SIMD intrinsics  
+- Optional NNUE  
+- Experimental search techniques  
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### **Prerequisites**
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
 
-### Build & Run
+### **Build & Run**
 
 ```bash
 git clone https://github.com/Phil-Brooks/Floundroid.git
