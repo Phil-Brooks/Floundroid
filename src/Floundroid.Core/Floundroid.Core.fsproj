@@ -3,6 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="types\Types.fs" />
     <Compile Include="Types/Piece.fs" />
     <Compile Include="Types/Square.fs" />
     <Compile Include="Types/Move.fs" />

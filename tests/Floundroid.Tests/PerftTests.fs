@@ -10,8 +10,8 @@ let perftSuite =
         test "Dummy perft" {
             let dummyBoard =
                 { Pieces = Map.empty
-                  SideToMove = Color.White
-                  CastlingRights = ""
+                  SideToMove = Colour.White
+                  CastlingRights = CastlingRights.none
                   EnPassantSquare = None
                   HalfmoveClock = 0
                   FullmoveNumber = 1 }
