@@ -83,3 +83,6 @@ module CastlingRights =
         if cr.BlackKingSide then sb.Append("k") |> ignore
         if cr.BlackQueenSide then sb.Append("q") |> ignore
         if sb.Length = 0 then "-" else sb.ToString()
+
+/// Optional barrel module to allow `open Floundroid.Core.Types` to expose everything.
+module All = ()
