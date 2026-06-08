@@ -11,11 +11,16 @@ A detailed, structured task list aligned with the project roadmap.
 
 # Stage 1 — Functional Core (Correctness)
 
-## 1.1 Domain Model
-- [ ] Define `Piece`, `Color`, `Square`, `File`, `Rank`
-- [ ] Define `Move` DU (normal, capture, promotion, castle, en passant)
-- [ ] Define immutable `Board` record
-- [ ] Add helper functions (flip color, square indexing, etc.)
+## 1.1 — Core Types
+- [x] Define foundational types (Colour, File, Rank, CastlingRights)
+- [x] Define Square type + helpers (separate module)
+- [x] Define PieceType and Piece
+- [x] Define MoveKind and Move
+- [x] Define Board (full GameState)
+- [x] Remove duplicate Square definitions
+- [x] Ensure no circular dependencies
+- [x] Add barrel module (`module All = ()`)
+- [x] Update all modules to use new types
 
 ## 1.2 Move Generation
 - [ ] Pawn moves (quiet, capture, double, promotion)
