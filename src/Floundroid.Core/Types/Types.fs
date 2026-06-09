@@ -6,6 +6,15 @@ type Colour =
     | Black
 
 module Colour =
+    let toChar = function
+        | White -> 'w'
+        | Black -> 'b'
+
+    let fromChar = function
+        | 'w' | 'W' -> White
+        | 'b' | 'B' -> Black
+        | c -> failwithf "Invalid colour char: %c" c
+    
     let opposite = function
         | White -> Black
         | Black -> White

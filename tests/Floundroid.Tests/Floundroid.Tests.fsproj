@@ -1,19 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ColourTests.fs" />
+    <Compile Include="FileTests.fs" />
+    <Compile Include="RankTests.fs" />
+    <Compile Include="SquareTests.fs" />
+    <Compile Include="PieceTypeTests.fs" />
+    <Compile Include="PieceTests.fs" />
+    <Compile Include="MoveKindTests.fs" />
+    <Compile Include="MoveTests.fs" />
+    <Compile Include="BoardTests.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Floundroid.Core\Floundroid.Core.fsproj" />
-    <ProjectReference Include="..\..\src\Floundroid.Search\Floundroid.Search.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Expecto" Version="9.0.4" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="PerftTests.fs" />
-    <Compile Include="FenTests.fs" />
-    <Compile Include="MoveGenTests.fs" />
-    <Compile Include="SearchTests.fs" />
-  </ItemGroup>
+
 </Project>
