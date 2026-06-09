@@ -24,43 +24,44 @@ module Board =
           FullmoveNumber = 1 }
 
     /// Try to get the piece on a given square.
-    let tryGetPiece (sq: Square) (b: Board) =
+    let tryGetPiece (b: Board) (sq: Square) =
         b.Pieces |> Map.tryFind sq
 
     /// Check if a square is occupied.
-    let isOccupied (sq: Square) (b: Board) =
+    let isOccupied (b: Board) (sq: Square) =
         b.Pieces |> Map.containsKey sq
 
-    /// Place or replace a piece on a square.
-    let setPiece (sq: Square) (piece: Piece) (b: Board) =
-        { b with Pieces = b.Pieces |> Map.add sq piece }
+    /// Place or remove a piece on a square.
+    let setPiece (b: Board) (sq: Square) (pieceOpt: Piece option) =
+        match pieceOpt with
+        | Some piece -> { b with Pieces = b.Pieces.Add(sq, piece) }
+        | None -> { b with Pieces = b.Pieces.Remove sq }
 
     /// Remove a piece from a square.
-    let removePiece (sq: Square) (b: Board) =
-        { b with Pieces = b.Pieces |> Map.remove sq }
+    let removePiece (b: Board) (sq: Square) =
+        { b with Pieces = b.Pieces.Remove sq }
 
     /// Move a piece from one square to another (no legality checks).
     let applyMove (m: Move) (b: Board) =
-        match tryGetPiece m.From b with
+        match tryGetPiece b m.From with
         | None ->
             invalidArg "m" $"No piece on {Square.toString m.From}"
 
         | Some piece ->
-            let b1 = removePiece m.From b
+            let b1 = removePiece b m.From
             let b2 =
                 match m.Kind with
                 | Promotion pt ->
                     let promoted = { Colour = piece.Colour; Kind = pt }
-                    setPiece m.To promoted b1
+                    setPiece b1 m.To (Some promoted)
                 | _ ->
-                    setPiece m.To piece b1
+                    setPiece b1 m.To (Some piece)
 
-            // Update metadata (side to move, clocks, etc.)
             let nextSide = Colour.opposite b.SideToMove
 
             { b2 with
                 SideToMove = nextSide
-                EnPassantSquare = None // movegen will set this when needed
+                EnPassantSquare = None
                 HalfmoveClock =
                     match piece.Kind, m.Kind with
                     | Pawn, _ -> 0
