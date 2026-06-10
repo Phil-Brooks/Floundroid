@@ -319,23 +319,45 @@ module MoveGen =
                     let startRank = if us = White then 1 else 6
                     
                     // Push
-                    let push1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt (r + dir))
-                    if not (Map.containsKey push1 b.Pieces) then
-                        moves.Add({ From = sq; To = push1; Kind = Quiet }) 
-                        if r = startRank then
-                            let push2 = Square.ofFileRank (File.fromInt f) (Rank.fromInt (r + 2 * dir))
-                            if not (Map.containsKey push2 b.Pieces) then
-                                moves.Add({ From = sq; To = push2; Kind = Quiet })
+                    let push1Rank = r + dir
+                    let push1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt push1Rank)
 
-                    // Captures
+                    if not (Map.containsKey push1 b.Pieces) then
+                        // Promotion?
+                        let promotionRank = if us = White then 7 else 0
+                        if push1Rank = promotionRank then
+                            for pt in [ Queen; Rook; Bishop; Knight ] do
+                                moves.Add({ From = sq; To = push1; Kind = Promotion pt })
+                        else
+                            moves.Add({ From = sq; To = push1; Kind = Quiet })
+
+                            // Double push
+                            if r = startRank then
+                                let push2 = Square.ofFileRank (File.fromInt f) (Rank.fromInt (r + 2 * dir))
+                                if not (Map.containsKey push2 b.Pieces) then
+                                    moves.Add({ From = sq; To = push2; Kind = Quiet })
+                    
+                    // Captures (including promotion captures)
                     for df in [-1; 1] do
                         let nf = f + df
                         if nf >= 0 && nf <= 7 then
-                            let capSq = Square.ofFileRank (File.fromInt nf) (Rank.fromInt (r + dir))
+                            let capRank = r + dir
+                            let capSq = Square.ofFileRank (File.fromInt nf) (Rank.fromInt capRank)
+
+                            let promotionRank = if us = White then 7 else 0
+
                             match b.Pieces |> Map.tryFind capSq with
-                            | Some target when target.Colour = them -> moves.Add({ From = sq; To = capSq; Kind = Capture })
-                            | _ -> 
-                                if Some capSq = b.EnPassantSquare then moves.Add({ From = sq; To = capSq; Kind = EnPassant })
+                            | Some target when target.Colour = them ->
+                                if capRank = promotionRank then
+                                    for pt in [ Queen; Rook; Bishop; Knight ] do
+                                        moves.Add({ From = sq; To = capSq; Kind = Promotion pt })
+                                else
+                                    moves.Add({ From = sq; To = capSq; Kind = Capture })
+
+                            | _ ->
+                                // En passant (never a promotion)
+                                if Some capSq = b.EnPassantSquare then
+                                    moves.Add({ From = sq; To = capSq; Kind = EnPassant })
 
         moves.ToArray()
 

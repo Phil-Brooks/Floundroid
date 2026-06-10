@@ -27,7 +27,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] King moves (basic)
 - [x] Pawn moves (quiet, capture, double)
 - [x] En passant rules
-- [ ] Pawn promotions (logic exists, but needs expanding to 4 distinct moves)
+- [x] Pawn promotions (logic exists, but needs expanding to 4 distinct moves)
 - [ ] Castling rules (checking rights + path clearance)
 - [x] Attack Detection (`isSquareAttacked`)
 - [ ] Check detection

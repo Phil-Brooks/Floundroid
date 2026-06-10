@@ -170,6 +170,70 @@ module MoveGenTests =
         Assert.Equal(10, moves.Length)
         Assert.Contains(moves, fun m -> Square.toString m.To = "e6" && m.Kind = Capture)
 
+module PromotionTests =
+
+    open Xunit
+
+    [<Fact>]
+    let ``White pawn generates 4 quiet promotion moves`` () =
+        // White pawn on e7, empty e8
+        let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
+        let moves = MoveGen.getPseudoLegalMoves b
+        let promos =
+            moves
+            |> Array.filter (fun m ->
+                m.From = Square.fromString "e7"
+                && m.To = Square.fromString "e8"
+            )
+        Assert.Equal(4, promos.Length)
+        Assert.All(promos, fun m ->
+            match m.Kind with
+            | Promotion Queen
+            | Promotion Rook
+            | Promotion Bishop
+            | Promotion Knight -> ()
+            | _ -> Assert.True(false, "Expected promotion move")
+        )
+
+    [<Fact>]
+    let ``White pawn generates 4 capture promotion moves`` () =
+        // White pawn on e7, black piece on d8
+        let b = Board.fromFen "3p4/4P3/8/8/8/8/8/8 w - - 0 1"
+        let moves = MoveGen.getPseudoLegalMoves b
+        let promos =
+            moves
+            |> Array.filter (fun m ->
+                m.From = Square.fromString "e7"
+                && m.To = Square.fromString "d8"
+            )
+        Assert.Equal(4, promos.Length)
+
+    [<Fact>]
+    let ``Black pawn generates 4 quiet promotion moves`` () =
+        // Black pawn on e2, empty e1
+        let b = Board.fromFen "8/8/8/8/8/8/4p3/8 b - - 0 1"
+        let moves = MoveGen.getPseudoLegalMoves b
+        let promos =
+            moves
+            |> Array.filter (fun m ->
+                m.From = Square.fromString "e2"
+                && m.To = Square.fromString "e1"
+            )
+        Assert.Equal(4, promos.Length)
+
+    [<Fact>]
+    let ``Black pawn generates 4 capture promotion moves`` () =
+        // Black pawn on e2, white piece on f1
+        let b = Board.fromFen "8/8/8/8/8/8/4p3/5P2 b - - 0 1"
+        let moves = MoveGen.getPseudoLegalMoves b
+        let promos =
+            moves
+            |> Array.filter (fun m ->
+                m.From = Square.fromString "e2"
+                && m.To = Square.fromString "f1"
+            )
+        Assert.Equal(4, promos.Length)
+
 module AttackTests =
 
     [<Fact>]
