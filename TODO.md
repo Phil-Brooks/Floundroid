@@ -38,7 +38,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] FEN parser
 - [x] FEN serializer
 - [x] Board pretty‑printer
-- [ ] Move → SAN (optional)
+- [x] Move → SAN (Disambiguation, check, and mate support)
 
 ## 1.4 Perft
 - [ ] Implement perft driver

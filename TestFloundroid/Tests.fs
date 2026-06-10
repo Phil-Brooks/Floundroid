@@ -489,3 +489,46 @@ module LegalMoveFilteringTests =
             moves,
             fun m -> m.Kind = CastleKingSide
         )
+
+// =========================
+// === SAN NOTATION TESTS ===
+// =========================
+
+module SanTests =
+
+    let getSan (fen: string) (uci: string) =
+        let b = Board.fromFen fen
+        let m = Move.fromUci uci
+        let moves = MoveGen.getLegalMoves b
+        
+        match moves |> Array.tryFind (fun lm -> lm.From = m.From && lm.To = m.To) with
+        | Some actualMove -> San.toSan b actualMove
+        | None -> 
+            let legalUcis = moves |> Array.map Move.toUci |> String.concat ", "
+            failwithf "Move %s is ILLEGAL in FEN: %s. Legal moves are: %s" uci fen legalUcis
+
+    [<Theory>]
+    [<InlineData("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4", "e4")>]
+    [<InlineData("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "e4d5", "exd5")>]
+    [<InlineData("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", "h5f7", "Qxf7#")>]
+    [<InlineData("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1", "O-O")>]
+    [<InlineData("8/4P3/8/8/8/8/k6K/8 w - - 0 1", "e7e8q", "e8=Q")>]
+    let ``SAN basic notation works`` (fen: string) (uci: string) (expected: string) =
+        Assert.Equal(expected, getSan fen uci)
+
+    [<Fact>]
+    let ``SAN disambiguates by file`` () =
+        let fen = "7k/8/8/8/8/5N2/8/1N5K w - - 0 1"
+        Assert.Equal("Nbd2", getSan fen "b1d2")
+
+    [<Fact>]
+    let ``SAN disambiguates by rank`` () =
+        let fen = "7k/R7/8/8/8/8/R7/7K w - - 0 1"
+        Assert.Equal("R2a4", getSan fen "a2a4")
+
+    [<Fact>]
+    let ``SAN handles promotion with capture and check`` () =
+        // White pawn on e7, black rook on d8, Black King on h8
+        // After exd8=Q, the Queen on d8 checks the King on h8 (same rank)
+        let fen = "3r3k/4P3/8/8/8/8/8/7K w - - 0 1"
+        Assert.Equal("exd8=Q+", getSan fen "e7d8q")

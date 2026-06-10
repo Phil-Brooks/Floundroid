@@ -450,6 +450,50 @@ module MoveGen =
                                 | _ -> true
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
+module San =
+    let toSan (b: Board) (m: Move) =
+        match m.Kind with
+        | CastleKingSide -> "O-O"
+        | CastleQueenSide -> "O-O-O"
+        | _ ->
+            let piece = b.Pieces.[m.From]
+            let isCapture = 
+                match m.Kind with 
+                | Capture | EnPassant -> true 
+                | _ -> b.Pieces.ContainsKey m.To
+            
+            let nextBoard = Board.applyMove m b
+            let isCheck = Board.isInCheck nextBoard
+            let isMate = isCheck && (MoveGen.getLegalMoves nextBoard).Length = 0
+            
+            let moveStr = 
+                if piece.Kind = Pawn then
+                    let prefix = if isCapture then sprintf "%cx" (File.toChar (Square.file m.From)) else ""
+                    let prom = match m.Kind with | Promotion pt -> sprintf "=%c" (Char.ToUpper(PieceType.toChar pt)) | _ -> ""
+                    sprintf "%s%s%s" prefix (Square.toString m.To) prom
+                else
+                    let pChar = Char.ToUpper(PieceType.toChar piece.Kind)
+                    let others = 
+                        MoveGen.getLegalMoves b 
+                        |> Array.filter (fun alt -> 
+                            let altPiece = b.Pieces.[alt.From]
+                            alt.From <> m.From && alt.To = m.To && altPiece.Kind = piece.Kind)
+                    
+                    let disambiguator =
+                        if others.Length = 0 then ""
+                        else
+                            let sameFile = others |> Array.exists (fun alt -> Square.file alt.From = Square.file m.From)
+                            let sameRank = others |> Array.exists (fun alt -> Square.rank alt.From = Square.rank m.From)
+                            if not sameFile then sprintf "%c" (File.toChar (Square.file m.From))
+                            elif not sameRank then sprintf "%c" (Rank.toChar (Square.rank m.From))
+                            else Square.toString m.From
+
+                    let cap = if isCapture then "x" else ""
+                    sprintf "%c%s%s%s" pChar disambiguator cap (Square.toString m.To)
+
+            let suffix = if isMate then "#" elif isCheck then "+" else ""
+            moveStr + suffix
+
 // --- PERFT & UCI ---
 
 module Perft =
