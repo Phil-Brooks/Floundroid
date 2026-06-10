@@ -41,10 +41,10 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Move → SAN (Disambiguation, check, and mate support)
 
 ## 1.4 Perft
-- [ ] Implement perft driver (Recursive counter + Divide utility with SAN/NPS)
-- [ ] Add standard test positions
-- [ ] Validate perft(1)–perft(6)
-- [ ] Add regression tests
+- [x] Implement perft driver (Recursive counter + Divide utility with SAN/NPS)
+- [x] Add standard test positions
+- [x] Validate perft(1)–perft(6)
+- [x] Add regression tests (Integrated suite command + unit tests)
 
 ## 1.5 Debugging Tools
 - [ ] Move list visualisation

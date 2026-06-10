@@ -495,6 +495,7 @@ module San =
             moveStr + suffix
 
 // --- PERFT & UCI ---
+type PerftSuiteItem = { Name: string; Fen: string; Expected: uint64 list }
 
 module Perft =
     let rec countNodes depth b = 
@@ -525,6 +526,49 @@ module Perft =
         
         printfn "\nTotal: %d | Time: %d ms | NPS: %d" total ms nps
         total
+
+    let suites = [
+        { Name = "Initial Position"
+          Fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+          Expected = [ 1uL; 20uL; 400uL; 8902uL; 197281uL; 4865609uL; 119060324uL ] }
+
+        { Name = "Kiwipete"
+          Fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+          Expected = [ 1uL; 48uL; 2039uL; 97862uL; 4085603uL; 193690690uL ] }
+
+        { Name = "Endgame/EP"
+          Fen = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
+          Expected = [ 1uL; 14uL; 191uL; 2812uL; 43238uL; 674624uL ] }
+
+        { Name = "Promotion Stress Test"
+          Fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
+          Expected = [ 1uL; 44uL; 1486uL; 62379uL; 2103487uL; 89941194uL ] }
+    ]
+
+    let runFullSuite (maxDepth: int) =
+        printfn "Starting Perft Regression Suite (Max Depth: %d)" maxDepth
+        printfn "------------------------------------------------"
+        let totalSw = Diagnostics.Stopwatch.StartNew()
+        
+        for suite in suites do
+            printfn "Testing: %s" suite.Name
+            let b = Board.fromFen suite.Fen
+            let depthsToTest = Math.Min(maxDepth, suite.Expected.Length - 1)
+            
+            for d in 1 .. depthsToTest do
+                let expected = suite.Expected.[d]
+                let sw = Diagnostics.Stopwatch.StartNew()
+                let actual = countNodes d b
+                sw.Stop()
+                
+                if actual = expected then
+                    printfn "  Depth %d: PASS (%d nodes) in %dms" d actual sw.ElapsedMilliseconds
+                else
+                    printfn "  Depth %d: FAILED! Expected %d, got %d" d expected actual
+            printfn ""
+            
+        totalSw.Stop()
+        printfn "Full Suite Finished in %d ms" totalSw.ElapsedMilliseconds
 
 module UciLoop =
     let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -576,9 +620,21 @@ module UciLoop =
                     // This case handles checkmate/stalemate
                     printfn "bestmove (none)" 
 
-            | "perft" :: d :: _ -> 
-                            let depth = int d
-                            Perft.divide depth board |> ignore            
+            | "perft" :: rest ->
+                match rest with
+                | "suite" :: d :: _ -> 
+                    match Int32.TryParse d with
+                    | true, depth -> Perft.runFullSuite depth
+                    | _ -> printfn "Invalid depth: %s" d
+                | "suite" :: _ -> 
+                    Perft.runFullSuite 4
+                | d :: _ -> 
+                    match Int32.TryParse d with
+                    | true, depth -> Perft.divide depth board |> ignore
+                    | _ -> printfn "Invalid depth: %s" d
+                | [] -> 
+                    // Handles just the word "perft"
+                    Perft.divide 1 board |> ignore
             
             | "print" :: _ -> 
                 Board.prettyPrint board

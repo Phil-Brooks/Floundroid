@@ -557,3 +557,9 @@ module PerftTests =
         let b = Board.fromFen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
         let nodes = Perft.countNodes 1 b
         Assert.Equal(48uL, nodes)
+
+    [<Fact>]
+        let ``Perft Position 3 Depth 3 is 2812`` () =
+            // This position tests specific pawn/rook interactions
+            let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
+            Assert.Equal(2812uL, Perft.countNodes 3 b)
