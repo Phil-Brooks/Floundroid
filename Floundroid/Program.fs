@@ -467,37 +467,78 @@ module Board =
             Pieces = b.Pieces.Remove sq }
 
     let applyMove (m: Move) (b: Board) =
-        match tryGetPiece b m.From with
-        | None -> invalidArg "m" $"No piece on {Square.toString m.From}"
-        | Some piece ->
-            let b1 = removePiece b m.From
+            match tryGetPiece b m.From with
+            | None -> invalidArg "m" $"No piece on {Square.toString m.From}"
+            | Some piece ->
+                let us = b.SideToMove
+                let them = Colour.opposite us
+                let mutable newPieces = b.Pieces.Remove(m.From)
+            
+                // 1. Handle special piece logic for the moving piece
+                let pieceToPlace = 
+                    match m.Kind with
+                    | Promotion pt -> { Colour = us; Kind = pt }
+                    | _ -> piece
 
-            let b2 =
+                // 2. Handle specific MoveKinds (Secondary piece updates)
                 match m.Kind with
-                | Promotion pt ->
-                    let promoted =
-                        { Colour = piece.Colour
-                          Kind = pt }
+                | EnPassant ->
+                    let epFile = Square.file m.To
+                    let epRank = if us = White then Rank.R5 else Rank.R4
+                    let victimSq = Square.ofFileRank epFile epRank
+                    newPieces <- newPieces.Remove(victimSq)
+                | CastleKingSide ->
+                    let rRank = if us = White then Rank.R1 else Rank.R8
+                    let rFrom = Square.ofFileRank File.H rRank
+                    let rTo = Square.ofFileRank File.F rRank
+                    match newPieces |> Map.tryFind rFrom with
+                    | Some rook -> newPieces <- newPieces.Remove(rFrom).Add(rTo, rook)
+                    | None -> ()
+                | CastleQueenSide ->
+                    let rRank = if us = White then Rank.R1 else Rank.R8
+                    let rFrom = Square.ofFileRank File.A rRank
+                    let rTo = Square.ofFileRank File.D rRank
+                    match newPieces |> Map.tryFind rFrom with
+                    | Some rook -> newPieces <- newPieces.Remove(rFrom).Add(rTo, rook)
+                    | None -> ()
+                | _ -> ()
 
-                    setPiece b1 m.To (Some promoted)
-                | _ ->
-                    setPiece b1 m.To (Some piece)
+                // 3. Place moving piece
+                newPieces <- newPieces.Add(m.To, pieceToPlace)
 
-            let nextSide = Colour.opposite b.SideToMove
+                // 4. Update Castling Rights
+                let updateRights (cr: CastlingRights) =
+                    let mutable r = cr
+                    if piece.Kind = King then
+                        if us = White then r <- { r with WhiteKingSide = false; WhiteQueenSide = false }
+                        else r <- { r with BlackKingSide = false; BlackQueenSide = false }
+                
+                    let checkRook sq currentRights =
+                        let f = Square.file sq
+                        let rank = Square.rank sq
+                        match f, rank with
+                        | File.A, Rank.R1 -> { currentRights with WhiteQueenSide = false }
+                        | File.H, Rank.R1 -> { currentRights with WhiteKingSide = false }
+                        | File.A, Rank.R8 -> { currentRights with BlackQueenSide = false }
+                        | File.H, Rank.R8 -> { currentRights with BlackKingSide = false }
+                        | _ -> currentRights
 
-            { b2 with
-                SideToMove = nextSide
-                EnPassantSquare = None
-                HalfmoveClock =
-                    match piece.Kind, m.Kind with
-                    | Pawn, _ -> 0
-                    | _, Capture -> 0
-                    | _ -> b.HalfmoveClock + 1
-                FullmoveNumber =
-                    if b.SideToMove = Black then
-                        b.FullmoveNumber + 1
-                    else
-                        b.FullmoveNumber }
+                    r |> checkRook m.From |> checkRook m.To
+
+                // 5. Calculate new En Passant square (FIXED LINE BELOW)
+                let nextEp =
+                    if piece.Kind = Pawn && Math.Abs(Rank.toInt (Square.rank m.From) - Rank.toInt (Square.rank m.To)) = 2 then
+                        let epRank = if us = White then Rank.R3 else Rank.R6
+                        Some (Square.ofFileRank (Square.file m.From) epRank)
+                    else None
+
+                { b with
+                    Pieces = newPieces
+                    SideToMove = them
+                    CastlingRights = updateRights b.CastlingRights
+                    EnPassantSquare = nextEp
+                    HalfmoveClock = if piece.Kind = Pawn || m.Kind = Capture then 0 else b.HalfmoveClock + 1
+                    FullmoveNumber = if us = Black then b.FullmoveNumber + 1 else b.FullmoveNumber }
 
     let isInCheckFor (colour: Colour) (b: Board) =
         let kingSq =
@@ -958,42 +999,35 @@ module MoveGen =
 
     /// Returns only legal moves (king safety enforced).
     let getLegalMoves (b: Board) =
-        let pseudo = getPseudoLegalMoves b
-        let pins = Board.getPins b
-        let us = b.SideToMove
+            let us = b.SideToMove
+            let them = Colour.opposite us
+            let pseudo = getPseudoLegalMoves b
+            let legal = ResizeArray<Move>()
 
-        let isPinned sq = pins.ContainsKey sq
-        let pinRay sq = pins.[sq]
+            for m in pseudo do
+                // 1. Special Castling Rules
+                let castlingCheckPassed =
+                    match m.Kind with
+                    | CastleKingSide | CastleQueenSide ->
+                        // Cannot castle out of check
+                        if Board.isInCheckFor us b then false 
+                        else
+                            // Cannot castle through check
+                            let rank = if us = White then Rank.R1 else Rank.R8
+                            let throughFile = if m.Kind = CastleKingSide then File.F else File.D
+                            let throughSq = Square.ofFileRank throughFile rank
+                            not (Attack.isSquareAttacked b throughSq them)
+                    | _ -> true
 
-        let legal = ResizeArray<Move>()
-
-        for m in pseudo do
-            let piece =
-                match Board.tryGetPiece b m.From with
-                | Some p -> p
-                | None -> failwith "Impossible: pseudo-legal move from empty square"
-
-            if piece.Kind = King then
-                let b2 = Board.applyMove m b
-
-                if not (Board.isInCheckFor us b2) then
-                    legal.Add m
-            elif isPinned m.From then
-                let ray = pinRay m.From
-
-                if List.contains m.To ray then
+                if castlingCheckPassed then
+                    // 2. Apply move and check if OUR king is safe
                     let b2 = Board.applyMove m b
-
-                    if not (Board.isInCheck b2) then
+                
+                    // We check 'us' (the side that just moved) in the resulting board 'b2'
+                    if not (Board.isInCheckFor us b2) then
                         legal.Add m
-            else
-                let b2 = Board.applyMove m b
 
-                if not (Board.isInCheck b2) then
-                    legal.Add m
-
-        legal.ToArray()
-
+            legal.ToArray()
 
 // --- UCI LOGIC ---
 
@@ -1027,7 +1061,7 @@ module UciLoop =
             | "print" :: _ ->
                 Board.prettyPrint currentBoard
             | "go" :: _ ->
-                let moves = MoveGen.getPseudoLegalMoves currentBoard
+                let moves = MoveGen.getLegalMoves currentBoard
 
                 if moves.Length > 0 then
                     printfn "bestmove %s" (Move.toUci moves.[0])
