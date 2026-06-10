@@ -391,6 +391,17 @@ module AttackTests =
         let b = Board.fromFen "8/8/8/8/4K3/8/8/8 w - - 0 1"
         Assert.False(Attack.isSquareAttacked b (Square.fromString "e4") Black)
 
+    [<Fact>]
+    let ``White pawn attacks upwards (should be detected but isSquareAttacked returns false)`` () =
+        // White pawn on e4 should attack d5 and f5.
+        let b = Board.fromFen "8/8/8/3p4/4P3/8/8/8 w - - 0 1"
+
+        // d5 is attacked by the pawn on e4.
+        let target = Square.fromString "d5"
+
+        // EXPECTED: true
+        Assert.True(Attack.isSquareAttacked b target White)
+
 
 // =========================
 // === CHECK DETECTION    ===

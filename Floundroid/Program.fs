@@ -471,29 +471,61 @@ module Perft =
         printfn "\nTotal: %d | Time: %d ms" total sw.ElapsedMilliseconds
 
 module UciLoop =
-    let mutable board = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    let mutable board = Board.fromFen startFen
+
     let rec run () =
         let line = Console.ReadLine()
         if line <> null then
             let ts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries) |> Array.toList
             match ts with
-            | "uci" :: _ -> printfn "id name Floundroid\nid author Phil Brooks\nuciok"
-            | "isready" :: _ -> printfn "readyok"
-            | "position" :: "startpos" :: rest ->
-                board <- Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-                if rest <> [] && rest.Head = "moves" then 
-                    for s in rest.Tail do 
-                        match MoveGen.getLegalMoves board |> Array.tryFind (fun m -> Move.toUci m = s) with 
-                        | Some m -> board <- Board.applyMove m board | _ -> ()
-            | "position" :: "fen" :: f1::f2::f3::f4::f5::f6 :: rest ->
-                board <- Board.fromFen $"{f1} {f2} {f3} {f4} {f5} {f6}"
-                if rest <> [] && rest.Head = "moves" then 
-                    for s in rest.Tail do 
-                        match MoveGen.getLegalMoves board |> Array.tryFind (fun m -> Move.toUci m = s) with 
-                        | Some m -> board <- Board.applyMove m board | _ -> ()
-            | "perft" :: d :: _ -> Perft.divide (int d) board
-            | "print" :: _ -> Board.prettyPrint board
-            | "quit" :: _ -> Environment.Exit(0)
+            | "uci" :: _ -> 
+                printfn "id name Floundroid"
+                printfn "id author Phil Brooks"
+                printfn "uciok"
+            | "isready" :: _ -> 
+                printfn "readyok"
+            | "position" :: rest ->
+                let (fen, moveParts) = 
+                    match rest with
+                    | "startpos" :: "moves" :: m -> 
+                        (startFen, m)
+                    | "startpos" :: _ -> 
+                        (startFen, [])
+                    | "fen" :: fParts ->
+                        // Find where "moves" starts, if it exists
+                        let movesIdx = fParts |> List.tryFindIndex (fun s -> s = "moves")
+                        match movesIdx with
+                        | Some i -> 
+                            let f = fParts |> List.take i |> String.concat " "
+                            let m = fParts |> List.skip (i + 1)
+                            (f, m)
+                        | None -> 
+                            (String.concat " " fParts, [])
+                    | _ -> (startFen, [])
+
+                board <- Board.fromFen fen
+                for mStr in moveParts do
+                    let legalMoves = MoveGen.getLegalMoves board
+                    match legalMoves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
+                    | Some m -> board <- Board.applyMove m board
+                    | None -> ()
+
+            | "go" :: _ ->
+                // Stage 2 logic: Pick the first move available
+                let moves = MoveGen.getLegalMoves board
+                if moves.Length > 0 then
+                    printfn "bestmove %s" (Move.toUci moves.[0])
+                else
+                    // This case handles checkmate/stalemate
+                    printfn "bestmove (none)" 
+
+            | "perft" :: d :: _ -> 
+                Perft.divide (int d) board
+            | "print" :: _ -> 
+                Board.prettyPrint board
+            | "quit" :: _ -> 
+                Environment.Exit(0)
             | _ -> ()
             run ()
 
