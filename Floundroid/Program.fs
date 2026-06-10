@@ -172,6 +172,104 @@ module Board =
 
 // --- MOVE GENERATION ---
 
+module Attack =
+
+    /// Returns true if `sq` is attacked by `attacker` colour.
+    let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
+        let f = Square.file sq |> File.toInt
+        let r = Square.rank sq |> Rank.toInt
+
+        let them = attacker
+        let us = Colour.opposite them
+
+        // --- Pawn attacks ---
+        let pawnDir = if them = White then -1 else 1
+        for df in [-1; 1] do
+            let nf, nr = f + df, r + pawnDir
+            if Square.isOnBoard nf nr then
+                let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                match b.Pieces |> Map.tryFind s2 with
+                | Some p when p.Colour = them && p.Kind = Pawn -> 
+                    // Pawn attacks this square
+                    true |> ignore
+                | _ -> ()
+
+        // If we found a pawn attack, return immediately
+        let pawnHit =
+            [-1; 1]
+            |> List.exists (fun df ->
+                let nf, nr = f + df, r + pawnDir
+                if Square.isOnBoard nf nr then
+                    let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                    match b.Pieces |> Map.tryFind s2 with
+                    | Some p when p.Colour = them && p.Kind = Pawn -> true
+                    | _ -> false
+                else false
+            )
+        if pawnHit then true else
+
+        // --- Knight attacks ---
+        let knightOffsets = [ (1,2); (1,-2); (-1,2); (-1,-2); (2,1); (2,-1); (-2,1); (-2,-1) ]
+        let knightHit =
+            knightOffsets
+            |> List.exists (fun (df, dr) ->
+                let nf, nr = f + df, r + dr
+                if Square.isOnBoard nf nr then
+                    let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                    match b.Pieces |> Map.tryFind s2 with
+                    | Some p when p.Colour = them && p.Kind = Knight -> true
+                    | _ -> false
+                else false
+            )
+        if knightHit then true else
+
+        // --- Sliding attacks: bishop/rook/queen ---
+        let bishopDirs = [ (1,1); (1,-1); (-1,1); (-1,-1) ]
+        let rookDirs   = [ (1,0); (-1,0); (0,1); (0,-1) ]
+
+        let slidingHit =
+            let checkDir (df, dr) =
+                let mutable nf, nr = f + df, r + dr
+                let mutable hit = false
+                let mutable blocked = false
+                while Square.isOnBoard nf nr && not blocked do
+                    let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                    match b.Pieces |> Map.tryFind s2 with
+                    | None ->
+                        nf <- nf + df
+                        nr <- nr + dr
+                    | Some p ->
+                        blocked <- true
+                        if p.Colour = them then
+                            match p.Kind with
+                            | Bishop when List.contains (df,dr) bishopDirs -> hit <- true
+                            | Rook   when List.contains (df,dr) rookDirs   -> hit <- true
+                            | Queen -> hit <- true
+                            | _ -> ()
+                hit
+
+            let bishopHit = bishopDirs |> List.exists checkDir
+            let rookHit   = rookDirs   |> List.exists checkDir
+            bishopHit || rookHit
+
+        if slidingHit then true else
+
+        // --- King attacks (adjacent squares) ---
+        let kingOffsets = [ (1,1); (1,-1); (-1,1); (-1,-1); (1,0); (-1,0); (0,1); (0,-1) ]
+        let kingHit =
+            kingOffsets
+            |> List.exists (fun (df, dr) ->
+                let nf, nr = f + df, r + dr
+                if Square.isOnBoard nf nr then
+                    let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                    match b.Pieces |> Map.tryFind s2 with
+                    | Some p when p.Colour = them && p.Kind = King -> true
+                    | _ -> false
+                else false
+            )
+
+        kingHit
+
 module MoveGen =
     let directions = Map [
         Bishop, [ (1,1); (1,-1); (-1,1); (-1,-1) ]

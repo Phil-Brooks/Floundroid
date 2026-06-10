@@ -29,7 +29,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] En passant rules
 - [ ] Pawn promotions (logic exists, but needs expanding to 4 distinct moves)
 - [ ] Castling rules (checking rights + path clearance)
-- [ ] Attack Detection (`isSquareAttacked`)
+- [x] Attack Detection (`isSquareAttacked`)
 - [ ] Check detection
 - [ ] Pin detection
 - [ ] Legal move filtering (The "King Safety" filter)

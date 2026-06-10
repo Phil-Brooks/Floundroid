@@ -169,3 +169,29 @@ module MoveGenTests =
         // Expected: 10 moves (Up: 2, Right: 3, Left: 4, Down: 1)
         Assert.Equal(10, moves.Length)
         Assert.Contains(moves, fun m -> Square.toString m.To = "e6" && m.Kind = Capture)
+
+module AttackTests =
+
+    [<Fact>]
+    let ``Square attacked by knight`` () =
+        let b = Board.fromFen "8/8/8/3n4/4K3/8/8/8 w - - 0 1"
+        let sq = Square.fromString "f4"
+        Assert.True(Attack.isSquareAttacked b sq Black)
+
+    [<Fact>]
+    let ``Square attacked by bishop`` () =
+        let b = Board.fromFen "8/8/8/3b4/4K3/8/8/8 w - - 0 1"
+        let sq = Square.fromString "e4"
+        Assert.True(Attack.isSquareAttacked b sq Black)
+
+    [<Fact>]
+    let ``Square attacked by pawn`` () =
+        let b = Board.fromFen "8/8/8/3p4/4K3/8/8/8 w - - 0 1"
+        let sq = Square.fromString "e4"
+        Assert.True(Attack.isSquareAttacked b sq Black)
+
+    [<Fact>]
+    let ``Square not attacked`` () =
+        let b = Board.fromFen "8/8/8/8/4K3/8/8/8 w - - 0 1"
+        let sq = Square.fromString "e4"
+        Assert.False(Attack.isSquareAttacked b sq Black)
