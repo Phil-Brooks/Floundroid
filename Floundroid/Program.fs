@@ -570,6 +570,59 @@ module Perft =
         totalSw.Stop()
         printfn "Full Suite Finished in %d ms" totalSw.ElapsedMilliseconds
 
+module Debug =
+    /// 1.5.1 - Move list visualisation
+    let displayMoves (b: Board) =
+        let moves = MoveGen.getLegalMoves b
+        printfn "Legal Moves (%d):" moves.Length
+        let formatted = 
+            moves 
+            |> Array.map (fun m -> sprintf "%s (%s)" (Move.toUci m) (San.toSan b m))
+            |> String.concat ", "
+        printfn "%s" formatted
+
+    /// 1.5.2 - Board consistency checker
+    let verify (b: Board) =
+        let errors = ResizeArray<string>()
+        let pieces = b.Pieces |> Map.toList |> List.map snd
+        
+        // 1. Check Kings
+        let whiteKings = pieces |> List.filter (fun p -> p.Colour = White && p.Kind = King) |> List.length
+        let blackKings = pieces |> List.filter (fun p -> p.Colour = Black && p.Kind = King) |> List.length
+        if whiteKings <> 1 then errors.Add(sprintf "Invalid White King count: %d" whiteKings)
+        if blackKings <> 1 then errors.Add(sprintf "Invalid Black King count: %d" blackKings)
+
+        // 2. Check Pawns
+        for (KeyValue(sq, p)) in b.Pieces do
+            if p.Kind = Pawn then
+                let r = Square.rank sq |> Rank.toInt
+                if r = 0 || r = 7 then 
+                    errors.Add(sprintf "Pawn on illegal rank %d at %s" (r+1) (Square.toString sq))
+
+        // 3. Side not to move cannot be in check
+        if Board.isInCheckFor (Colour.opposite b.SideToMove) b then
+            errors.Add("Illegal state: Side NOT to move is in check.")
+
+        if errors.Count = 0 then
+            printfn "Board state is consistent."
+        else
+            printfn "CONSISTENCY ERRORS FOUND:"
+            for err in errors do printfn " - %s" err
+
+    /// 1.5.3 - Attack map visualiser
+    let displayAttackMap (b: Board) (attacker: Colour) =
+        printfn "Attack Map for %A:" attacker
+        for r in 7 .. -1 .. 0 do
+            printf "%d " (r + 1)
+            for f in 0 .. 7 do
+                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
+                if Attack.isSquareAttacked b sq attacker then
+                    printf "x "
+                else
+                    printf ". "
+            printfn ""
+        printfn "  a b c d e f g h"
+
 module UciLoop =
     let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     let mutable board = Board.fromFen startFen
@@ -638,6 +691,11 @@ module UciLoop =
             
             | "print" :: _ -> 
                 Board.prettyPrint board
+
+            | "moves" :: _ -> Debug.displayMoves board
+            | "verify" :: _ -> Debug.verify board
+            | "attacks" :: "white" :: _ -> Debug.displayAttackMap board White
+            | "attacks" :: "black" :: _ -> Debug.displayAttackMap board Black
             | "quit" :: _ -> 
                 Environment.Exit(0)
             | _ -> ()

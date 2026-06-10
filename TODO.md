@@ -46,10 +46,10 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Validate perft(1)–perft(6)
 - [x] Add regression tests (Integrated suite command + unit tests)
 
-## 1.5 Debugging Tools
-- [ ] Move list visualisation
-- [ ] Board consistency checker
-- [ ] Attack map visualiser
+## 1.5 Debugging Tools ✅
+- [x] Move list visualisation (`moves` command showing UCI + SAN)
+- [x] Board consistency checker (`verify` command for invariants)
+- [x] Attack map visualiser (`attacks white/black` grid)
 
 ---
 
