@@ -83,95 +83,6 @@ type Board =
     { Pieces : Map<Square, Piece>; SideToMove : Colour; CastlingRights : CastlingRights
       EnPassantSquare : Square option; HalfmoveClock : int; FullmoveNumber : int }
 
-// --- BOARD UTILS & FEN ---
-
-module Board =
-    let empty = { Pieces = Map.empty; SideToMove = White; CastlingRights = CastlingRights.none; EnPassantSquare = None; HalfmoveClock = 0; FullmoveNumber = 1 }
-
-    let tryGetPiece (b: Board) (sq: Square) = b.Pieces |> Map.tryFind sq
-    let isOccupied (b: Board) (sq: Square) = b.Pieces |> Map.containsKey sq
-
-    let setPiece (b: Board) (sq: Square) (pieceOpt: Piece option) =
-        match pieceOpt with
-        | Some piece -> { b with Pieces = b.Pieces.Add(sq, piece) }
-        | None -> { b with Pieces = b.Pieces.Remove sq }
-
-    let removePiece (b: Board) (sq: Square) = { b with Pieces = b.Pieces.Remove sq }
-
-    let applyMove (m: Move) (b: Board) =
-        match tryGetPiece b m.From with
-        | None -> invalidArg "m" $"No piece on {Square.toString m.From}"
-        | Some piece ->
-            let b1 = removePiece b m.From
-            let b2 =
-                match m.Kind with
-                | Promotion pt ->
-                    let promoted = { Colour = piece.Colour; Kind = pt }
-                    setPiece b1 m.To (Some promoted)
-                | _ ->
-                    setPiece b1 m.To (Some piece)
-            let nextSide = Colour.opposite b.SideToMove
-            { b2 with
-                SideToMove = nextSide
-                EnPassantSquare = None
-                HalfmoveClock =
-                    match piece.Kind, m.Kind with
-                    | Pawn, _ -> 0
-                    | _, Capture -> 0
-                    | _ -> b.HalfmoveClock + 1
-                FullmoveNumber =
-                    if b.SideToMove = Black then b.FullmoveNumber + 1 else b.FullmoveNumber }
-
-    let fromFen (fen: string) =
-        let parts = fen.Split(' ')
-        let rows = parts.[0].Split('/')
-        let mutable pieces = Map.empty
-        for r in 0 .. 7 do
-            let rank = 7 - r
-            let mutable file = 0
-            for char in rows.[r] do
-                if Char.IsDigit char then
-                    file <- file + (int char - int '0')
-                else
-                    let sq = Square.ofFileRank (File.fromInt file) (Rank.fromInt rank)
-                    pieces <- pieces.Add(sq, Piece.fromChar char)
-                    file <- file + 1
-        { Pieces = pieces
-          SideToMove = Colour.fromChar parts.[1].[0]
-          CastlingRights = CastlingRights.fromString parts.[2]
-          EnPassantSquare = if parts.[3] = "-" then None else Some (Square.fromString parts.[3])
-          HalfmoveClock = int parts.[4]
-          FullmoveNumber = int parts.[5] }
-
-    let toFen (b: Board) =
-        let sb = StringBuilder()
-        for r in 7 .. -1 .. 0 do
-            let mutable emptyCount = 0
-            for f in 0 .. 7 do
-                match b.Pieces |> Map.tryFind (Square.ofFileRank (File.fromInt f) (Rank.fromInt r)) with
-                | Some p -> 
-                    if emptyCount > 0 then sb.Append(emptyCount) |> ignore
-                    emptyCount <- 0
-                    sb.Append(Piece.toChar p) |> ignore
-                | None -> emptyCount <- emptyCount + 1
-            if emptyCount > 0 then sb.Append(emptyCount) |> ignore
-            if r > 0 then sb.Append('/') |> ignore
-        sprintf "%O %c %s %s %d %d" sb (Colour.toChar b.SideToMove) (CastlingRights.toString b.CastlingRights) 
-            (match b.EnPassantSquare with Some sq -> Square.toString sq | None -> "-") b.HalfmoveClock b.FullmoveNumber
-
-    let prettyPrint (b: Board) =
-        for r in 7 .. -1 .. 0 do
-            printf "%d " (r + 1)
-            for f in 0 .. 7 do
-                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
-                match b.Pieces |> Map.tryFind sq with
-                | Some p -> printf "%c " (Piece.toChar p)
-                | None -> printf ". "
-            printfn ""
-        printfn "  a b c d e f g h"
-
-// --- MOVE GENERATION ---
-
 module Attack =
 
     /// Returns true if `sq` is attacked by `attacker` colour.
@@ -269,6 +180,108 @@ module Attack =
             )
 
         kingHit
+
+// --- BOARD UTILS & FEN ---
+
+module Board =
+    let empty = { Pieces = Map.empty; SideToMove = White; CastlingRights = CastlingRights.none; EnPassantSquare = None; HalfmoveClock = 0; FullmoveNumber = 1 }
+
+    let tryGetPiece (b: Board) (sq: Square) = b.Pieces |> Map.tryFind sq
+    let isOccupied (b: Board) (sq: Square) = b.Pieces |> Map.containsKey sq
+
+    let setPiece (b: Board) (sq: Square) (pieceOpt: Piece option) =
+        match pieceOpt with
+        | Some piece -> { b with Pieces = b.Pieces.Add(sq, piece) }
+        | None -> { b with Pieces = b.Pieces.Remove sq }
+
+    let removePiece (b: Board) (sq: Square) = { b with Pieces = b.Pieces.Remove sq }
+
+    let applyMove (m: Move) (b: Board) =
+        match tryGetPiece b m.From with
+        | None -> invalidArg "m" $"No piece on {Square.toString m.From}"
+        | Some piece ->
+            let b1 = removePiece b m.From
+            let b2 =
+                match m.Kind with
+                | Promotion pt ->
+                    let promoted = { Colour = piece.Colour; Kind = pt }
+                    setPiece b1 m.To (Some promoted)
+                | _ ->
+                    setPiece b1 m.To (Some piece)
+            let nextSide = Colour.opposite b.SideToMove
+            { b2 with
+                SideToMove = nextSide
+                EnPassantSquare = None
+                HalfmoveClock =
+                    match piece.Kind, m.Kind with
+                    | Pawn, _ -> 0
+                    | _, Capture -> 0
+                    | _ -> b.HalfmoveClock + 1
+                FullmoveNumber =
+                    if b.SideToMove = Black then b.FullmoveNumber + 1 else b.FullmoveNumber }
+
+    /// Returns true if the side to move is currently in check.
+    let isInCheck (b: Board) =
+        // Find the king of the side to move
+        let kingSq =
+            b.Pieces
+            |> Seq.tryFind (fun (KeyValue(_, p)) -> p.Colour = b.SideToMove && p.Kind = King)
+            |> Option.map (fun (KeyValue(sq, _)) -> sq)
+
+        match kingSq with
+        | None -> false  // should never happen in a legal position
+        | Some ks ->
+            Attack.isSquareAttacked b ks (Colour.opposite b.SideToMove)
+    
+    let fromFen (fen: string) =
+        let parts = fen.Split(' ')
+        let rows = parts.[0].Split('/')
+        let mutable pieces = Map.empty
+        for r in 0 .. 7 do
+            let rank = 7 - r
+            let mutable file = 0
+            for char in rows.[r] do
+                if Char.IsDigit char then
+                    file <- file + (int char - int '0')
+                else
+                    let sq = Square.ofFileRank (File.fromInt file) (Rank.fromInt rank)
+                    pieces <- pieces.Add(sq, Piece.fromChar char)
+                    file <- file + 1
+        { Pieces = pieces
+          SideToMove = Colour.fromChar parts.[1].[0]
+          CastlingRights = CastlingRights.fromString parts.[2]
+          EnPassantSquare = if parts.[3] = "-" then None else Some (Square.fromString parts.[3])
+          HalfmoveClock = int parts.[4]
+          FullmoveNumber = int parts.[5] }
+
+    let toFen (b: Board) =
+        let sb = StringBuilder()
+        for r in 7 .. -1 .. 0 do
+            let mutable emptyCount = 0
+            for f in 0 .. 7 do
+                match b.Pieces |> Map.tryFind (Square.ofFileRank (File.fromInt f) (Rank.fromInt r)) with
+                | Some p -> 
+                    if emptyCount > 0 then sb.Append(emptyCount) |> ignore
+                    emptyCount <- 0
+                    sb.Append(Piece.toChar p) |> ignore
+                | None -> emptyCount <- emptyCount + 1
+            if emptyCount > 0 then sb.Append(emptyCount) |> ignore
+            if r > 0 then sb.Append('/') |> ignore
+        sprintf "%O %c %s %s %d %d" sb (Colour.toChar b.SideToMove) (CastlingRights.toString b.CastlingRights) 
+            (match b.EnPassantSquare with Some sq -> Square.toString sq | None -> "-") b.HalfmoveClock b.FullmoveNumber
+
+    let prettyPrint (b: Board) =
+        for r in 7 .. -1 .. 0 do
+            printf "%d " (r + 1)
+            for f in 0 .. 7 do
+                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
+                match b.Pieces |> Map.tryFind sq with
+                | Some p -> printf "%c " (Piece.toChar p)
+                | None -> printf ". "
+            printfn ""
+        printfn "  a b c d e f g h"
+
+// --- MOVE GENERATION ---
 
 module MoveGen =
     let directions = Map [

@@ -30,7 +30,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Pawn promotions
 - [x] Castling rules (pseudo‑legal: rights + path clearance)
 - [x] Attack Detection (`isSquareAttacked`)
-- [ ] Check detection
+- [x] Check detection
 - [ ] Pin detection
 - [ ] Legal move filtering (The "King Safety" filter)
 

@@ -259,3 +259,20 @@ module AttackTests =
         let b = Board.fromFen "8/8/8/8/4K3/8/8/8 w - - 0 1"
         let sq = Square.fromString "e4"
         Assert.False(Attack.isSquareAttacked b sq Black)
+
+module CheckDetectionTests =
+
+    [<Fact>]
+    let ``White is in check from rook`` () =
+        let b = Board.fromFen "4k3/8/8/8/8/8/4R3/4K3 b - - 0 1"
+        Assert.True(Board.isInCheck b)
+
+    [<Fact>]
+    let ``White is not in check`` () =
+        let b = Board.fromFen "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
+        Assert.False(Board.isInCheck b)
+
+    [<Fact>]
+    let ``Black is in check from knight`` () =
+        let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
+        Assert.True(Board.isInCheck b)
