@@ -1,6 +1,3 @@
-
----
-
 # ✅ **TODO.md (Detailed Project Task List)**
 
 # Floundroid — TODO List 
@@ -23,22 +20,24 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Update all modules to use new types
 
 ## 1.2 Move Generation
-- [ ] Pawn moves (quiet, capture, double, promotion)
-- [ ] Knight moves
-- [ ] Bishop moves
-- [ ] Rook moves
-- [ ] Queen moves
-- [ ] King moves
-- [ ] Castling rules
-- [ ] En passant rules
+- [x] Knight moves
+- [x] Bishop moves
+- [x] Rook moves
+- [x] Queen moves
+- [x] King moves (basic)
+- [x] Pawn moves (quiet, capture, double)
+- [x] En passant rules
+- [ ] Pawn promotions (logic exists, but needs expanding to 4 distinct moves)
+- [ ] Castling rules (checking rights + path clearance)
+- [ ] Attack Detection (`isSquareAttacked`)
 - [ ] Check detection
 - [ ] Pin detection
-- [ ] Legal move filtering
+- [ ] Legal move filtering (The "King Safety" filter)
 
 ## 1.3 FEN + Utilities
-- [ ] FEN parser
-- [ ] FEN serializer
-- [ ] Board pretty‑printer
+- [x] FEN parser
+- [x] FEN serializer
+- [x] Board pretty‑printer
 - [ ] Move → SAN (optional)
 
 ## 1.4 Perft
@@ -57,12 +56,12 @@ A detailed, structured task list aligned with the project roadmap.
 # Stage 2 — UCI Engine Interface
 
 ## 2.1 UCI Protocol
-- [ ] Implement `uci`
-- [ ] Implement `isready`
-- [ ] Implement `position`
+- [x] Implement `uci`
+- [x] Implement `isready`
+- [x] Implement `position` (startpos and FEN)
 - [ ] Implement `go depth N`
 - [ ] Implement `stop`
-- [ ] Implement `quit`
+- [x] Implement `quit`
 
 ## 2.2 Search Framework
 - [ ] Iterative deepening loop
