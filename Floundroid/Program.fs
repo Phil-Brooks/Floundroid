@@ -501,18 +501,30 @@ module Perft =
         if depth = 0 then 1uL else
         let moves = MoveGen.getLegalMoves b
         if depth = 1 then uint64 moves.Length 
-        else moves |> Array.fold (fun acc m -> acc + countNodes (depth - 1) (Board.applyMove m b)) 0uL
-    
+        else 
+            let mutable total = 0uL
+            for i in 0 .. moves.Length - 1 do
+                total <- total + countNodes (depth - 1) (Board.applyMove moves.[i] b)
+            total
+
     let divide depth b =
         let sw = Diagnostics.Stopwatch.StartNew()
         let moves = MoveGen.getLegalMoves b |> Array.sortBy Move.toUci
         let mutable total = 0uL
+        
+        printfn "Perft results for depth %d:" depth
         for m in moves do 
             let n = countNodes (depth - 1) (Board.applyMove m b)
-            printfn "%s: %d" (Move.toUci m) n
+            // Use the San module we just built!
+            printfn "%s (%s): %d" (Move.toUci m) (San.toSan b m) n
             total <- total + n
+            
         sw.Stop()
-        printfn "\nTotal: %d | Time: %d ms" total sw.ElapsedMilliseconds
+        let ms = sw.ElapsedMilliseconds
+        let nps = if ms > 0L then (total * 1000uL) / uint64 ms else 0uL
+        
+        printfn "\nTotal: %d | Time: %d ms | NPS: %d" total ms nps
+        total
 
 module UciLoop =
     let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -565,7 +577,9 @@ module UciLoop =
                     printfn "bestmove (none)" 
 
             | "perft" :: d :: _ -> 
-                Perft.divide (int d) board
+                            let depth = int d
+                            Perft.divide depth board |> ignore            
+            
             | "print" :: _ -> 
                 Board.prettyPrint board
             | "quit" :: _ -> 

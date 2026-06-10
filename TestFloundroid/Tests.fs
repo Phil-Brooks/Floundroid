@@ -532,3 +532,28 @@ module SanTests =
         // After exd8=Q, the Queen on d8 checks the King on h8 (same rank)
         let fen = "3r3k/4P3/8/8/8/8/8/7K w - - 0 1"
         Assert.Equal("exd8=Q+", getSan fen "e7d8q")
+
+// =========================
+// === PERFT DRIVER TESTS ===
+// =========================
+
+module PerftTests =
+
+    [<Fact>]
+    let ``Initial position depth 1 is 20`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let nodes = Perft.countNodes 1 b
+        Assert.Equal(20uL, nodes)
+
+    [<Fact>]
+    let ``Initial position depth 2 is 400`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let nodes = Perft.countNodes 2 b
+        Assert.Equal(400uL, nodes)
+
+    [<Fact>]
+    let ``Kiwipete depth 1 is 48`` () =
+        // Kiwipete is a famous perft test position with many captures and castling
+        let b = Board.fromFen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+        let nodes = Perft.countNodes 1 b
+        Assert.Equal(48uL, nodes)
