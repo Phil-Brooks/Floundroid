@@ -160,6 +160,69 @@ module BoardTests =
         let nextB = Board.applyMove m b
         Assert.Equal(2, nextB.FullmoveNumber)
 
+    [<Fact>]
+    let ``Kingside castling moves rook`` () =
+        let b =
+            Board.fromFen
+                "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1"
+
+        let m =
+            { From = Square.fromString "e1"
+              To = Square.fromString "g1"
+              Kind = CastleKingSide }
+
+        let b2 = Board.applyMove m b
+
+        Assert.True(Board.isOccupied b2 (Square.fromString "f1"))
+        Assert.False(Board.isOccupied b2 (Square.fromString "h1"))
+
+    [<Fact>]
+    let ``En passant removes captured pawn`` () =
+        let b =
+            Board.fromFen
+                "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
+
+        let m =
+            { From = Square.fromString "e5"
+              To = Square.fromString "d6"
+              Kind = EnPassant }
+
+        let b2 = Board.applyMove m b
+
+        Assert.False(Board.isOccupied b2 (Square.fromString "d5"))
+        Assert.True(Board.isOccupied b2 (Square.fromString "d6"))
+
+    [<Fact>]
+    let ``Promotion creates promoted piece`` () =
+        let b =
+            Board.fromFen
+                "8/4P3/8/8/8/8/8/8 w - - 0 1"
+
+        let m =
+            { From = Square.fromString "e7"
+              To = Square.fromString "e8"
+              Kind = Promotion Queen }
+
+        let b2 = Board.applyMove m b
+
+        match Board.tryGetPiece b2 (Square.fromString "e8") with
+        | Some p -> Assert.Equal(Queen, p.Kind)
+        | None -> Assert.True(false)
+
+    [<Fact>]
+    let ``Moving rook removes kingside castling rights`` () =
+        let b =
+            Board.fromFen
+                "4k3/8/8/8/8/8/8/4K2R w K - 0 1"
+
+        let m =
+            { From = Square.fromString "h1"
+              To = Square.fromString "h2"
+              Kind = Quiet }
+
+        let b2 = Board.applyMove m b
+
+        Assert.False(b2.CastlingRights.WhiteKingSide)
 
 // =========================
 // === FEN & MOVEGEN TESTS ==
@@ -233,6 +296,15 @@ module MoveGenTests =
             fun m -> Square.toString m.To = "e6" && m.Kind = Capture
         )
 
+    [<Fact>]
+    let ``Starting position has 20 legal moves`` () =
+        let b =
+            Board.fromFen
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        let moves = MoveGen.getLegalMoves b
+
+        Assert.Equal(20, moves.Length)
 
 // =========================
 // === PROMOTION TESTS    ===
@@ -392,4 +464,17 @@ module LegalMoveFilteringTests =
         Assert.DoesNotContain(
             moves,
             fun m -> m.Kind = EnPassant
+        )
+
+    [<Fact>]
+    let ``Cannot castle into attacked destination square`` () =
+        let b =
+            Board.fromFen
+                "6rk/8/8/8/8/8/8/R3K2R w KQ - 0 1"
+
+        let moves = MoveGen.getLegalMoves b
+
+        Assert.DoesNotContain(
+            moves,
+            fun m -> m.Kind = CastleKingSide
         )

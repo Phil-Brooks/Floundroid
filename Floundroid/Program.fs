@@ -231,9 +231,18 @@ module Board =
             let mutable newPieces = b.Pieces.Remove(m.From)
             let pieceToPlace = match m.Kind with | Promotion pt -> { Colour = us; Kind = pt } | _ -> piece
             match m.Kind with
-            | EnPassant -> 
-                let vRank = if us = White then Rank.R5 else Rank.R4
-                newPieces <- newPieces.Remove(Square.ofFileRank (Square.file m.To) vRank)
+            | EnPassant ->
+                let capturedSq =
+                    if us = White then
+                        Square.ofFileRank
+                            (Square.file m.To)
+                            (Rank.fromInt (Rank.toInt (Square.rank m.To) - 1))
+                    else
+                        Square.ofFileRank
+                            (Square.file m.To)
+                            (Rank.fromInt (Rank.toInt (Square.rank m.To) + 1))
+
+                newPieces <- newPieces.Remove(capturedSq)            
             | CastleKingSide ->
                 let rR = if us = White then Rank.R1 else Rank.R8
                 let rF, rT = Square.ofFileRank File.H rR, Square.ofFileRank File.F rR
@@ -246,13 +255,34 @@ module Board =
             newPieces <- newPieces.Add(m.To, pieceToPlace)
             let updateRights (cr: CastlingRights) =
                 let mutable r = cr
+
+                // King moved
                 if piece.Kind = King then
-                    if us = White then r <- { r with WhiteKingSide = false; WhiteQueenSide = false }
-                    else r <- { r with BlackKingSide = false; BlackQueenSide = false }
-                let checkR sq cur = match Square.file sq, Square.rank sq with
-                                    | File.A, Rank.R1 -> { cur with WhiteQueenSide = false } | File.H, Rank.R1 -> { cur with WhiteKingSide = false }
-                                    | File.A, Rank.R8 -> { cur with BlackQueenSide = false } | File.H, Rank.R8 -> { cur with BlackKingSide = false } | _ -> cur
-                r |> checkR m.From |> checkR m.To
+                    if us = White then
+                        r <- { r with WhiteKingSide = false
+                                      WhiteQueenSide = false }
+                    else
+                        r <- { r with BlackKingSide = false
+                                      BlackQueenSide = false }
+
+                // Rook moved from its home square
+                let revokeForSquare sq cur =
+                    match Square.file sq, Square.rank sq with
+                    | File.A, Rank.R1 -> { cur with WhiteQueenSide = false }
+                    | File.H, Rank.R1 -> { cur with WhiteKingSide = false }
+                    | File.A, Rank.R8 -> { cur with BlackQueenSide = false }
+                    | File.H, Rank.R8 -> { cur with BlackKingSide = false }
+                    | _ -> cur
+
+                r <- revokeForSquare m.From r
+
+                // Rook captured on its home square
+                match b.Pieces.TryFind m.To with
+                | Some captured when captured.Kind = Rook ->
+                    r <- revokeForSquare m.To r
+                | _ -> ()
+
+                r            
             let nextEp = if piece.Kind = Pawn && Math.Abs(Rank.toInt (Square.rank m.From) - Rank.toInt (Square.rank m.To)) = 2 then
                             Some (Square.ofFileRank (Square.file m.From) (if us = White then Rank.R3 else Rank.R6)) else None
             { b with Pieces = newPieces; SideToMove = them; CastlingRights = updateRights b.CastlingRights; EnPassantSquare = nextEp
@@ -282,28 +312,88 @@ module MoveGen =
                 match p.Kind with
                 | Pawn ->
                     let d = if us = White then 1 else -1
-                    // Push
+
+                    // Pushes
                     let nr1 = r + d
+
                     if nr1 >= 0 && nr1 <= 7 then
-                        let p1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr1)
+                        let p1 =
+                            Square.ofFileRank
+                                (File.fromInt f)
+                                (Rank.fromInt nr1)
+
                         if not (b.Pieces.ContainsKey p1) then
-                            if nr1 = (if us=White then 7 else 0) then for pt in [Queen;Rook;Bishop;Knight] do moves.Add({From=sq;To=p1;Kind=Promotion pt})
-                            else moves.Add({From=sq;To=p1;Kind=Quiet})
-                                 if r = (if us=White then 1 else 6) then
-                                     let nr2 = r + 2*d
-                                     if nr2 >= 0 && nr2 <= 7 then
-                                         let p2 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr2)
-                                         if not (b.Pieces.ContainsKey p2) then moves.Add({From=sq;To=p2;Kind=Quiet})
+
+                            // Promotion push
+                            if nr1 = (if us = White then 7 else 0) then
+                                for pt in [ Queen; Rook; Bishop; Knight ] do
+                                    moves.Add(
+                                        { From = sq
+                                          To = p1
+                                          Kind = Promotion pt }
+                                    )
+                            else
+                                moves.Add(
+                                    { From = sq
+                                      To = p1
+                                      Kind = Quiet }
+                                )
+
+                            // Double push from starting rank
+                            if r = (if us = White then 1 else 6) then
+                                let nr2 = r + 2 * d
+
+                                if nr2 >= 0 && nr2 <= 7 then
+                                    let p2 =
+                                        Square.ofFileRank
+                                            (File.fromInt f)
+                                            (Rank.fromInt nr2)
+
+                                    if not (b.Pieces.ContainsKey p2) then
+                                        moves.Add(
+                                            { From = sq
+                                              To = p2
+                                              Kind = Quiet }
+                                        )
+
                     // Captures
-                    for df in [-1; 1] do
+                    for df in [ -1; 1 ] do
                         let nf, nr = f + df, r + d
+
                         if Square.isOnBoard nf nr then
-                            let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-                            match b.Pieces |> Map.tryFind cap with
-                            | Some t when t.Colour = them ->
-                                if nr = (if us=White then 7 else 0) then for pt in [Queen;Rook;Bishop;Knight] do moves.Add({From=sq;To=cap;Kind=Promotion pt})
-                                else moves.Add({From=sq;To=cap;Kind=Capture})
-                            | _ -> if Some cap = b.EnPassantSquare then moves.Add({From=sq;To=cap;Kind=EnPassant})
+                            let cap =
+                                Square.ofFileRank
+                                    (File.fromInt nf)
+                                    (Rank.fromInt nr)
+
+                            match b.Pieces.TryFind cap with
+                            | Some victim when victim.Colour = them ->
+                                if nr = (if us = White then 7 else 0) then
+                                    for pt in [ Queen; Rook; Bishop; Knight ] do
+                                        moves.Add(
+                                            { From = sq
+                                              To = cap
+                                              Kind = Promotion pt }
+                                        )
+                                else
+                                    moves.Add(
+                                        { From = sq
+                                          To = cap
+                                          Kind = Capture }
+                                    )
+                            | _ -> ()
+
+                    // En passant
+                    match b.EnPassantSquare with
+                    | Some ep ->
+                        if abs (File.toInt (Square.file ep) - f) = 1 &&
+                           Rank.toInt (Square.rank ep) = r + d then
+                            moves.Add(
+                                { From = sq
+                                  To = ep
+                                  Kind = EnPassant }
+                            )
+                    | None -> ()                
                 | Knight | King ->
                     for (df, dr) in dirs.[p.Kind] do
                         let nf, nr = f + df, r + dr
@@ -335,9 +425,28 @@ module MoveGen =
         getPseudoLegalMoves b |> Array.filter (fun m ->
             let castlingCheck = match m.Kind with
                                 | CastleKingSide | CastleQueenSide ->
-                                    if Board.isInCheckFor us b then false else
-                                        let rnk, mid = (if us=White then Rank.R1 else Rank.R8), (if m.Kind=CastleKingSide then File.F else File.D)
-                                        not (Attack.isSquareAttacked b (Square.ofFileRank mid rnk) them)
+                                    if Board.isInCheckFor us b then
+                                        false
+                                    else
+                                        let rnk =
+                                            if us = White then Rank.R1 else Rank.R8
+
+                                        let midFile =
+                                            if m.Kind = CastleKingSide then File.F
+                                            else File.D
+
+                                        let destFile =
+                                            if m.Kind = CastleKingSide then File.G
+                                            else File.C
+
+                                        let midSquare =
+                                            Square.ofFileRank midFile rnk
+
+                                        let destSquare =
+                                            Square.ofFileRank destFile rnk
+
+                                        not (Attack.isSquareAttacked b midSquare them)
+                                        && not (Attack.isSquareAttacked b destSquare them)                                
                                 | _ -> true
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
