@@ -220,6 +220,17 @@ module Board =
                 FullmoveNumber =
                     if b.SideToMove = Black then b.FullmoveNumber + 1 else b.FullmoveNumber }
 
+    let isInCheckFor (colour: Colour) (b: Board) =
+        let kingSq =
+            b.Pieces
+            |> Seq.tryFind (fun (KeyValue(_, p)) -> p.Colour = colour && p.Kind = King)
+            |> Option.map (fun (KeyValue(sq, _)) -> sq)
+
+        match kingSq with
+        | None -> false
+        | Some ks ->
+            Attack.isSquareAttacked b ks (Colour.opposite colour)
+    
     /// Returns true if the side to move is currently in check.
     let isInCheck (b: Board) =
         // Find the king of the side to move
@@ -309,8 +320,7 @@ module Board =
                 nr <- nr + dr
             sq, List.rev ray)
         |> Map.ofSeq
-    
-    
+        
     let fromFen (fen: string) =
         let parts = fen.Split(' ')
         let rows = parts.[0].Split('/')
@@ -494,6 +504,45 @@ module MoveGen =
                                     moves.Add({ From = sq; To = capSq; Kind = EnPassant })
 
         moves.ToArray()
+
+    /// Returns only legal moves (king safety enforced).
+    let getLegalMoves (b: Board) =
+        let pseudo = getPseudoLegalMoves b
+        let pins = Board.getPins b
+        let us = b.SideToMove
+
+        let isPinned sq = pins.ContainsKey sq
+        let pinRay sq = pins.[sq]
+
+        let legal = ResizeArray<Move>()
+
+        for m in pseudo do
+            let piece =
+                match Board.tryGetPiece b m.From with
+                | Some p -> p
+                | None -> failwith "Impossible: pseudo-legal move from empty square"
+
+            // --- 1. King moves: must not move into check ---
+            if piece.Kind = King then
+                let b2 = Board.applyMove m b
+                if not (Board.isInCheckFor us b2) then
+                    legal.Add m
+
+            // --- 2. Pinned piece: must stay on pin ray ---
+            elif isPinned m.From then
+                let ray = pinRay m.From
+                if List.contains m.To ray then
+                    let b2 = Board.applyMove m b
+                    if not (Board.isInCheck b2) then
+                        legal.Add m
+
+            // --- 3. Normal piece: just ensure king not left in check ---
+            else
+                let b2 = Board.applyMove m b
+                if not (Board.isInCheck b2) then
+                    legal.Add m
+
+        legal.ToArray()
 
 // --- UCI LOGIC ---
 

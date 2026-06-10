@@ -291,3 +291,24 @@ module PinDetectionTests =
         let b = Board.fromFen "4r3/8/8/8/8/8/3N4/4K3 w - - 0 1"
         let pins = Board.getPins b
         Assert.False(pins.ContainsKey(Square.fromString "d2"))
+
+module LegalMoveFilteringTests =
+
+    [<Fact>]
+    let ``Pinned knight has no legal moves`` () =
+        let b = Board.fromFen "4r3/8/8/8/8/8/4N3/4K3 w - - 0 1"
+        let moves = MoveGen.getLegalMoves b
+        Assert.DoesNotContain(moves, fun m -> m.From = Square.fromString "e2")
+
+    [<Fact>]
+    let ``King cannot move into check`` () =
+        let b = Board.fromFen "4k3/8/8/4r3/8/8/8/4K3 w - - 0 1"
+        let moves = MoveGen.getLegalMoves b
+        Assert.DoesNotContain(moves, fun m -> m.To = Square.fromString "e2")
+
+    [<Fact>]
+    let ``Illegal en passant exposing king is filtered out`` () =
+        // Classic EP-discovered-check scenario
+        let b = Board.fromFen "4k3/8/8/8/3pP3/8/8/4K3 w - d6 0 1"
+        let moves = MoveGen.getLegalMoves b
+        Assert.DoesNotContain(moves, fun m -> m.Kind = EnPassant)

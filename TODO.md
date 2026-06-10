@@ -32,7 +32,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Attack Detection (`isSquareAttacked`)
 - [x] Check detection
 - [x] Pin detection
-- [ ] Legal move filtering (The "King Safety" filter)
+- [x] Legal move filtering (The "King Safety" filter)
 
 ## 1.3 FEN + Utilities
 - [x] FEN parser
