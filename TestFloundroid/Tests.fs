@@ -2,7 +2,7 @@
 
 open System
 open Xunit
-open Program
+open Floundroid
 
 // =========================
 // === CORE TYPE TESTS   ===

@@ -1,4 +1,6 @@
-﻿open System
+﻿module Floundroid
+
+open System
 open System.Text
 
 // --- CORE TYPES ---
