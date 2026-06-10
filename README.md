@@ -31,12 +31,17 @@ This is still a human‑driven engine, but it embraces AI as a collaborative too
 
 > **Make impossible chess states unrepresentable, then make the engine fast enough to matter.**
 
-Floundroid begins with strong functional modelling, then transitions into a highly optimised bitboard engine.  
-F#’s type system ensures correctness; .NET’s performance primitives ensure speed.
+Floundroid begins with strong functional modelling, powered by multiple AI assistance models during development, then transitions into a highly optimised bitboard engine.  
+F#'s type system ensures correctness; .NET's performance primitives ensure speed.
 
 ---
 
 ## ⭐ Features
+
+### **AI Collaboration**
+- Multi-model assistance for architecture design and code generation 
+- Iterative rapid prototyping with AI collaboration tools 
+- Cross-validation of implementation approaches through multi-AI feedback
 
 ### **Core Engine**
 - Strong F# domain modelling  
@@ -91,8 +96,7 @@ Focus: **Correctness, purity, and domain modelling**
 - FEN parsing and board visualisation  
 - Full Perft test suite  
 - Internal debugging tools  
-
----
+- Initial AI model integration  
 
 ### **Stage 2 — UCI Engine Interface 🟡**
 
