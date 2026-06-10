@@ -289,8 +289,8 @@ module MoveGen =
                 let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
                 
                 match p.Kind with
-                | Knight | King ->
-                    for (df, dr) in directions.[p.Kind] do
+                | Knight ->
+                    for (df, dr) in directions.[Knight] do
                         let nf, nr = f + df, r + dr
                         if Square.isOnBoard nf nr then
                             let targetSq = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
@@ -299,6 +299,49 @@ module MoveGen =
                             | Some _ -> moves.Add({ From = sq; To = targetSq; Kind = Capture })
                             | None -> moves.Add({ From = sq; To = targetSq; Kind = Quiet })
 
+                | King ->
+                    // Normal king moves
+                    for (df, dr) in directions.[King] do
+                        let nf, nr = f + df, r + dr
+                        if Square.isOnBoard nf nr then
+                            let targetSq = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                            match b.Pieces |> Map.tryFind targetSq with
+                            | Some target when target.Colour = us -> ()
+                            | Some _ -> moves.Add({ From = sq; To = targetSq; Kind = Capture })
+                            | None -> moves.Add({ From = sq; To = targetSq; Kind = Quiet })
+
+                    // --- Castling (pseudo-legal only) ---
+                    let rank = if us = White then 0 else 7
+                    let kingStart = Square.ofFileRank File.E (Rank.fromInt rank)
+
+                    if sq = kingStart then
+                        let cr = b.CastlingRights
+
+                        // King-side castling
+                        let canCastleKs =
+                            (us = White && cr.WhiteKingSide) ||
+                            (us = Black && cr.BlackKingSide)
+
+                        if canCastleKs then
+                            let f1 = Square.ofFileRank File.F (Rank.fromInt rank)
+                            let g1 = Square.ofFileRank File.G (Rank.fromInt rank)
+                            if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
+                                moves.Add({ From = sq; To = g1; Kind = CastleKingSide })
+
+                        // Queen-side castling
+                        let canCastleQs =
+                            (us = White && cr.WhiteQueenSide) ||
+                            (us = Black && cr.BlackQueenSide)
+
+                        if canCastleQs then
+                            let d1 = Square.ofFileRank File.D (Rank.fromInt rank)
+                            let c1 = Square.ofFileRank File.C (Rank.fromInt rank)
+                            let b1 = Square.ofFileRank File.B (Rank.fromInt rank)
+                            if not (Board.isOccupied b d1)
+                               && not (Board.isOccupied b c1)
+                               && not (Board.isOccupied b b1) then
+                                moves.Add({ From = sq; To = c1; Kind = CastleQueenSide })
+ 
                 | Bishop | Rook | Queen ->
                     for (df, dr) in directions.[p.Kind] do
                         let mutable nf, nr = f + df, r + dr
