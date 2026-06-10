@@ -276,3 +276,18 @@ module CheckDetectionTests =
     let ``Black is in check from knight`` () =
         let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
         Assert.True(Board.isInCheck b)
+
+module PinDetectionTests =
+
+    [<Fact>]
+    let ``Simple rook pin`` () =
+        // Black rook on e8, white bishop on e2, white king on e1
+        let b = Board.fromFen "4r3/8/8/8/8/8/4B3/4K3 w - - 0 1"
+        let pins = Board.getPins b
+        Assert.True(pins.ContainsKey(Square.fromString "e2"))
+
+    [<Fact>]
+    let ``Knight is never pinned`` () =
+        let b = Board.fromFen "4r3/8/8/8/8/8/3N4/4K3 w - - 0 1"
+        let pins = Board.getPins b
+        Assert.False(pins.ContainsKey(Square.fromString "d2"))

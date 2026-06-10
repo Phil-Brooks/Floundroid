@@ -233,6 +233,84 @@ module Board =
         | Some ks ->
             Attack.isSquareAttacked b ks (Colour.opposite b.SideToMove)
     
+    /// Returns a map of pinned piece squares to the line of allowed movement.
+    /// Key = pinned piece square
+    /// Value = list of squares along the pin ray (including the king direction)
+    let getPins (b: Board) =
+        let us = b.SideToMove
+        let them = Colour.opposite us
+
+        // Find our king
+        let kingSq =
+            b.Pieces
+            |> Seq.tryFind (fun (KeyValue(_, p)) -> p.Colour = us && p.Kind = King)
+            |> Option.map (fun (KeyValue(sq, _)) -> sq)
+            |> Option.defaultValue -1
+
+        let kf = Square.file kingSq |> File.toInt
+        let kr = Square.rank kingSq |> Rank.toInt
+
+        // Directions a slider can pin along
+        let directions =
+            [ (1,0); (-1,0); (0,1); (0,-1)      // rook directions
+              (1,1); (1,-1); (-1,1); (-1,-1) ] // bishop directions
+
+        let pins = ResizeArray<_>()
+
+        for (df, dr) in directions do
+            let mutable nf = kf + df
+            let mutable nr = kr + dr
+            let mutable blockerSq = None
+            let mutable doneDir = false
+
+            while Square.isOnBoard nf nr && not doneDir do
+                let sq = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                match b.Pieces |> Map.tryFind sq with
+                | None ->
+                    nf <- nf + df
+                    nr <- nr + dr
+
+                | Some p when p.Colour = us ->
+                    match blockerSq with
+                    | None ->
+                        blockerSq <- Some sq
+                        nf <- nf + df
+                        nr <- nr + dr
+                    | Some _ ->
+                        doneDir <- true
+
+                | Some p when p.Colour = them ->
+                    let isSlider =
+                        match p.Kind with
+                        | Rook when df = 0 || dr = 0 -> true
+                        | Bishop when df <> 0 && dr <> 0 -> true
+                        | Queen -> true
+                        | _ -> false
+
+                    match blockerSq, isSlider with
+                    | Some bSq, true ->
+                        pins.Add(bSq, (df, dr))
+                    | _ -> ()
+
+                    doneDir <- true
+
+                | _ ->
+                    doneDir <- true
+
+        // Convert to map: pinnedPiece → allowed ray squares
+        pins
+        |> Seq.map (fun (sq, (df, dr)) ->
+            let mutable ray = []
+            let mutable nf = kf + df
+            let mutable nr = kr + dr
+            while Square.isOnBoard nf nr do
+                ray <- Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr) :: ray
+                nf <- nf + df
+                nr <- nr + dr
+            sq, List.rev ray)
+        |> Map.ofSeq
+    
+    
     let fromFen (fen: string) =
         let parts = fen.Split(' ')
         let rows = parts.[0].Split('/')

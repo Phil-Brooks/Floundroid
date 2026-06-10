@@ -31,7 +31,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Castling rules (pseudo‑legal: rights + path clearance)
 - [x] Attack Detection (`isSquareAttacked`)
 - [x] Check detection
-- [ ] Pin detection
+- [x] Pin detection
 - [ ] Legal move filtering (The "King Safety" filter)
 
 ## 1.3 FEN + Utilities
