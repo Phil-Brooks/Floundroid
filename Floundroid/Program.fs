@@ -10,11 +10,13 @@ type Colour =
     | Black
 
 module Colour =
+    /// Converts a Colour to its character representation ('w' for White, 'b' for Black).
     let toChar =
         function
         | White -> 'w'
         | Black -> 'b'
 
+    /// Converts a character to a Colour ('w' for White, 'b' for Black).
     let fromChar =
         function
         | 'w'
@@ -23,6 +25,7 @@ module Colour =
         | 'B' -> Black
         | c -> failwithf "Invalid colour char: %c" c
 
+    /// Returns the opposite colour.
     let opposite =
         function
         | White -> Black
@@ -39,6 +42,7 @@ type File =
     | H
 
 module File =
+    /// Converts a File to its integer representation (0-7).
     let toInt =
         function
         | A -> 0
@@ -50,6 +54,7 @@ module File =
         | G -> 6
         | H -> 7
 
+    /// Converts an integer to a File (0-7).
     let fromInt =
         function
         | 0 -> A
@@ -62,8 +67,10 @@ module File =
         | 7 -> H
         | i -> invalidArg "i" $"File index {i} out of range (0-7)"
 
+    /// Converts a File to its character representation ('a'-'h').
     let toChar f = "abcdefgh".[toInt f]
 
+    /// Converts a character to a File ('a'-'h').
     let fromChar =
         function
         | 'a' -> A
@@ -87,6 +94,7 @@ type Rank =
     | R8
 
 module Rank =
+    /// Converts a Rank to its integer representation (0-7).
     let toInt =
         function
         | R1 -> 0
@@ -98,6 +106,7 @@ module Rank =
         | R7 -> 6
         | R8 -> 7
 
+    /// Converts an integer to a Rank (0-7).
     let fromInt =
         function
         | 0 -> R1
@@ -110,8 +119,10 @@ module Rank =
         | 7 -> R8
         | i -> invalidArg "i" $"Rank index {i} out of range (0-7)"
 
+    /// Converts a Rank to its character representation ('1'-'8').
     let toChar r = "12345678".[toInt r]
 
+    /// Converts a character to a Rank ('1'-'8').
     let fromChar =
         function
         | '1' -> R1
@@ -127,16 +138,24 @@ module Rank =
 type Square = int
 
 module Square =
+    /// Converts a File and Rank to a Square.
     let ofFileRank (f: File) (r: Rank) : Square = Rank.toInt r * 8 + File.toInt f
+
+    /// Gets the File of a Square.
     let file (sq: Square) : File = File.fromInt (sq % 8)
+
+    /// Gets the Rank of a Square.
     let rank (sq: Square) : Rank = Rank.fromInt (sq / 8)
 
+    /// Converts a Square to its string representation.
     let toString (sq: Square) : string =
         $"{File.toChar (file sq)}{Rank.toChar (rank sq)}"
 
+    /// Converts a string representation of a square (e.g., "e4") to a Square.
     let fromString (s: string) : Square =
         ofFileRank (File.fromChar s.[0]) (Rank.fromChar s.[1])
 
+    /// Checks if a square is on the board.
     let isOnBoard (f: int) (r: int) = f >= 0 && f < 8 && r >= 0 && r < 8
 
 type PieceType =
@@ -148,6 +167,7 @@ type PieceType =
     | King
 
 module PieceType =
+    /// Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').
     let toChar =
         function
         | Pawn -> 'p'
@@ -157,6 +177,7 @@ module PieceType =
         | Queen -> 'q'
         | King -> 'k'
 
+    /// Converts a character to a PieceType.
     let fromChar =
         function
         | 'p'
@@ -176,9 +197,11 @@ module PieceType =
 type Piece = { Colour: Colour; Kind: PieceType }
 
 module Piece =
+    /// Converts a Piece to its character representation (uppercase for White, lowercase for Black).
     let toChar (p: Piece) =
         let c = PieceType.toChar p.Kind in if p.Colour = White then Char.ToUpper c else c
 
+    /// Converts a character to a Piece, determining colour from case (uppercase = White, lowercase = Black).
     let fromChar c =
         { Colour = (if Char.IsUpper c then White else Black)
           Kind = PieceType.fromChar c }
@@ -196,6 +219,7 @@ module CastlingRights =
           BlackKingSide = false
           BlackQueenSide = false }
 
+    /// Converts a string representation of castling rights to a CastlingRights value.
     let fromString (s: string) =
         if s = "-" then
             none
@@ -205,6 +229,7 @@ module CastlingRights =
               BlackKingSide = s.Contains "k"
               BlackQueenSide = s.Contains "q" }
 
+    /// Converts a CastlingRights value to its string representation.
     let toString cr =
         let sb = StringBuilder()
 
@@ -236,6 +261,7 @@ type Move =
       Kind: MoveKind }
 
 module Move =
+    /// Converts a Move to its UCI string representation.
     let toUci (m: Move) =
         let baseStr = Square.toString m.From + Square.toString m.To
 
@@ -243,6 +269,7 @@ module Move =
         | Promotion pt -> baseStr + (PieceType.toChar pt |> string)
         | _ -> baseStr
 
+    /// Converts a UCI string representation of a move to a Move value.
     let fromUci (s: string) =
         if s.Length < 4 then
             invalidArg "s" "UCI move string too short"
@@ -271,6 +298,7 @@ type Board =
 // --- ATTACK DETECTION ---
 
 module Attack =
+    /// Checks if a square is attacked by the specified colour.
     let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
         let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
         let them = attacker
@@ -370,14 +398,18 @@ module Board =
           HalfmoveClock = 0
           FullmoveNumber = 1 }
 
+    /// Tries to get a piece from a square.
     let tryGetPiece (b: Board) (sq: Square) = b.Pieces |> Map.tryFind sq
+    /// Checks if a square is occupied.
     let isOccupied (b: Board) (sq: Square) = b.Pieces |> Map.containsKey sq
 
+    /// Sets a piece on a square.
     let setPiece (b: Board) (sq: Square) (pOpt: Piece option) =
         match pOpt with
         | Some p -> { b with Pieces = b.Pieces.Add(sq, p) }
         | None -> { b with Pieces = b.Pieces.Remove sq }
 
+    /// Parses a FEN string and returns a Board record representing the position.
     let fromFen (fen: string) =
         let parts = fen.Split(' ')
         let rows = parts.[0].Split('/')
@@ -405,6 +437,7 @@ module Board =
           HalfmoveClock = int parts.[4]
           FullmoveNumber = int parts.[5] }
 
+    /// Converts a Board record to its FEN string representation.
     let toFen (b: Board) =
         let sb = StringBuilder()
 
@@ -440,6 +473,12 @@ module Board =
             b.HalfmoveClock
             b.FullmoveNumber
 
+    /// <summary>
+    /// Checks if a player is in check.
+    /// </summary>
+    /// <param name="colour">The colour of the player to check.</param>
+    /// <param name="b">The current game state.</param>
+    /// <returns>True if the player is in check, false otherwise.</returns>
     let isInCheckFor (colour: Colour) (b: Board) =
         let kingSq =
             b.Pieces
@@ -449,8 +488,10 @@ module Board =
         | None -> false
         | Some(KeyValue(ks, _)) -> Attack.isSquareAttacked b ks (Colour.opposite colour)
 
+    /// Checks if the side to move is currently in check.
     let isInCheck (b: Board) = isInCheckFor b.SideToMove b
 
+    /// Gets a map of pinned pieces and the squares they are pinned to.
     let getPins (b: Board) =
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
 
@@ -515,6 +556,13 @@ module Board =
 
             pins |> Map.ofSeq
 
+    /// <summary>
+    /// Executes a move on the board and returns a new immutable board state.
+    /// Updates castling rights, en passant targets, and move clocks.
+    /// </summary>
+    /// <param name="m">The validated move to apply.</param>
+    /// <param name="b">The current game state.</param>
+    /// <returns>A new Board record reflecting the post-move state.</returns>
     let applyMove (m: Move) (b: Board) =
         match b.Pieces |> Map.tryFind m.From with
         | None -> b
@@ -611,6 +659,7 @@ module Board =
                     else
                         b.FullmoveNumber }
 
+    /// Prints the board in a human-readable format.
     let prettyPrint (b: Board) =
         for r in 7..-1..0 do
             printf "%d " (r + 1)
@@ -635,6 +684,7 @@ module MoveGen =
               Knight, [ (1, 2); (1, -2); (-1, 2); (-1, -2); (2, 1); (2, -1); (-2, 1); (-2, -1) ]
               King, [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ] ]
 
+    /// Gets all pseudo-legal moves for the current position.
     let getPseudoLegalMoves (b: Board) =
         let moves = ResizeArray<Move>()
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
@@ -767,6 +817,7 @@ module MoveGen =
 
         moves.ToArray()
 
+    /// Gets all legal moves for the current position.
     let getLegalMoves (b: Board) =
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
 
@@ -796,6 +847,7 @@ module MoveGen =
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
 module San =
+    /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
     let toSan (b: Board) (m: Move) =
         match m.Kind with
         | CastleKingSide -> "O-O"
@@ -870,6 +922,7 @@ type PerftSuiteItem =
       Expected: uint64 list }
 
 module Perft =
+    /// Counts the number of leaf nodes at a given depth from the current board state.
     let rec countNodes depth b =
         if depth = 0 then
             1uL
@@ -886,6 +939,7 @@ module Perft =
 
                 total
 
+    /// Divides the perft calculation for a given depth and board state.
     let divide depth b =
         let sw = Diagnostics.Stopwatch.StartNew()
         let moves = MoveGen.getLegalMoves b |> Array.sortBy Move.toUci
@@ -923,6 +977,7 @@ module Perft =
             Fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
             Expected = [ 1uL; 44uL; 1486uL; 62379uL; 2103487uL; 89941194uL ] } ]
 
+    /// Runs the full perft suite up to a specified maximum depth, comparing results against expected values.
     let runFullSuite (maxDepth: int) =
         printfn "Starting Perft Regression Suite (Max Depth: %d)" maxDepth
         printfn "------------------------------------------------"

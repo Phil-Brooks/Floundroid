@@ -1,191 +1,175 @@
-# Floundroid Code Structure
+# Floundroid Technical Reference
+Generated on: 11/06/2026 13:02:37
 
-Generated on: 11/06/2026 12:36:51
+## 📑 Table of Contents
+- [Floundroid](#-module-floundroid)
+- [Colour](#-module-colour)
+- [File](#-module-file)
+- [Rank](#-module-rank)
+- [Square](#-module-square)
+- [PieceType](#-module-piecetype)
+- [Piece](#-module-piece)
+- [CastlingRights](#-module-castlingrights)
+- [Move](#-module-move)
+- [Attack](#-module-attack)
+- [Board](#-module-board)
+- [MoveGen](#-module-movegen)
+- [San](#-module-san)
+- [Perft](#-module-perft)
+- [Debug](#-module-debug)
+- [UciLoop](#-module-uciloop)
+
+
 
 ## 📦 module Floundroid
 ---
-- **Type:** `type Colour =`
 
-## 📦 module Colour =
----
-- **Type:** `type File =`
+#### 🧩 `type Colour =`
 
-## 📦 module File =
+## 📦 module Colour
 ---
-  - `fn` toChar
-- **Type:** `type Rank =`
+- **fn** `toChar`
+    - *Converts a Colour to its character representation ('w' for White, 'b' for Black).*
+- **fn** `fromChar`
+    - *Converts a character to a Colour ('w' for White, 'b' for Black).*
+- **fn** `opposite`
+    - *Returns the opposite colour.*
 
-## 📦 module Rank =
----
-  - `fn` toChar
-- **Type:** `type Square = int`
+#### 🧩 `type File =`
 
-## 📦 module Square =
+## 📦 module File
 ---
-  - `fn` ofFileRank
-  - `fn` file
-  - `fn` rank
-  - `fn` toString
-  - `fn` fromString
-  - `fn` isOnBoard
-- **Type:** `type PieceType =`
+- **fn** `toInt`
+    - *Converts a File to its integer representation (0-7).*
+- **fn** `fromInt`
+    - *Converts an integer to a File (0-7).*
+- **fn** `fromChar`
+    - *Converts a character to a File ('a'-'h').*
 
-## 📦 module PieceType =
----
-- **Type:** `type Piece = { Colour: Colour; Kind: PieceType }`
+#### 🧩 `type Rank =`
 
-## 📦 module Piece =
+## 📦 module Rank
 ---
-  - `fn` toChar
-  - `fn` c
-- **Type:** `type CastlingRights =`
+- **fn** `toInt`
+    - *Converts a Rank to its integer representation (0-7).*
+- **fn** `fromInt`
+    - *Converts an integer to a Rank (0-7).*
+- **fn** `fromChar`
+    - *Converts a character to a Rank ('1'-'8').*
 
-## 📦 module CastlingRights =
----
-  - `fn` fromString
-  - `fn` sb
-- **Type:** `type MoveKind =`
-- **Type:** `type Move =`
+#### 🧩 `type Square = int`
 
-## 📦 module Move =
+## 📦 module Square
 ---
-  - `fn` toUci
-  - `fn` baseStr
-  - `fn` fromUci
-  - `fn` fromSq
-  - `fn` toSq
-- **Type:** `type Board =`
+- **fn** `toString`
+    - *Converts a Square to its string representation.*
+- **fn** `fromString`
+    - *Converts a string representation of a square (e.g., "e4") to a Square.*
 
-## 📦 module Attack =
----
-  - `fn` isSquareAttacked
-  - `fn` f,
-  - `fn` pawnDir
-  - `fn` mutable
-  - `fn` nf,
-  - `fn` s2
-  - `fn` nf,
-  - `fn` s2
-  - `fn` mutable
-  - `fn` mutable
-  - `fn` s2
-  - `fn` nf,
-  - `fn` s2
+#### 🧩 `type PieceType =`
 
-## 📦 module Board =
+## 📦 module PieceType
 ---
-  - `fn` tryGetPiece
-  - `fn` isOccupied
-  - `fn` setPiece
-  - `fn` fromFen
-  - `fn` parts
-  - `fn` rows
-  - `fn` mutable
-  - `fn` rank,
-  - `fn` sq
-  - `fn` toFen
-  - `fn` sb
-  - `fn` mutable
-  - `fn` sq
-  - `fn` isInCheckFor
-  - `fn` isInCheck
-  - `fn` getPins
-  - `fn` us,
-  - `fn` kf,
-  - `fn` pins
-  - `fn` mutable
-  - `fn` sq
-  - `fn` mutable
-  - `fn` rsq
-  - `fn` applyMove
-  - `fn` us,
-  - `fn` mutable
-  - `fn` rR
-  - `fn` rF,
-  - `fn` rk
-  - `fn` rR
-  - `fn` rF,
-  - `fn` rk
-  - `fn` updateRights
-  - `fn` revokeForSquare
-  - `fn` prettyPrint
+- **fn** `toChar`
+    - *Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').*
+- **fn** `fromChar`
+    - *Converts a character to a PieceType.*
 
-## 📦 module MoveGen =
----
-  - `fn` getPseudoLegalMoves
-  - `fn` moves
-  - `fn` us,
-  - `fn` f,
-  - `fn` d
-  - `fn` p1
-  - `fn` p2
-  - `fn` nf,
-  - `fn` cap
-  - `fn` nf,
-  - `fn` t
-  - `fn` rnk,
-  - `fn` mutable
-  - `fn` t
-  - `fn` getLegalMoves
-  - `fn` us,
-  - `fn` rnk
-  - `fn` midFile
-  - `fn` destFile
-  - `fn` midSquare
-  - `fn` destSquare
+#### 🧩 `type Piece = { Colour: Colour; Kind: PieceType }`
 
-## 📦 module San =
+## 📦 module Piece
 ---
-  - `fn` toSan
-  - `fn` piece
-  - `fn` nextBoard
-  - `fn` isCheck
-  - `fn` isMate
-  - `fn` pChar
-  - `fn` altPiece
-  - `fn` cap
-- **Type:** `type PerftSuiteItem =`
+- **fn** `toChar`
+    - *Converts a Piece to its character representation (uppercase for White, lowercase for Black).*
+- **fn** `fromChar`
+    - *Converts a character to a Piece, determining colour from case (uppercase = White, lowercase = Black).*
 
-## 📦 module Perft =
----
-  - `fn` rec
-  - `fn` moves
-  - `fn` mutable
-  - `fn` divide
-  - `fn` sw
-  - `fn` moves
-  - `fn` mutable
-  - `fn` n
-  - `fn` ms
-  - `fn` nps
-  - `fn` runFullSuite
-  - `fn` totalSw
-  - `fn` b
-  - `fn` depthsToTest
-  - `fn` expected
-  - `fn` sw
-  - `fn` actual
+#### 🧩 `type CastlingRights =`
 
-## 📦 module Debug =
+## 📦 module CastlingRights
 ---
-  - `fn` displayMoves
-  - `fn` moves
-  - `fn` verify
-  - `fn` errors
-  - `fn` pieces
-  - `fn` r
-  - `fn` displayAttackMap
-  - `fn` sq
+- **fn** `none`
+- **fn** `fromString`
+    - *Converts a string representation of castling rights to a CastlingRights value.*
+- **fn** `toString`
+    - *Converts a CastlingRights value to its string representation.*
 
-## 📦 module UciLoop =
+#### 🧩 `type MoveKind =`
+
+#### 🧩 `type Move =`
+
+## 📦 module Move
 ---
-  - `fn` startFen
-  - `fn` mutable
-  - `fn` line
-  - `fn` ts
-  - `fn` (fen,
-  - `fn` movesIdx
-  - `fn` f
-  - `fn` m
-  - `fn` legalMoves
-  - `fn` moves
+- **fn** `toUci`
+    - *Converts a Move to its UCI string representation.*
+- **fn** `fromUci`
+    - *Converts a UCI string representation of a move to a Move value.*
+
+#### 🧩 `type Board =`
+
+## 📦 module Attack
+---
+- **fn** `isSquareAttacked`
+    - *Checks if a square is attacked by the specified colour.*
+
+## 📦 module Board
+---
+- **fn** `empty`
+- **fn** `setPiece`
+    - *Sets a piece on a square.*
+- **fn** `fromFen`
+    - *Parses a FEN string and returns a Board record representing the position.*
+- **fn** `toFen`
+    - *Converts a Board record to its FEN string representation.*
+- **fn** `isInCheckFor`
+    - *Checks if a player is in check.*
+    - ***Param colour**: The colour of the player to check.*
+    - ***Param b**: The current game state.*
+    - ***Returns**: True if the player is in check, false otherwise.*
+- **fn** `getPins`
+    - *Gets a map of pinned pieces and the squares they are pinned to.*
+- **fn** `applyMove`
+    - *Executes a move on the board and returns a new immutable board state.*
+    - *Updates castling rights, en passant targets, and move clocks.*
+    - ***Param m**: The validated move to apply.*
+    - ***Param b**: The current game state.*
+    - ***Returns**: A new Board record reflecting the post-move state.*
+- **fn** `prettyPrint`
+    - *Prints the board in a human-readable format.*
+
+## 📦 module MoveGen
+---
+- **fn** `getPseudoLegalMoves`
+    - *Gets all pseudo-legal moves for the current position.*
+- **fn** `getLegalMoves`
+    - *Gets all legal moves for the current position.*
+
+## 📦 module San
+---
+- **fn** `toSan`
+    - *Converts a move to Standard Algebraic Notation (SAN) based on the current board state.*
+
+#### 🧩 `type PerftSuiteItem =`
+
+## 📦 module Perft
+---
+- **fn** `countNodes`
+    - *Counts the number of leaf nodes at a given depth from the current board state.*
+- **fn** `divide`
+    - *Divides the perft calculation for a given depth and board state.*
+- **fn** `runFullSuite`
+    - *Runs the full perft suite up to a specified maximum depth, comparing results against expected values.*
+
+## 📦 module Debug
+---
+- **fn** `displayMoves`
+    - *1.5.1 - Move list visualisation*
+- **fn** `verify`
+    - *1.5.2 - Board consistency checker*
+- **fn** `displayAttackMap`
+    - *1.5.3 - Attack map visualiser*
+
+## 📦 module UciLoop
+---
+- **fn** `run`
+- **fn** `main`
