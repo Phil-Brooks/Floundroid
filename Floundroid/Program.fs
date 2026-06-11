@@ -1,4 +1,4 @@
-﻿module Floundroid
+module Floundroid
 
 open System
 open System.Text
@@ -914,6 +914,65 @@ module San =
                 else ""
 
             moveStr + suffix
+
+// --- STAGE 2.1: EVALUATION ---
+
+module Evaluation =
+    /// Material values for pieces in centipawns.
+    let pieceValue = 
+        function
+        | Pawn -> 100
+        | Knight -> 320
+        | Bishop -> 330
+        | Rook -> 500
+        | Queen -> 900
+        | King -> 20000
+
+    /// Corrected PST for Pawns (White's perspective)
+    /// Encourages pawns to advance toward promotion and control the center.
+    let pawnPst = [|
+         0;  0;  0;  0;  0;  0;  0;  0  // Rank 1
+         5; 10; 10;-20;-20; 10; 10;  5  // Rank 2
+         5; -5;-10;  0;  0;-10; -5;  5  // Rank 3
+         0;  0;  0; 20; 20;  0;  0;  0  // Rank 4
+         5;  5; 10; 25; 25; 10;  5;  5  // Rank 5
+         10; 10; 20; 30; 30; 20; 10; 10  // Rank 6
+         50; 50; 50; 50; 50; 50; 50; 50  // Rank 7
+         0;  0;  0;  0;  0;  0;  0;  0  // Rank 8
+    |]
+
+    /// Corrected PST for Knights (White's perspective)
+    /// Penalizes knights on the edges ("rim") and rewards central activity.
+    let knightPst = [|
+        -50;-40;-30;-30;-30;-30;-40;-50
+        -40;-20;  0;  5;  5;  0;-20;-40
+        -30;  5; 10; 15; 15; 10;  5;-30
+        -30;  0; 15; 20; 20; 15;  0;-30
+        -30;  5; 15; 20; 20; 15;  5;-30
+        -30;  0; 10; 15; 15; 10;  0;-30
+        -40;-20;  0;  0;  0;  0;-20;-40
+        -50;-40;-30;-30;-30;-30;-40;-50
+    |]
+
+    let evaluate (b: Board) =
+        let mutable score = 0
+        for (KeyValue(sq, p)) in b.Pieces do
+            let baseVal = pieceValue p.Kind
+            
+            // Mirror logic: sq ^^^ 56 flips the rank for Black
+            let pstIndex = if p.Colour = White then sq else sq ^^^ 56
+            
+            let pstBonus = 
+                match p.Kind with
+                | Pawn -> pawnPst.[pstIndex]
+                | Knight -> knightPst.[pstIndex]
+                | _ -> 0
+            
+            if p.Colour = White then 
+                score <- score + baseVal + pstBonus
+            else 
+                score <- score - (baseVal + pstBonus)
+        score
 
 // --- PERFT, DEBUG& UCI ---
 type PerftSuiteItem =

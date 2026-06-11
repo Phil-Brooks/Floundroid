@@ -527,3 +527,55 @@ module PerftTests =
         // This position tests specific pawn/rook interactions
         let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
         Assert.Equal(2812uL, Perft.countNodes 3 b)
+
+// =========================
+// === EVALUATION TESTS   ===
+// =========================
+
+module EvaluationTests =
+
+    [<Fact>]
+    let ``Starting position evaluation is perfectly symmetrical (0)`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        Assert.Equal(0, Evaluation.evaluate b)
+
+    [<Theory>]
+    [<InlineData("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 900)>] // White extra Queen
+    [<InlineData("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1", -900)>] // Black extra Queen
+    let ``Material advantage is detected correctly`` (fen: string, expectedMinMaterial: int) =
+        let b = Board.fromFen fen
+        let score = Evaluation.evaluate b
+        if expectedMinMaterial > 0 then
+            Assert.True(score >= expectedMinMaterial, $"White should be up at least {expectedMinMaterial}, got {score}")
+        else
+            Assert.True(score <= expectedMinMaterial, $"Black should be up at least {abs expectedMinMaterial}, got {score}")
+
+    [<Fact>]
+    let ``Knight on D4 is valued higher than Knight on A1 (PST)`` () =
+        let corner = Board.fromFen "8/8/8/8/8/8/8/N7 w - - 0 1"
+        let center = Board.fromFen "8/8/8/8/3N4/8/8/8 w - - 0 1"
+        
+        let scoreCorner = Evaluation.evaluate corner
+        let scoreCenter = Evaluation.evaluate center
+        
+        Assert.True(scoreCenter > scoreCorner, 
+            $"Central knight ({scoreCenter}) should be worth more than corner knight ({scoreCorner})")
+
+    [<Fact>]
+    let ``Black piece positioning is mirrored correctly`` () =
+        // A black pawn on d7 (starting) vs d2 (advanced)
+        // Advanced black pawns should score better for Black (more negative total score)
+        let starting = Board.fromFen "8/3p4/8/8/8/8/8/8 b - - 0 1"
+        let advanced = Board.fromFen "8/8/8/8/8/8/3p4/8 b - - 0 1"
+        
+        let scoreStarting = Evaluation.evaluate starting
+        let scoreAdvanced = Evaluation.evaluate advanced
+        
+        // advanced should be "better" for Black, meaning a more negative number
+        Assert.True(scoreAdvanced < scoreStarting, 
+            $"Advanced black pawn ({scoreAdvanced}) should be better for black than starting pawn ({scoreStarting})")
+
+    [<Fact>]
+    let ``Evaluating an empty board returns 0`` () =
+        let b = Board.empty
+        Assert.Equal(0, Evaluation.evaluate b)
