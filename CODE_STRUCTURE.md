@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 11/06/2026 15:23:27
+Generated on: 11/06/2026 19:55:21
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -16,6 +16,7 @@ Generated on: 11/06/2026 15:23:27
 - [MoveGen](#-module-movegen)
 - [San](#-module-san)
 - [Evaluation](#-module-evaluation)
+- [Search](#-module-search)
 - [Perft](#-module-perft)
 - [Debug](#-module-debug)
 - [UciLoop](#-module-uciloop)
@@ -156,6 +157,12 @@ Generated on: 11/06/2026 15:23:27
     - *Material values for pieces in centipawns.*
 - **fn** `evaluate`
     - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
+
+## 📦 module Search
+---
+- **fn** `negamax`
+    - *Negamax with Alpha-Beta Pruning.*
+- **fn** `findBestMove`
 
 #### 🧩 `type PerftSuiteItem =`
 

@@ -976,6 +976,62 @@ module Evaluation =
                 score <- score - (baseVal + pstBonus)
 
         score
+
+// --- STAGE 2.2: SEARCH FRAMEWORK ---
+
+module Search =
+    let MATE_VALUE = 30000
+    let INF = 1000000
+
+    /// Negamax with Alpha-Beta Pruning.
+    let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) : int * Move option =
+        if depth = 0 then
+            let sideMult = if b.SideToMove = White then 1 else -1
+            (Evaluation.evaluate b * sideMult, None)
+        else
+            let moves = MoveGen.getLegalMoves b
+            if moves.Length = 0 then
+                if Board.isInCheck b then (-MATE_VALUE - depth, None)
+                else (0, None)
+            else
+                let mutable bestScore = -INF
+                let mutable bestMove = None
+                let mutable currentAlpha = alpha
+                
+                let sortedMoves = 
+                    moves |> Array.sortByDescending (fun m -> 
+                        match m.Kind with 
+                        | Capture | EnPassant -> 10 
+                        | Promotion _ -> 9 
+                        | _ -> 0)
+
+                let mutable i = 0
+                let mutable exitLoop = false
+                while i < sortedMoves.Length && not exitLoop do
+                    let m = sortedMoves.[i]
+                    // FIX: Parentheses around negative arguments are MANDATORY in F# for negamax
+                    let score, _ = negamax (Board.applyMove m b) (depth - 1) (-beta) (-currentAlpha)
+                    let actualScore = -score
+
+                    if actualScore > bestScore then
+                        bestScore <- actualScore
+                        bestMove <- Some m
+
+                    currentAlpha <- Math.Max(currentAlpha, bestScore)
+                    if currentAlpha >= beta then
+                        exitLoop <- true 
+                    i <- i + 1
+
+                (bestScore, bestMove)
+
+    let findBestMove (b: Board) (depth: int) =
+        // Re-using INF and -INF with proper scoping
+        let score, moveOpt = negamax b depth -INF INF
+        match moveOpt with
+        | Some m -> 
+            printfn "info depth %d score cp %d pv %s" depth score (Move.toUci m)
+            Some m
+        | None -> None
 // --- PERFT, DEBUG& UCI ---
 type PerftSuiteItem =
     { Name: string
@@ -1181,16 +1237,22 @@ module UciLoop =
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
 
-            | "go" :: _ ->
-                // Stage 2 logic: Pick the first move available
-                let moves = MoveGen.getLegalMoves board
-
-                if moves.Length > 0 then
-                    printfn "bestmove %s" (Move.toUci moves.[0])
-                else
-                    // This case handles checkmate/stalemate
-                    printfn "bestmove (none)"
-
+            | "go" :: rest ->
+                // UCI Parser for 'depth'
+                let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
+                let depth = 
+                    match depthIdx with 
+                    | Some i when i < rest.Length - 1 -> 
+                        match Int32.TryParse(rest.[i+1]) with
+                        | true, d -> d
+                        | _ -> 4 // Default depth if parsing fails
+                    | _ -> 4 // Default depth if 'depth' not specified
+                
+                let bestMove = Search.findBestMove board depth
+                
+                match bestMove with
+                | Some m -> printfn "bestmove %s" (Move.toUci m)
+                | None -> printfn "bestmove (none)" // Handles checkmate/stalemate
             | "perft" :: rest ->
                 match rest with
                 | "suite" :: d :: _ ->
