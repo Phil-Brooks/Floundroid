@@ -151,7 +151,7 @@ module Square =
     let toString (sq: Square) : string =
         $"{File.toChar (file sq)}{Rank.toChar (rank sq)}"
 
-    /// Converts a string representation of a square (e.g., "e4") to a Square.
+    /// Converts a string representation of a square (e.g., "d4") to a Square.
     let fromString (s: string) : Square =
         ofFileRank (File.fromChar s.[0]) (Rank.fromChar s.[1])
 

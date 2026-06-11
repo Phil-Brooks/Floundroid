@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 11/06/2026 13:02:37
+Generated on: 11/06/2026 13:06:51
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -64,7 +64,7 @@ Generated on: 11/06/2026 13:02:37
 - **fn** `toString`
     - *Converts a Square to its string representation.*
 - **fn** `fromString`
-    - *Converts a string representation of a square (e.g., "e4") to a Square.*
+    - *Converts a string representation of a square (e.g., "d4") to a Square.*
 
 #### 🧩 `type PieceType =`
 
