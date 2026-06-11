@@ -954,26 +954,28 @@ module Evaluation =
         -50;-40;-30;-30;-30;-30;-40;-50
     |]
 
+    /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
         let mutable score = 0
+
         for (KeyValue(sq, p)) in b.Pieces do
             let baseVal = pieceValue p.Kind
-            
+
             // Mirror logic: sq ^^^ 56 flips the rank for Black
             let pstIndex = if p.Colour = White then sq else sq ^^^ 56
-            
-            let pstBonus = 
+
+            let pstBonus =
                 match p.Kind with
                 | Pawn -> pawnPst.[pstIndex]
                 | Knight -> knightPst.[pstIndex]
                 | _ -> 0
-            
-            if p.Colour = White then 
-                score <- score + baseVal + pstBonus
-            else 
-                score <- score - (baseVal + pstBonus)
-        score
 
+            if p.Colour = White then
+                score <- score + baseVal + pstBonus
+            else
+                score <- score - (baseVal + pstBonus)
+
+        score
 // --- PERFT, DEBUG& UCI ---
 type PerftSuiteItem =
     { Name: string

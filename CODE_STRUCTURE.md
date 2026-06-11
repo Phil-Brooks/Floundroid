@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 11/06/2026 13:06:51
+Generated on: 11/06/2026 15:23:27
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -15,6 +15,7 @@ Generated on: 11/06/2026 13:06:51
 - [Board](#-module-board)
 - [MoveGen](#-module-movegen)
 - [San](#-module-san)
+- [Evaluation](#-module-evaluation)
 - [Perft](#-module-perft)
 - [Debug](#-module-debug)
 - [UciLoop](#-module-uciloop)
@@ -148,6 +149,13 @@ Generated on: 11/06/2026 13:06:51
 ---
 - **fn** `toSan`
     - *Converts a move to Standard Algebraic Notation (SAN) based on the current board state.*
+
+## 📦 module Evaluation
+---
+- **fn** `pieceValue`
+    - *Material values for pieces in centipawns.*
+- **fn** `evaluate`
+    - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
 
 #### 🧩 `type PerftSuiteItem =`
 

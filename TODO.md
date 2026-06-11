@@ -67,8 +67,8 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Iterative deepening loop
 - [ ] Alpha‑beta search
 - [ ] Basic move ordering (captures first)
-- [ ] Simple evaluation (material)
-- [ ] Add piece‑square tables
+- [x] Simple evaluation (material)
+- [x] Add piece‑square tables
 
 ## 2.3 Async Architecture
 - [ ] Async search loop
