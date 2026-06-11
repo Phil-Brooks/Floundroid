@@ -1,0 +1,25 @@
+root = true
+
+[*.fs]
+# Standard indentation
+indent_style = space
+indent_size = 4
+
+# --- Fantomas Specific Settings ---
+
+# Forces a break onto multiple lines if a line exceeds this length.
+# Lowering this (e.g., to 80) is the most effective way to force long arrays to wrap.
+max_line_length = 80
+
+# 'stroustrup' or 'aligned' are better for multiline arrays than 'cramped'.
+# 'stroustrup': [
+#     1
+#     2
+# ]
+fsharp_multiline_bracket_style = stroustrup
+
+# Ensures the closing bracket is on its own line for better readability.
+fsharp_multiline_block_brackets_on_same_column = true
+
+# Optional: Add a newline before the '=' in long bindings to encourage wrapping.
+fsharp_newline_before_multiline_computation_expression = true

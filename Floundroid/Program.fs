@@ -918,8 +918,8 @@ module San =
 // --- STAGE 2.1: EVALUATION ---
 
 module Evaluation =
-    /// Material values for pieces in centipawns.
-    let pieceValue = 
+        /// Material values for pieces in centipawns.
+    let pieceValue =
         function
         | Pawn -> 100
         | Knight -> 320
