@@ -5,6 +5,7 @@ open System.Text
 
 // --- CORE TYPES ---
 
+/// Colours are represented as a discriminated union with two cases: White and Black.
 type Colour =
     | White
     | Black
@@ -31,6 +32,7 @@ module Colour =
         | White -> Black
         | Black -> White
 
+/// Files are represented as integers from 0 to 7, where 0 = file a and 7 = file h.
 type File =
     | A
     | B
@@ -83,6 +85,7 @@ module File =
         | 'h' -> H
         | c -> invalidArg "c" $"{c}"
 
+/// Ranks are represented as integers from 0 to 7, where 0 = rank 1 and 7 = rank 8.
 type Rank =
     | R1
     | R2
@@ -135,6 +138,7 @@ module Rank =
         | '8' -> R8
         | c -> invalidArg "c" $"{c}"
 
+/// Squares are represented as integers from 0 to 63, where 0 = a1, 1 = b1, ..., 63 = h8.
 type Square = int
 
 module Square =
@@ -194,6 +198,7 @@ module PieceType =
         | 'K' -> King
         | c -> invalidArg "c" $"{c}"
 
+/// A Piece consists of a Colour and a PieceType.
 type Piece = { Colour: Colour; Kind: PieceType }
 
 module Piece =
@@ -206,6 +211,7 @@ module Piece =
         { Colour = (if Char.IsUpper c then White else Black)
           Kind = PieceType.fromChar c }
 
+/// Castling rights are represented as a record with four boolean fields.
 type CastlingRights =
     { WhiteKingSide: bool
       WhiteQueenSide: bool
@@ -247,6 +253,7 @@ module CastlingRights =
 
         if sb.Length = 0 then "-" else sb.ToString()
 
+/// Move kinds represent the different types of moves in chess, including quiet moves, captures, promotions, en passant, and castling.
 type MoveKind =
     | Quiet
     | Capture
@@ -255,6 +262,7 @@ type MoveKind =
     | CastleKingSide
     | CastleQueenSide
 
+/// A Move consists of a source square, a destination square, and a MoveKind indicating the type of move.
 type Move =
     { From: Square
       To: Square
@@ -287,6 +295,7 @@ module Move =
           To = toSq
           Kind = kind }
 
+/// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
     { Pieces: Map<Square, Piece>
       SideToMove: Colour
@@ -1033,6 +1042,8 @@ module Search =
             Some m
         | None -> None
 // --- PERFT, DEBUG& UCI ---
+
+/// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =
     { Name: string
       Fen: string

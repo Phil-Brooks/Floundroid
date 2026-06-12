@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 11/06/2026 19:55:21
+Generated on: 12/06/2026 08:29:50
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -60,6 +60,7 @@ Generated on: 11/06/2026 19:55:21
     - *Converts a character to a Rank ('1'-'8').*
 
 #### 🧩 `type Square = int`
+> Squares are represented as integers from 0 to 63, where 0 = a1, 1 = b1, ..., 63 = h8.
 
 ## 📦 module Square
 ---
