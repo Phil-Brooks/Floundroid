@@ -1041,6 +1041,7 @@ module Evaluation =
 // --- STAGE 2.2: SEARCH FRAMEWORK ---
 
 module Search =
+    let mutable nodes = 0uL // Global counter for the current search
     let MATE_VALUE = 30000
     let INF = 1000000
 
@@ -1079,6 +1080,7 @@ module Search =
  
      /// Negamax search with alpha-beta pruning.
     let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
+        nodes <- nodes + 1uL // Increment on every call
         // Check for "stop" command
         if ct.IsCancellationRequested then (0, None)
         elif depth = 0 then
@@ -1121,10 +1123,12 @@ module Search =
                 (bestScore, bestMove)
 
     /// Iterative Deepening
-    let findBestMove (b: Board) (maxDepth: int) (ct: CancellationToken) = async {
+    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) = async {
         // This explicitly tells F# to move this work to a background thread
         do! Async.SwitchToThreadPool() 
         
+        nodes <- 0uL
+        let sw = Diagnostics.Stopwatch.StartNew()
         let mutable absoluteBestMove = None
         let mutable d = 1
         
@@ -1133,12 +1137,20 @@ module Search =
             let score, moveOpt = negamax b d -INF INF ct
             
             if not ct.IsCancellationRequested then
+                let elapsed = sw.Elapsed.TotalSeconds
+                let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
                 match moveOpt with
                 | Some m -> 
                     absoluteBestMove <- Some m
-                    printfn "info depth %d score cp %d pv %s" d score (Move.toUci m)
+                    // Added 'nodes' and 'nps' for CuteChess to read
+                    printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
                 | None -> ()
-            d <- d + 1
+            // SIMPLE TIME MANAGEMENT: 
+            // If we've used more than 60% of our allotted time, don't start the next depth
+            if sw.ElapsedMilliseconds > int64 (targetTimeMs / 2) then
+                d <- maxDepth + 1 // Exit loop
+            else
+                d <- d + 1
             
         return absoluteBestMove
     }    
@@ -1353,6 +1365,13 @@ module UciLoop =
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
             | "go" :: rest ->
+                // Basic Time Management Logic
+                let wtime = rest |> List.tryFindIndex (fun s -> s = "wtime") |> Option.map (fun i -> int rest.[i+1]) |> Option.defaultValue 100000
+                let btime = rest |> List.tryFindIndex (fun s -> s = "btime") |> Option.map (fun i -> int rest.[i+1]) |> Option.defaultValue 100000
+                
+                // Simple rule: Spend 1/20th of remaining time on this move
+                let myTime = if board.SideToMove = White then wtime else btime
+                let targetTime = myTime / 20 
                 // Cancel any existing search just in case
                 searchCts.Cancel()
                 searchCts <- new CancellationTokenSource()
@@ -1370,7 +1389,7 @@ module UciLoop =
 
                 // Start the search in the background
                 Async.Start(async {
-                    let! result = Search.findBestMove board depth token
+                    let! result = Search.findBestMove board 20 targetTime searchCts.Token
                     match result with
                     | Some m -> printfn "bestmove %s" (Move.toUci m)
                     | None -> 

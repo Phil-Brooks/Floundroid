@@ -601,7 +601,7 @@ module SearchTests =
             Board.fromFen "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
 
         let bestMoveOpt = 
-            Search.findBestMove b 2 System.Threading.CancellationToken.None
+            Search.findBestMove b 2 2000 System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
         match bestMoveOpt with
@@ -614,7 +614,7 @@ module SearchTests =
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPP11PPP/RNBQKBNR w KQkq - 0 1"
 
         let bestMoveOpt = 
-            Search.findBestMove b 3 System.Threading.CancellationToken.None
+            Search.findBestMove b 3 2000 System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
         match bestMoveOpt with
