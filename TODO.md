@@ -6,100 +6,39 @@ A detailed, structured task list aligned with the project roadmap.
 
 ---
 
-# Stage 1 — Functional Core (Correctness)
-
-## 1.1 — Core Types
-- [x] Define foundational types (Colour, File, Rank, CastlingRights)
-- [x] Define Square type + helpers (separate module)
-- [x] Define PieceType and Piece
-- [x] Define MoveKind and Move
-- [x] Define Board (full GameState)
-- [x] Remove duplicate Square definitions
-- [x] Ensure no circular dependencies
-- [x] Add barrel module (`module All = ()`)
-- [x] Update all modules to use new types
-
-## 1.2 Move Generation
-- [x] Knight moves
-- [x] Bishop moves
-- [x] Rook moves
-- [x] Queen moves
-- [x] King moves (basic)
-- [x] Pawn moves (quiet, capture, double)
-- [x] En passant rules
-- [x] Pawn promotions
-- [x] Castling rules (pseudo‑legal: rights + path clearance)
-- [x] Attack Detection (`isSquareAttacked`)
-- [x] Check detection
-- [x] Pin detection
-- [x] Legal move filtering (The "King Safety" filter)
-
-## 1.3 FEN + Utilities
-- [x] FEN parser
-- [x] FEN serializer
-- [x] Board pretty‑printer
-- [x] Move → SAN (Disambiguation, check, and mate support)
-
-## 1.4 Perft
-- [x] Implement perft driver (Recursive counter + Divide utility with SAN/NPS)
-- [x] Add standard test positions
-- [x] Validate perft(1)–perft(6)
-- [x] Add regression tests (Integrated suite command + unit tests)
-
-## 1.5 Debugging Tools ✅
-- [x] Move list visualisation (`moves` command showing UCI + SAN)
-- [x] Board consistency checker (`verify` command for invariants)
-- [x] Attack map visualiser (`attacks white/black` grid)
+# Stage 1 — Functional Core (Correctness) ✅
+- [x] 1.1 — Core Types
+- [x] 1.2 — Move Generation
+- [x] 1.3 — FEN + Utilities
+- [x] 1.4 — Perft Validation
+- [x] 1.5 — Debugging Tools
 
 ---
 
-# Stage 2 — UCI Engine Interface
-
-## 2.1 UCI Protocol
-- [x] Implement `uci`
-- [x] Implement `isready`
-- [x] Implement `position` (startpos and FEN)
-- [x] Implement `go depth N` (Basic implementation done, needs iterative deepening)
-- [x] Implement `stop`
-- [x] Implement `quit`
-
-## 2.2 Search Framework
-- [x] Iterative deepening loop
-- [x] Alpha‑beta search
-- [x] Basic move ordering (captures first)
-- [x] Simple evaluation (material)
-- [x] Add piece‑square tables
-
-## 2.3 Async Architecture
-- [x] Async search loop
-- [x] Async command listener
-- [x] Cancellation token for `stop`
-
-## 2.4 GUI Integration
-- [ ] Arena config
-- [ ] CuteChess config
-- [ ] Banksia config
+# Stage 2 — UCI Engine Interface ✅
+- [x] 2.1 — UCI Protocol (`uci`, `isready`, `position`, `go`, `stop`, `quit`)
+- [x] 2.2 — Search Framework (Alpha-beta, ID, PST, Quiescence)
+- [x] 2.3 — Async Architecture (Thread pooling + Cancellation tokens)
+- [x] 2.4 — GUI Integration (Verified in Arena/CuteChess)
+- [x] 2.5 — **Milestone: v0.2.0 Functional Release**
 
 ---
 
-# Stage 3 — Mechanical Brain (Performance)
-
+# Stage 3 — Mechanical Brain (Performance) 🏗️
 ## 3.1 Bitboards
-- [ ] Replace board model with bitboards
-- [ ] 12 piece bitboards
-- [ ] Occupancy bitboards
-- [ ] Precomputed attack tables
-- [ ] Magic bitboards (optional)
+- [ ] Implement `Bitboard` type (uint64)
+- [ ] Map piece placements to 12 piece bitboards
+- [ ] Implement bitwise sliding attack generation
+- [ ] Implement bitwise pawn/knight/king attack generation
+- [ ] Port `isSquareAttacked` to bitboard logic
 
 ## 3.2 Zobrist Hashing
-- [ ] Generate random keys
-- [ ] Implement hash update logic
-- [ ] Integrate into board state
+- [ ] Generate random keys for pieces, side, castling, and EP
+- [ ] Implement incremental hash updates in `applyMove`
 
 ## 3.3 Transposition Table
-- [ ] Define TT entry struct
-- [ ] Implement store/probe logic
-- [ ] Integrate into search
+- [ ] Define TT entry structure
+- [ ] Implement TT Probing and Storing logic in Search
 
 ## 3.4 Move Ordering
 - [ ] TT move

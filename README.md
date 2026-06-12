@@ -3,8 +3,8 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-![Lines of Code](https://img.shields.io/badge/LOC-auto-lightgrey)  
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![Status](https://img.shields.io/badge/Status-Stage%203%20In%20Progress-orange)
+[![Latest Release](https://img.shields.io/github/v/release/Phil-Brooks/Floundroid)](https://github.com/Phil-Brooks/Floundroid/releases)
 
 <p align="center">
   <img src="logo.png" alt="Floundroid Logo" width="300">
@@ -13,6 +13,12 @@
   <br />
   <strong>Floundroid</strong> is a chess engine built in F#, evolving from clean functional abstractions into a high‑performance bitboard machine.
 </p>
+
+---
+
+## 🚀 Latest Stable Release: v0.2.0
+The **Functional Foundation** is now available. This version features a complete UCI interface, asynchronous search, and a robust functional move generator. 
+👉 [**Download Floundroid.exe v0.2.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
@@ -87,39 +93,25 @@ Floundroid is built in **five deliberate stages**, moving from correctness → p
 
 ---
 
-### **Stage 1 — Functional Core (In Progress) 🟢**
-
-Focus: **Correctness, purity, and domain modelling**
-
+### **Stage 1 — Functional Core** ✅ 🟢
+**Status: Complete**
 - Strong types for pieces, squares, moves, and board state  
 - Pure functional move generation (pseudo‑legal + legal)  
-- FEN parsing and board visualisation  
-- Full Perft test suite  
-- Internal debugging tools  
-- Initial AI model integration  
+- FEN parsing and full Perft test suite validation 
 
-### **Stage 2 — UCI Engine Interface 🟡**
+### **Stage 2 — UCI Engine Interface** ✅ 🟢
+**Status: Complete**
+- Full UCI protocol implementation (`uci`, `isready`, `position`, `go`, `stop`)
+- **Async Search Architecture**: Responsive command listener while thinking.
+- **Iterative Deepening**: Progressive search depth.
+- **Evaluation**: Material values + Piece-Square Tables (PST).
 
-Focus: **Playability**
-
-- Full UCI protocol implementation  
-- Async search loop  
-- Basic alpha‑beta search  
-- Simple evaluation (material + PSTs)  
-- GUI integration  
-
----
-
-### **Stage 3 — Mechanical Brain 🔴**
-
-Focus: **Performance**
-
-- Bitboards  
-- Magic bitboards / lookup tables  
-- Zobrist hashing  
-- Transposition table  
-- Move ordering heuristics  
-- Quiescence search  
+### **Stage 3 — Mechanical Brain** 🟡 
+**Status: In Progress (Next Up)**
+- **Bitboards**: Transitioning from Map-based board to 64-bit integer representations.
+- **Zobrist Hashing**: Efficient position tracking.
+- **Transposition Table**: Caching search results.
+- **Move Ordering**: Killer moves and History heuristics.
 
 ---
 
@@ -152,10 +144,10 @@ Focus: **Identity**
 ### **Prerequisites**
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
 
-### **Build & Run**
+### **Installation**
+You can download the standalone binary from the [Releases](https://github.com/Phil-Brooks/Floundroid/releases) page or build it from source:
 
 ```bash
 git clone https://github.com/Phil-Brooks/Floundroid.git
 cd Floundroid
-dotnet build
-dotnet run
+dotnet build -c Release
