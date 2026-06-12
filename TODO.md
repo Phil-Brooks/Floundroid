@@ -59,12 +59,12 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Implement `uci`
 - [x] Implement `isready`
 - [x] Implement `position` (startpos and FEN)
-- [ ] Implement `go depth N` (Basic implementation done, needs iterative deepening)
+- [x] Implement `go depth N` (Basic implementation done, needs iterative deepening)
 - [ ] Implement `stop`
 - [x] Implement `quit`
 
 ## 2.2 Search Framework
-- [ ] Iterative deepening loop
+- [x] Iterative deepening loop
 - [x] Alpha‑beta search
 - [x] Basic move ordering (captures first)
 - [x] Simple evaluation (material)

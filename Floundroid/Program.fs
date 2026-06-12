@@ -927,7 +927,8 @@ module San =
 // --- STAGE 2.1: EVALUATION ---
 
 module Evaluation =
-        /// Material values for pieces in centipawns.
+    
+    /// Assigns a base value to each piece type for evaluation purposes.
     let pieceValue =
         function
         | Pawn -> 100
@@ -937,22 +938,23 @@ module Evaluation =
         | Queen -> 900
         | King -> 20000
 
-    /// Corrected PST for Pawns (White's perspective)
-    /// Encourages pawns to advance toward promotion and control the center.
-    let pawnPst = [|
-         0;  0;  0;  0;  0;  0;  0;  0  // Rank 1
-         5; 10; 10;-20;-20; 10; 10;  5  // Rank 2
-         5; -5;-10;  0;  0;-10; -5;  5  // Rank 3
-         0;  0;  0; 20; 20;  0;  0;  0  // Rank 4
-         5;  5; 10; 25; 25; 10;  5;  5  // Rank 5
-         10; 10; 20; 30; 30; 20; 10; 10  // Rank 6
-         50; 50; 50; 50; 50; 50; 50; 50  // Rank 7
-         0;  0;  0;  0;  0;  0;  0;  0  // Rank 8
-    |]
+    // All PSTs are written as they appear on a board (Rank 8 top, Rank 1 bottom)
+    // and then reversed so that index 0 = a1.
 
-    /// Corrected PST for Knights (White's perspective)
-    /// Penalizes knights on the edges ("rim") and rewards central activity.
-    let knightPst = [|
+    /// The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let pawnPst = Array.rev [|
+        0;  0;  0;  0;  0;  0;  0;  0
+        50; 50; 50; 50; 50; 50; 50; 50
+        10; 10; 20; 30; 30; 20; 10; 10
+        5;  5; 10; 25; 25; 10;  5;  5
+        0;  0;  0; 20; 20;  0;  0;  0
+        5; -5;-10;  0;  0;-10; -5;  5
+        5; 10; 10;-20;-20; 10; 10;  5
+        0;  0;  0;  0;  0;  0;  0;  0
+    |] 
+
+    /// The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let knightPst = Array.rev [|
         -50;-40;-30;-30;-30;-30;-40;-50
         -40;-20;  0;  5;  5;  0;-20;-40
         -30;  5; 10; 15; 15; 10;  5;-30
@@ -961,15 +963,63 @@ module Evaluation =
         -30;  0; 10; 15; 15; 10;  0;-30
         -40;-20;  0;  0;  0;  0;-20;-40
         -50;-40;-30;-30;-30;-30;-40;-50
+    |] 
+
+    /// The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let bishopPst = Array.rev [|
+        -20;-10;-10;-10;-10;-10;-10;-20
+        -10;  0;  0;  0;  0;  0;  0;-10
+        -10;  0;  5; 10; 10;  5;  0;-10
+        -10;  5;  5; 10; 10;  5;  5;-10
+        -10;  0; 10; 10; 10; 10;  0;-10
+        -10; 10; 10; 10; 10; 10; 10;-10
+        -10;  5;  0;  0;  0;  0;  5;-10
+        -20;-10;-10;-10;-10;-10;-10;-20
+    |] 
+
+    
+    /// The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let rookPst = Array.rev [|
+        0;  0;  0;  0;  0;  0;  0;  0
+        5; 10; 10; 10; 10; 10; 10;  5
+        -5;  0;  0;  0;  0;  0;  0; -5
+        -5;  0;  0;  0;  0;  0;  0; -5
+        -5;  0;  0;  0;  0;  0;  0; -5
+        -5;  0;  0;  0;  0;  0;  0; -5
+        -5;  0;  0;  0;  0;  0;  0; -5
+        0;  0;  0;  5;  5;  0;  0;  0
+    |] 
+
+    /// The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let queenPst = Array.rev [|
+        -20;-10;-10; -5; -5;-10;-10;-20
+        -10;  0;  0;  0;  0;  0;  0;-10
+        -10;  0;  5;  5;  5;  5;  0;-10
+        -5;  0;  5;  5;  5;  5;  0; -5
+        0;  0;  5;  5;  5;  5;  0; -5
+        -10;  5;  5;  5;  5;  5;  0;-10
+        -10;  0;  5;  0;  0;  0;  0;-10
+        -20;-10;-10; -5; -5;-10;-10;-20
+    |]
+
+    /// The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
+    let kingPst = Array.rev [|
+        -30;-40;-40;-50;-50;-40;-40;-30
+        -30;-40;-40;-50;-50;-40;-40;-30
+        -30;-40;-40;-50;-50;-40;-40;-30
+        -30;-40;-40;-50;-50;-40;-40;-30
+        -20;-30;-30;-40;-40;-30;-30;-20
+        -10;-20;-20;-20;-20;-20;-20;-10
+        20; 20;  0;  0;  0;  0; 20; 20
+        20; 30; 10;  0;  0; 10; 30; 20
     |]
 
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
         let mutable score = 0
-
         for (KeyValue(sq, p)) in b.Pieces do
             let baseVal = pieceValue p.Kind
-
+            
             // Mirror logic: sq ^^^ 56 flips the rank for Black
             let pstIndex = if p.Colour = White then sq else sq ^^^ 56
 
@@ -977,26 +1027,56 @@ module Evaluation =
                 match p.Kind with
                 | Pawn -> pawnPst.[pstIndex]
                 | Knight -> knightPst.[pstIndex]
-                | _ -> 0
+                | Bishop -> bishopPst.[pstIndex]
+                | Rook -> rookPst.[pstIndex]
+                | Queen -> queenPst.[pstIndex]
+                | King -> kingPst.[pstIndex]
 
             if p.Colour = White then
                 score <- score + baseVal + pstBonus
             else
                 score <- score - (baseVal + pstBonus)
-
         score
-
 // --- STAGE 2.2: SEARCH FRAMEWORK ---
 
 module Search =
     let MATE_VALUE = 30000
     let INF = 1000000
 
-    /// Negamax with Alpha-Beta Pruning.
+    /// Quiescence search: plays out all captures until the position is stable.
+    let rec quiesce (b: Board) (alpha: int) (beta: int) : int =
+        let sideMult = if b.SideToMove = White then 1 else -1
+        let standPat = Evaluation.evaluate b * sideMult
+        
+        if standPat >= beta then 
+            beta
+        else
+            let mutable currentAlpha = Math.Max(alpha, standPat)
+            let captures = 
+                MoveGen.getLegalMoves b 
+                |> Array.filter (fun m -> 
+                    match m.Kind with 
+                    | Capture | EnPassant | Promotion _ -> true 
+                    | _ -> false)
+                
+            let mutable i = 0
+            let mutable exitLoop = false
+            while i < captures.Length && not exitLoop do
+                let score = -quiesce (Board.applyMove captures.[i] b) (-beta) (-currentAlpha)
+                
+                if score >= beta then
+                    currentAlpha <- beta
+                    exitLoop <- true
+                else
+                    if score > currentAlpha then
+                        currentAlpha <- score
+                    i <- i + 1
+            currentAlpha
+
+    /// Negamax search with alpha-beta pruning.
     let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) : int * Move option =
         if depth = 0 then
-            let sideMult = if b.SideToMove = White then 1 else -1
-            (Evaluation.evaluate b * sideMult, None)
+            (quiesce b alpha beta, None)
         else
             let moves = MoveGen.getLegalMoves b
             if moves.Length = 0 then
@@ -1010,15 +1090,14 @@ module Search =
                 let sortedMoves = 
                     moves |> Array.sortByDescending (fun m -> 
                         match m.Kind with 
-                        | Capture | EnPassant -> 10 
-                        | Promotion _ -> 9 
+                        | Capture | EnPassant -> 100
+                        | Promotion _ -> 90
                         | _ -> 0)
 
                 let mutable i = 0
                 let mutable exitLoop = false
                 while i < sortedMoves.Length && not exitLoop do
                     let m = sortedMoves.[i]
-                    // FIX: Parentheses around negative arguments are MANDATORY in F# for negamax
                     let score, _ = negamax (Board.applyMove m b) (depth - 1) (-beta) (-currentAlpha)
                     let actualScore = -score
 
@@ -1027,20 +1106,28 @@ module Search =
                         bestMove <- Some m
 
                     currentAlpha <- Math.Max(currentAlpha, bestScore)
+                    
                     if currentAlpha >= beta then
-                        exitLoop <- true 
-                    i <- i + 1
+                        exitLoop <- true // This replaces the "break"
+                    else
+                        i <- i + 1
 
                 (bestScore, bestMove)
 
-    let findBestMove (b: Board) (depth: int) =
-        // Re-using INF and -INF with proper scoping
-        let score, moveOpt = negamax b depth -INF INF
-        match moveOpt with
-        | Some m -> 
-            printfn "info depth %d score cp %d pv %s" depth score (Move.toUci m)
-            Some m
-        | None -> None
+    /// Iterative Deepening
+    let findBestMove (b: Board) (maxDepth: int) =
+        let mutable absoluteBestMove = None
+        
+        for d in 1 .. maxDepth do
+            let score, moveOpt = negamax b d -INF INF
+            match moveOpt with
+            | Some m -> 
+                absoluteBestMove <- Some m
+                printfn "info depth %d score cp %d pv %s" d score (Move.toUci m)
+            | None -> ()
+            
+        absoluteBestMove
+
 // --- PERFT, DEBUG& UCI ---
 
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.

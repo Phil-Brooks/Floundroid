@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Floundroid",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Floundroid/bin/Debug/net10.0/Floundroid.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Floundroid",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Published Engine (Fastest)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Publish Engine",
+            // Note the deep path to the actual published EXE
+            "program": "${workspaceFolder}/Floundroid/bin/Release/net10.0/win-x64/publish/Floundroid.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Floundroid/bin/Release/net10.0/win-x64/publish",
+            "console": "integratedTerminal"
+        }
+    ]
+}

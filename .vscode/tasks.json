@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // 1. Used for F5 / Debugging
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Floundroid/Floundroid.fsproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            // 2. Used to quickly test Release performance without publishing
+            "label": "Build Release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "-c", "Release",
+                "${workspaceFolder}/Floundroid/Floundroid.fsproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            // 3. The "One-Click" to create the final standalone engine
+            "label": "Publish Engine",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "publish",
+                "-c", "Release",
+                "-r", "win-x64",
+                "--self-contained", "true",
+                "-p:PublishSingleFile=true",
+                "-p:PublishReadyToRun=true",
+                "-p:DebugType=None",
+                "-p:DebugSymbols=false",
+                "${workspaceFolder}/Floundroid/Floundroid.fsproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        }              
+    ]
+}

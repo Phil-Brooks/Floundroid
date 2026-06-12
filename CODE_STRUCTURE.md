@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 12/06/2026 08:38:13
+Generated on: 12/06/2026 11:17:25
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -163,15 +163,18 @@ Generated on: 12/06/2026 08:38:13
 ## 📦 module Evaluation
 ---
 - **fn** `pieceValue`
-    - *Material values for pieces in centipawns.*
+    - *Assigns a base value to each piece type for evaluation purposes.*
 - **fn** `evaluate`
     - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
 
 ## 📦 module Search
 ---
+- **fn** `quiesce`
+    - *Quiescence search: plays out all captures until the position is stable.*
 - **fn** `negamax`
-    - *Negamax with Alpha-Beta Pruning.*
+    - *Negamax search with alpha-beta pruning.*
 - **fn** `findBestMove`
+    - *Iterative Deepening*
 
 #### 🧩 `type PerftSuiteItem =`
 > Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
