@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 12/06/2026 08:29:50
+Generated on: 12/06/2026 08:38:13
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -27,6 +27,7 @@ Generated on: 12/06/2026 08:29:50
 ---
 
 #### 🧩 `type Colour =`
+> Colours are represented as a discriminated union with two cases: White and Black.
 
 ## 📦 module Colour
 ---
@@ -38,6 +39,7 @@ Generated on: 12/06/2026 08:29:50
     - *Returns the opposite colour.*
 
 #### 🧩 `type File =`
+> Files are represented as integers from 0 to 7, where 0 = file a and 7 = file h.
 
 ## 📦 module File
 ---
@@ -49,6 +51,7 @@ Generated on: 12/06/2026 08:29:50
     - *Converts a character to a File ('a'-'h').*
 
 #### 🧩 `type Rank =`
+> Ranks are represented as integers from 0 to 7, where 0 = rank 1 and 7 = rank 8.
 
 ## 📦 module Rank
 ---
@@ -79,6 +82,7 @@ Generated on: 12/06/2026 08:29:50
     - *Converts a character to a PieceType.*
 
 #### 🧩 `type Piece = { Colour: Colour; Kind: PieceType }`
+> A Piece consists of a Colour and a PieceType.
 
 ## 📦 module Piece
 ---
@@ -88,6 +92,7 @@ Generated on: 12/06/2026 08:29:50
     - *Converts a character to a Piece, determining colour from case (uppercase = White, lowercase = Black).*
 
 #### 🧩 `type CastlingRights =`
+> Castling rights are represented as a record with four boolean fields.
 
 ## 📦 module CastlingRights
 ---
@@ -98,8 +103,10 @@ Generated on: 12/06/2026 08:29:50
     - *Converts a CastlingRights value to its string representation.*
 
 #### 🧩 `type MoveKind =`
+> Move kinds represent the different types of moves in chess, including quiet moves, captures, promotions, en passant, and castling.
 
 #### 🧩 `type Move =`
+> A Move consists of a source square, a destination square, and a MoveKind indicating the type of move.
 
 ## 📦 module Move
 ---
@@ -109,6 +116,7 @@ Generated on: 12/06/2026 08:29:50
     - *Converts a UCI string representation of a move to a Move value.*
 
 #### 🧩 `type Board =`
+> The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 
 ## 📦 module Attack
 ---
@@ -166,6 +174,7 @@ Generated on: 12/06/2026 08:29:50
 - **fn** `findBestMove`
 
 #### 🧩 `type PerftSuiteItem =`
+> Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 
 ## 📦 module Perft
 ---
