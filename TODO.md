@@ -60,7 +60,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Implement `isready`
 - [x] Implement `position` (startpos and FEN)
 - [x] Implement `go depth N` (Basic implementation done, needs iterative deepening)
-- [ ] Implement `stop`
+- [x] Implement `stop`
 - [x] Implement `quit`
 
 ## 2.2 Search Framework
@@ -71,9 +71,9 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Add piece‑square tables
 
 ## 2.3 Async Architecture
-- [ ] Async search loop
-- [ ] Async command listener
-- [ ] Cancellation token for `stop`
+- [x] Async search loop
+- [x] Async command listener
+- [x] Cancellation token for `stop`
 
 ## 2.4 GUI Integration
 - [ ] Arena config

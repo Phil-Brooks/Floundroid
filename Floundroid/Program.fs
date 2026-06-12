@@ -2,6 +2,7 @@ module Floundroid
 
 open System
 open System.Text
+open System.Threading
 
 // --- CORE TYPES ---
 
@@ -1044,39 +1045,44 @@ module Search =
     let INF = 1000000
 
     /// Quiescence search: plays out all captures until the position is stable.
-    let rec quiesce (b: Board) (alpha: int) (beta: int) : int =
-        let sideMult = if b.SideToMove = White then 1 else -1
-        let standPat = Evaluation.evaluate b * sideMult
-        
-        if standPat >= beta then 
-            beta
+    let rec quiesce (b: Board) (alpha: int) (beta: int) (ct: CancellationToken) : int =
+        // Every few nodes, check if we should stop
+        if ct.IsCancellationRequested then alpha 
         else
-            let mutable currentAlpha = Math.Max(alpha, standPat)
-            let captures = 
-                MoveGen.getLegalMoves b 
-                |> Array.filter (fun m -> 
-                    match m.Kind with 
-                    | Capture | EnPassant | Promotion _ -> true 
-                    | _ -> false)
-                
-            let mutable i = 0
-            let mutable exitLoop = false
-            while i < captures.Length && not exitLoop do
-                let score = -quiesce (Board.applyMove captures.[i] b) (-beta) (-currentAlpha)
-                
-                if score >= beta then
-                    currentAlpha <- beta
-                    exitLoop <- true
-                else
-                    if score > currentAlpha then
-                        currentAlpha <- score
-                    i <- i + 1
-            currentAlpha
-
-    /// Negamax search with alpha-beta pruning.
-    let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) : int * Move option =
-        if depth = 0 then
-            (quiesce b alpha beta, None)
+            let sideMult = if b.SideToMove = White then 1 else -1
+            let standPat = Evaluation.evaluate b * sideMult
+            
+            if standPat >= beta then beta
+            else
+                let mutable currentAlpha = Math.Max(alpha, standPat)
+                let captures = 
+                    MoveGen.getLegalMoves b 
+                    |> Array.filter (fun m -> 
+                        match m.Kind with 
+                        | Capture | EnPassant | Promotion _ -> true 
+                        | _ -> false)
+                    
+                let mutable i = 0
+                let mutable exitLoop = false
+                while i < captures.Length && not exitLoop do
+                    // Pass the token down
+                    let score = -quiesce (Board.applyMove captures.[i] b) (-beta) (-currentAlpha) ct
+                    
+                    if score >= beta then
+                        currentAlpha <- beta
+                        exitLoop <- true
+                    else
+                        if score > currentAlpha then
+                            currentAlpha <- score
+                        i <- i + 1
+                currentAlpha
+ 
+     /// Negamax search with alpha-beta pruning.
+    let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
+        // Check for "stop" command
+        if ct.IsCancellationRequested then (0, None)
+        elif depth = 0 then
+            (quiesce b alpha beta ct, None)
         else
             let moves = MoveGen.getLegalMoves b
             if moves.Length = 0 then
@@ -1097,36 +1103,46 @@ module Search =
                 let mutable i = 0
                 let mutable exitLoop = false
                 while i < sortedMoves.Length && not exitLoop do
-                    let m = sortedMoves.[i]
-                    let score, _ = negamax (Board.applyMove m b) (depth - 1) (-beta) (-currentAlpha)
-                    let actualScore = -score
-
-                    if actualScore > bestScore then
-                        bestScore <- actualScore
-                        bestMove <- Some m
-
-                    currentAlpha <- Math.Max(currentAlpha, bestScore)
-                    
-                    if currentAlpha >= beta then
-                        exitLoop <- true // This replaces the "break"
+                    if ct.IsCancellationRequested then 
+                        exitLoop <- true
                     else
-                        i <- i + 1
+                        let m = sortedMoves.[i]
+                        let score, _ = negamax (Board.applyMove m b) (depth - 1) (-beta) (-currentAlpha) ct
+                        let actualScore = -score
+
+                        if actualScore > bestScore then
+                            bestScore <- actualScore
+                            bestMove <- Some m
+
+                        currentAlpha <- Math.Max(currentAlpha, bestScore)
+                        if currentAlpha >= beta then exitLoop <- true
+                        else i <- i + 1
 
                 (bestScore, bestMove)
 
     /// Iterative Deepening
-    let findBestMove (b: Board) (maxDepth: int) =
-        let mutable absoluteBestMove = None
+    let findBestMove (b: Board) (maxDepth: int) (ct: CancellationToken) = async {
+        // This explicitly tells F# to move this work to a background thread
+        do! Async.SwitchToThreadPool() 
         
-        for d in 1 .. maxDepth do
-            let score, moveOpt = negamax b d -INF INF
-            match moveOpt with
-            | Some m -> 
-                absoluteBestMove <- Some m
-                printfn "info depth %d score cp %d pv %s" d score (Move.toUci m)
-            | None -> ()
+        let mutable absoluteBestMove = None
+        let mutable d = 1
+        
+        // Iterative Deepening Loop
+        while d <= maxDepth && not ct.IsCancellationRequested do
+            let score, moveOpt = negamax b d -INF INF ct
             
-        absoluteBestMove
+            if not ct.IsCancellationRequested then
+                match moveOpt with
+                | Some m -> 
+                    absoluteBestMove <- Some m
+                    printfn "info depth %d score cp %d pv %s" d score (Move.toUci m)
+                | None -> ()
+            d <- d + 1
+            
+        return absoluteBestMove
+    }    
+    
 
 // --- PERFT, DEBUG& UCI ---
 
@@ -1296,6 +1312,8 @@ module Debug =
 module UciLoop =
     let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     let mutable board = Board.fromFen startFen
+    // Track the current search task and its cancellation token
+    let mutable searchCts = new CancellationTokenSource()
 
     let rec run () =
         let line = Console.ReadLine()
@@ -1334,8 +1352,12 @@ module UciLoop =
                     match legalMoves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
-
             | "go" :: rest ->
+                // Cancel any existing search just in case
+                searchCts.Cancel()
+                searchCts <- new CancellationTokenSource()
+                let token = searchCts.Token
+                
                 // UCI Parser for 'depth'
                 let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
                 let depth = 
@@ -1345,12 +1367,18 @@ module UciLoop =
                         | true, d -> d
                         | _ -> 4 // Default depth if parsing fails
                     | _ -> 4 // Default depth if 'depth' not specified
-                
-                let bestMove = Search.findBestMove board depth
-                
-                match bestMove with
-                | Some m -> printfn "bestmove %s" (Move.toUci m)
-                | None -> printfn "bestmove (none)" // Handles checkmate/stalemate
+
+                // Start the search in the background
+                Async.Start(async {
+                    let! result = Search.findBestMove board depth token
+                    match result with
+                    | Some m -> printfn "bestmove %s" (Move.toUci m)
+                    | None -> 
+                        // If we have no move (e.g. cancelled at depth 0), 
+                        // we should still try to find something or print nothing safely
+                        ()
+                }, token)
+
             | "perft" :: rest ->
                 match rest with
                 | "suite" :: d :: _ ->
@@ -1372,7 +1400,11 @@ module UciLoop =
             | "verify" :: _ -> Debug.verify board
             | "attacks" :: "white" :: _ -> Debug.displayAttackMap board White
             | "attacks" :: "black" :: _ -> Debug.displayAttackMap board Black
-            | "quit" :: _ -> Environment.Exit(0)
+            | "stop" :: _ ->
+                searchCts.Cancel() // This tells the search to die
+            | "quit" :: _ -> 
+                searchCts.Cancel()
+                Environment.Exit(0)
             | _ -> ()
 
             run ()

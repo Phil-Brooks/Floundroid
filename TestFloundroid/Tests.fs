@@ -600,7 +600,9 @@ module SearchTests =
         let b =
             Board.fromFen "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
 
-        let bestMoveOpt = Search.findBestMove b 2
+        let bestMoveOpt = 
+            Search.findBestMove b 2 System.Threading.CancellationToken.None
+            |> Async.RunSynchronously
 
         match bestMoveOpt with
         | Some move -> Assert.Equal("h5f7", Move.toUci move)
@@ -611,7 +613,9 @@ module SearchTests =
         // White Queen on d1 can capture a free Black Queen on d5.
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPP11PPP/RNBQKBNR w KQkq - 0 1"
 
-        let bestMoveOpt = Search.findBestMove b 3
+        let bestMoveOpt = 
+            Search.findBestMove b 3 System.Threading.CancellationToken.None
+            |> Async.RunSynchronously
 
         match bestMoveOpt with
         | Some move -> Assert.Equal("d1d5", Move.toUci move)
@@ -621,5 +625,6 @@ module SearchTests =
     let ``Search identifies stalemate as draw`` () =
         // Classic stalemate: Black is to move, has no legal moves, but is not in check.
         let b = Board.fromFen "7k/5K2/6Q1/8/8/8/8/8 b - - 0 1"
-        let score, _ = Search.negamax b 2 -Search.INF Search.INF
+        let score, _ = 
+            Search.negamax b 2 -Search.INF Search.INF System.Threading.CancellationToken.None
         Assert.Equal(0, score)
