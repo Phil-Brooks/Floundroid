@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 13/06/2026 14:14:05
+Generated on: 13/06/2026 15:21:18
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -157,7 +157,6 @@ Generated on: 13/06/2026 14:14:05
 ## 📦 module Attack
 ---
 - **fn** `isSquareAttacked`
-    - *Checks if a square is attacked by the specified colour using bitboards.*
 
 ## 📦 module Board
 ---
@@ -177,8 +176,6 @@ Generated on: 13/06/2026 14:14:05
     - ***Param colour**: The colour of the player to check.*
     - ***Param b**: The current game state.*
     - ***Returns**: True if the player is in check, false otherwise.*
-- **fn** `getPins`
-    - *Gets a map of pinned pieces and the squares they are pinned to.*
 - **fn** `applyMove`
     - *Executes a move on the board and returns a new immutable board state.*
     - *Updates castling rights, en passant targets, and move clocks.*
@@ -193,7 +190,6 @@ Generated on: 13/06/2026 14:14:05
 ## 📦 module MoveGen
 ---
 - **fn** `getPseudoLegalMoves`
-    - *Gets all pseudo-legal moves for the current position.*
 - **fn** `getLegalMoves`
     - *Gets all legal moves for the current position.*
 

@@ -339,7 +339,6 @@ module PromotionTests =
 
         Assert.Equal(4, promos.Length)
 
-
 // =========================
 // === ATTACK TESTS       ===
 // =========================
@@ -377,7 +376,6 @@ module AttackTests =
         // EXPECTED: true
         Assert.True(Attack.isSquareAttacked b target White)
 
-
 // =========================
 // === CHECK DETECTION    ===
 // =========================
@@ -398,26 +396,6 @@ module CheckDetectionTests =
     let ``Black is in check from knight`` () =
         let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
         Assert.True(Board.isInCheck b)
-
-
-// =========================
-// === PIN DETECTION      ===
-// =========================
-
-module PinDetectionTests =
-
-    [<Fact>]
-    let ``Simple rook pin`` () =
-        let b = Board.fromFen "4r3/8/8/8/8/8/4B3/4K3 w - - 0 1"
-        let pins = Board.getPins b
-        Assert.True(pins.ContainsKey(Square.fromString "e2"))
-
-    [<Fact>]
-    let ``Knight is never pinned`` () =
-        let b = Board.fromFen "4r3/8/8/8/8/8/3N4/4K3 w - - 0 1"
-        let pins = Board.getPins b
-        Assert.False(pins.ContainsKey(Square.fromString "d2"))
-
 
 // =========================
 // === LEGAL MOVE FILTER ===
@@ -662,43 +640,6 @@ module BitboardTests =
         Assert.Equal(Square.fromString "c3", first)
         Assert.Equal(Square.fromString "f6", second)
         Assert.Equal(0uL, bb) // Should be empty now
-
-    [<Fact>]
-    let ``Board_getBitboards accurately converts starting position`` () =
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let board = Board.fromFen fen
-        let bbs = BitboardSet.fromMap board.Pieces
-
-        // 1. Check totals
-        Assert.Equal(32, Bitboard.count bbs.Occupancy)
-        Assert.Equal(16, Bitboard.count bbs.WhiteTotal)
-        Assert.Equal(16, Bitboard.count bbs.BlackTotal)
-
-        // 2. Check specific piece counts
-        Assert.Equal(8, Bitboard.count bbs.WhitePawns)
-        Assert.Equal(2, Bitboard.count bbs.WhiteRooks)
-        Assert.Equal(1, Bitboard.count bbs.WhiteKings)
-
-        Assert.Equal(8, Bitboard.count bbs.BlackPawns)
-        Assert.Equal(2, Bitboard.count bbs.BlackKnights)
-        Assert.Equal(1, Bitboard.count bbs.BlackQueens)
-
-        // 3. Verify specific square placement (e.g., White King on e1)
-        let e1 = Square.fromString "e1"
-        Assert.True(Bitboard.contains e1 bbs.WhiteKings)
-        Assert.True(Bitboard.contains e1 bbs.WhiteTotal)
-        Assert.True(Bitboard.contains e1 bbs.Occupancy)
-
-        // 4. Verify specific square is empty (e.g., e4)
-        let e4 = Square.fromString "e4"
-        Assert.False(Bitboard.contains e4 bbs.Occupancy)
-
-    [<Fact>]
-    let ``Board_getBitboards handles empty board`` () =
-        let board = Board.empty
-        let bbs = BitboardSet.fromMap board.Pieces
-        Assert.Equal(0uL, bbs.Occupancy)
-        Assert.Equal(0uL, bbs.WhiteTotal)
 
     [<Fact>]
     let ``Knight attacks on b1 are correct`` () =

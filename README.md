@@ -3,7 +3,7 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-![Status](https://img.shields.io/badge/Status-Stage%203%20In%20Progress-orange)
+![Status](https://img.shields.io/badge/Status-Stage%203%20Bitboard%20Core-yellow)
 [![Latest Release](https://img.shields.io/github/v/release/Phil-Brooks/Floundroid)](https://github.com/Phil-Brooks/Floundroid/releases)
 
 <p align="center">
@@ -16,9 +16,14 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.2.0
-The **Functional Foundation** is now available. This version features a complete UCI interface, asynchronous search, and a robust functional move generator. 
-👉 [**Download Floundroid.exe v0.2.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+## 🚀 Latest Stable Release: v0.3.0 (Alpha)
+The **Bitboard Core** is now live. This version removes the functional `Map` and transitions to a high-performance `uint64` bitboard representation for piece storage and attack generation.
+
+### **Performance**
+- **Bitboard representation:** Complete removal of Map-based board state.
+- **Hardware Intrinsics:** Utilizing `.NET` bitwise primitives for population count and bit-scanning.
+- **Leaper Lookups:** Pre-calculated attack tables for Knights, Kings, and Pawns.
+👉 [**Download Floundroid.exe v0.3.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 

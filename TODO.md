@@ -28,9 +28,10 @@ A detailed, structured task list aligned with the project roadmap.
 ## 3.1 Bitboards
 - [x] Implement `Bitboard` type (uint64)
 - [x] Map piece placements to 12 piece bitboards
-- [ ] Implement bitwise sliding attack generation
-- [x] Implement bitwise pawn/knight/king attack generation
+- [x] Remove `Map<Square, Piece>` as source of truth
+- [x] Implement bitwise pawn/knight/king attack generation (Lookup tables)
 - [x] Port `isSquareAttacked` to bitboard logic
+- [ ] Implement bitwise sliding attack generation (Magic Bitboards or PEXT) 🟡
 
 ## 3.2 Zobrist Hashing
 - [ ] Generate random keys for pieces, side, castling, and EP
