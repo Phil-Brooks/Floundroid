@@ -600,7 +600,7 @@ module SearchTests =
         let b =
             Board.fromFen "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
 
-        let bestMoveOpt = 
+        let bestMoveOpt =
             Search.findBestMove b 2 2000 System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
@@ -613,7 +613,7 @@ module SearchTests =
         // White Queen on d1 can capture a free Black Queen on d5.
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPP11PPP/RNBQKBNR w KQkq - 0 1"
 
-        let bestMoveOpt = 
+        let bestMoveOpt =
             Search.findBestMove b 3 2000 System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
@@ -625,8 +625,10 @@ module SearchTests =
     let ``Search identifies stalemate as draw`` () =
         // Classic stalemate: Black is to move, has no legal moves, but is not in check.
         let b = Board.fromFen "7k/5K2/6Q1/8/8/8/8/8 b - - 0 1"
-        let score, _ = 
+
+        let score, _ =
             Search.negamax b 2 -Search.INF Search.INF System.Threading.CancellationToken.None
+
         Assert.Equal(0, score)
 
 module BitboardTests =
@@ -640,20 +642,60 @@ module BitboardTests =
 
     [<Fact>]
     let ``Bitboard count works`` () =
-        let bb = Bitboard.empty 
-                 |> Bitboard.set (Square.fromString "a1")
-                 |> Bitboard.set (Square.fromString "h8")
+        let bb =
+            Bitboard.empty
+            |> Bitboard.set (Square.fromString "a1")
+            |> Bitboard.set (Square.fromString "h8")
+
         Assert.Equal(2, Bitboard.count bb)
 
     [<Fact>]
     let ``Bitboard popLsb iterates and clears bits`` () =
-        let mutable bb = Bitboard.empty 
-                         |> Bitboard.set (Square.fromString "c3")
-                         |> Bitboard.set (Square.fromString "f6")
-        
+        let mutable bb =
+            Bitboard.empty
+            |> Bitboard.set (Square.fromString "c3")
+            |> Bitboard.set (Square.fromString "f6")
+
         let first = Bitboard.popLsb &bb
         let second = Bitboard.popLsb &bb
-        
+
         Assert.Equal(Square.fromString "c3", first)
         Assert.Equal(Square.fromString "f6", second)
-        Assert.Equal(0uL, bb) // Should be empty now        
+        Assert.Equal(0uL, bb) // Should be empty now
+
+    [<Fact>]
+    let ``Board_getBitboards accurately converts starting position`` () =
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let board = Board.fromFen fen
+        let bbs = Board.getBitboards board
+
+        // 1. Check totals
+        Assert.Equal(32, Bitboard.count bbs.Occupancy)
+        Assert.Equal(16, Bitboard.count bbs.WhiteTotal)
+        Assert.Equal(16, Bitboard.count bbs.BlackTotal)
+
+        // 2. Check specific piece counts
+        Assert.Equal(8, Bitboard.count bbs.WhitePawns)
+        Assert.Equal(2, Bitboard.count bbs.WhiteRooks)
+        Assert.Equal(1, Bitboard.count bbs.WhiteKings)
+
+        Assert.Equal(8, Bitboard.count bbs.BlackPawns)
+        Assert.Equal(2, Bitboard.count bbs.BlackKnights)
+        Assert.Equal(1, Bitboard.count bbs.BlackQueens)
+
+        // 3. Verify specific square placement (e.g., White King on e1)
+        let e1 = Square.fromString "e1"
+        Assert.True(Bitboard.contains e1 bbs.WhiteKings)
+        Assert.True(Bitboard.contains e1 bbs.WhiteTotal)
+        Assert.True(Bitboard.contains e1 bbs.Occupancy)
+
+        // 4. Verify specific square is empty (e.g., e4)
+        let e4 = Square.fromString "e4"
+        Assert.False(Bitboard.contains e4 bbs.Occupancy)
+
+    [<Fact>]
+    let ``Board_getBitboards handles empty board`` () =
+        let board = Board.empty
+        let bbs = Board.getBitboards board
+        Assert.Equal(0uL, bbs.Occupancy)
+        Assert.Equal(0uL, bbs.WhiteTotal)

@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 13/06/2026 11:10:21
+Generated on: 13/06/2026 11:25:38
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -12,6 +12,7 @@ Generated on: 13/06/2026 11:10:21
 - [Piece](#-module-piece)
 - [CastlingRights](#-module-castlingrights)
 - [Move](#-module-move)
+- [BitboardSet](#-module-bitboardset)
 - [Attack](#-module-attack)
 - [Board](#-module-board)
 - [MoveGen](#-module-movegen)
@@ -136,6 +137,13 @@ Generated on: 13/06/2026 11:10:21
 - **fn** `fromUci`
     - *Converts a UCI string representation of a move to a Move value.*
 
+#### 🧩 `type BitboardSet =`
+> A collection of bitboards representing all pieces on the board.
+
+## 📦 module BitboardSet
+---
+- **fn** `empty`
+
 #### 🧩 `type Board =`
 > The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 
@@ -168,6 +176,8 @@ Generated on: 13/06/2026 11:10:21
     - ***Returns**: A new Board record reflecting the post-move state.*
 - **fn** `prettyPrint`
     - *Prints the board in a human-readable format.*
+- **fn** `getBitboards`
+    - *Converts the current piece Map into a BitboardSet.*
 
 ## 📦 module MoveGen
 ---

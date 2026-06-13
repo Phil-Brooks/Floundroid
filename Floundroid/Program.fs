@@ -205,7 +205,6 @@ module Bitboard =
             sb.Append("\n") |> ignore
         sb.Append("  a b c d e f g h").ToString()
 
-
 type PieceType =
     | Pawn
     | Knight
@@ -338,6 +337,23 @@ module Move =
         { From = fromSq
           To = toSq
           Kind = kind }
+
+/// A collection of bitboards representing all pieces on the board.
+type BitboardSet =
+    { WhitePawns: Bitboard; WhiteKnights: Bitboard; WhiteBishops: Bitboard
+      WhiteRooks: Bitboard; WhiteQueens: Bitboard; WhiteKings: Bitboard
+      BlackPawns: Bitboard; BlackKnights: Bitboard; BlackBishops: Bitboard
+      BlackRooks: Bitboard; BlackQueens: Bitboard; BlackKings: Bitboard
+      // Combined layers
+      WhiteTotal: Bitboard; BlackTotal: Bitboard; Occupancy: Bitboard }
+
+module BitboardSet =
+    let empty =
+        { WhitePawns = 0uL; WhiteKnights = 0uL; WhiteBishops = 0uL
+          WhiteRooks = 0uL; WhiteQueens = 0uL; WhiteKings = 0uL
+          BlackPawns = 0uL; BlackKnights = 0uL; BlackBishops = 0uL
+          BlackRooks = 0uL; BlackQueens = 0uL; BlackKings = 0uL
+          WhiteTotal = 0uL; BlackTotal = 0uL; Occupancy = 0uL }
 
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
@@ -725,6 +741,33 @@ module Board =
             printfn ""
 
         printfn "  a b c d e f g h"
+
+    /// Converts the current piece Map into a BitboardSet.
+    let getBitboards (b: Board) =
+        let mutable bbs = BitboardSet.empty
+        for (KeyValue(sq, p)) in b.Pieces do
+            let bit = 1uL <<< sq
+            match p.Colour, p.Kind with
+            | White, Pawn   -> bbs <- { bbs with WhitePawns = bbs.WhitePawns ||| bit }
+            | White, Knight -> bbs <- { bbs with WhiteKnights = bbs.WhiteKnights ||| bit }
+            | White, Bishop -> bbs <- { bbs with WhiteBishops = bbs.WhiteBishops ||| bit }
+            | White, Rook   -> bbs <- { bbs with WhiteRooks = bbs.WhiteRooks ||| bit }
+            | White, Queen  -> bbs <- { bbs with WhiteQueens = bbs.WhiteQueens ||| bit }
+            | White, King   -> bbs <- { bbs with WhiteKings = bbs.WhiteKings ||| bit }
+            | Black, Pawn   -> bbs <- { bbs with BlackPawns = bbs.BlackPawns ||| bit }
+            | Black, Knight -> bbs <- { bbs with BlackKnights = bbs.BlackKnights ||| bit }
+            | Black, Bishop -> bbs <- { bbs with BlackBishops = bbs.BlackBishops ||| bit }
+            | Black, Rook   -> bbs <- { bbs with BlackRooks = bbs.BlackRooks ||| bit }
+            | Black, Queen  -> bbs <- { bbs with BlackQueens = bbs.BlackQueens ||| bit }
+            | Black, King   -> bbs <- { bbs with BlackKings = bbs.BlackKings ||| bit }
+        
+        let whiteTotal = bbs.WhitePawns ||| bbs.WhiteKnights ||| bbs.WhiteBishops ||| bbs.WhiteRooks ||| bbs.WhiteQueens ||| bbs.WhiteKings
+        let blackTotal = bbs.BlackPawns ||| bbs.BlackKnights ||| bbs.BlackBishops ||| bbs.BlackRooks ||| bbs.BlackQueens ||| bbs.BlackKings
+        
+        { bbs with 
+            WhiteTotal = whiteTotal
+            BlackTotal = blackTotal
+            Occupancy = whiteTotal ||| blackTotal }
 
 // --- MOVE GENERATION ---
 

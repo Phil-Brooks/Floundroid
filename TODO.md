@@ -27,7 +27,7 @@ A detailed, structured task list aligned with the project roadmap.
 # Stage 3 — Mechanical Brain (Performance) 🏗️
 ## 3.1 Bitboards
 - [x] Implement `Bitboard` type (uint64)
-- [ ] Map piece placements to 12 piece bitboards
+- [x] Map piece placements to 12 piece bitboards
 - [ ] Implement bitwise sliding attack generation
 - [ ] Implement bitwise pawn/knight/king attack generation
 - [ ] Port `isSquareAttacked` to bitboard logic
