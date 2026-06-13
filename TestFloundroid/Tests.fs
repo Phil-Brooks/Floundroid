@@ -667,7 +667,7 @@ module BitboardTests =
     let ``Board_getBitboards accurately converts starting position`` () =
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         let board = Board.fromFen fen
-        let bbs = Board.getBitboards board
+        let bbs = BitboardSet.fromMap board.Pieces
 
         // 1. Check totals
         Assert.Equal(32, Bitboard.count bbs.Occupancy)
@@ -696,6 +696,56 @@ module BitboardTests =
     [<Fact>]
     let ``Board_getBitboards handles empty board`` () =
         let board = Board.empty
-        let bbs = Board.getBitboards board
+        let bbs = BitboardSet.fromMap board.Pieces
         Assert.Equal(0uL, bbs.Occupancy)
         Assert.Equal(0uL, bbs.WhiteTotal)
+
+    [<Fact>]
+    let ``Knight attacks on b1 are correct`` () =
+        let b1 = Square.fromString "b1"
+        let attacks = BitboardGen.knightAttacks.[b1]
+        // From b1, knight hits a3, c3, d2
+        Assert.True(Bitboard.contains (Square.fromString "a3") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "c3") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "d2") attacks)
+        Assert.Equal(3, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``Knight on a-file does not wrap to h-file`` () =
+        let a4 = Square.fromString "a4"
+        let attacks = BitboardGen.knightAttacks.[a4]
+        // A knight on a4 should NOT be able to hit anything on the g or h files
+        let hFileMask = 0x8080808080808080uL
+        let gFileMask = 0x4040404040404040uL
+        Assert.Equal(0uL, attacks &&& hFileMask)
+        Assert.Equal(0uL, attacks &&& gFileMask)
+
+    [<Fact>]
+    let ``King attacks in corner are 3`` () =
+        let a1 = Square.fromString "a1"
+        let attacks = BitboardGen.kingAttacks.[a1]
+        Assert.Equal(3, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``White pawn attacks from e2 hit d3 and f3`` () =
+        let e2 = Square.fromString "e2"
+        let attacks = BitboardGen.pawnAttacks.[0, e2]
+        Assert.True(Bitboard.contains (Square.fromString "d3") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "f3") attacks)
+        Assert.Equal(2, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``Black pawn attacks from d7 hit c6 and e6`` () =
+        let d7 = Square.fromString "d7"
+        let attacks = BitboardGen.pawnAttacks.[1, d7]
+        Assert.True(Bitboard.contains (Square.fromString "c6") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "e6") attacks)
+        Assert.Equal(2, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``Pawn on a-file does not wrap when attacking`` () =
+        let a2 = Square.fromString "a2"
+        let attacks = BitboardGen.pawnAttacks.[0, a2]
+        // Should only hit b3 (sq 17), not h1 or anything else
+        Assert.Equal(1, Bitboard.count attacks)
+        Assert.True(Bitboard.contains (Square.fromString "b3") attacks)

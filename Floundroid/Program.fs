@@ -349,11 +349,170 @@ type BitboardSet =
 
 module BitboardSet =
     let empty =
-        { WhitePawns = 0uL; WhiteKnights = 0uL; WhiteBishops = 0uL
-          WhiteRooks = 0uL; WhiteQueens = 0uL; WhiteKings = 0uL
-          BlackPawns = 0uL; BlackKnights = 0uL; BlackBishops = 0uL
-          BlackRooks = 0uL; BlackQueens = 0uL; BlackKings = 0uL
-          WhiteTotal = 0uL; BlackTotal = 0uL; Occupancy = 0uL }
+        { WhitePawns = 0uL
+          WhiteKnights = 0uL
+          WhiteBishops = 0uL
+          WhiteRooks = 0uL
+          WhiteQueens = 0uL
+          WhiteKings = 0uL
+          BlackPawns = 0uL
+          BlackKnights = 0uL
+          BlackBishops = 0uL
+          BlackRooks = 0uL
+          BlackQueens = 0uL
+          BlackKings = 0uL
+          WhiteTotal = 0uL
+          BlackTotal = 0uL
+          Occupancy = 0uL }
+
+    /// Converts a Piece Map into a BitboardSet.
+    let fromMap (pieces: Map<Square, Piece>) =
+        let mutable bbs = empty
+
+        for (KeyValue(sq, p)) in pieces do
+            let bit = 1uL <<< sq
+
+            match p.Colour, p.Kind with
+            | White, Pawn ->
+                bbs <-
+                    { bbs with
+                        WhitePawns = bbs.WhitePawns ||| bit }
+            | White, Knight ->
+                bbs <-
+                    { bbs with
+                        WhiteKnights = bbs.WhiteKnights ||| bit }
+            | White, Bishop ->
+                bbs <-
+                    { bbs with
+                        WhiteBishops = bbs.WhiteBishops ||| bit }
+            | White, Rook ->
+                bbs <-
+                    { bbs with
+                        WhiteRooks = bbs.WhiteRooks ||| bit }
+            | White, Queen ->
+                bbs <-
+                    { bbs with
+                        WhiteQueens = bbs.WhiteQueens ||| bit }
+            | White, King ->
+                bbs <-
+                    { bbs with
+                        WhiteKings = bbs.WhiteKings ||| bit }
+            | Black, Pawn ->
+                bbs <-
+                    { bbs with
+                        BlackPawns = bbs.BlackPawns ||| bit }
+            | Black, Knight ->
+                bbs <-
+                    { bbs with
+                        BlackKnights = bbs.BlackKnights ||| bit }
+            | Black, Bishop ->
+                bbs <-
+                    { bbs with
+                        BlackBishops = bbs.BlackBishops ||| bit }
+            | Black, Rook ->
+                bbs <-
+                    { bbs with
+                        BlackRooks = bbs.BlackRooks ||| bit }
+            | Black, Queen ->
+                bbs <-
+                    { bbs with
+                        BlackQueens = bbs.BlackQueens ||| bit }
+            | Black, King ->
+                bbs <-
+                    { bbs with
+                        BlackKings = bbs.BlackKings ||| bit }
+
+        let whiteTotal =
+            bbs.WhitePawns
+            ||| bbs.WhiteKnights
+            ||| bbs.WhiteBishops
+            ||| bbs.WhiteRooks
+            ||| bbs.WhiteQueens
+            ||| bbs.WhiteKings
+
+        let blackTotal =
+            bbs.BlackPawns
+            ||| bbs.BlackKnights
+            ||| bbs.BlackBishops
+            ||| bbs.BlackRooks
+            ||| bbs.BlackQueens
+            ||| bbs.BlackKings
+
+        { bbs with
+            WhiteTotal = whiteTotal
+            BlackTotal = blackTotal
+            Occupancy = whiteTotal ||| blackTotal }
+
+module BitboardGen =
+    /// Pre-calculated knight attacks for every square
+    let knightAttacks = Array.zeroCreate<Bitboard> 64
+    /// Pre-calculated king attacks for every square
+    let kingAttacks = Array.zeroCreate<Bitboard> 64
+    /// Pawn attacks: [Colour index 0=White, 1=Black, Square 0-63]
+    let pawnAttacks = Array2D.zeroCreate<Bitboard> 2 64
+
+    let private initializeLeapers () =
+        for sq in 0..63 do
+            let f, r = sq % 8, sq / 8
+
+            // Knight Logic
+            let mutable kbb = 0uL
+
+            let knightOffsets =
+                [ (1, 2); (1, -2); (-1, 2); (-1, -2); (2, 1); (2, -1); (-2, 1); (-2, -1) ]
+
+            for (df, dr) in knightOffsets do
+                let nf, nr = f + df, r + dr
+
+                if nf >= 0 && nf < 8 && nr >= 0 && nr < 8 then
+                    kbb <- kbb ||| (1uL <<< (nr * 8 + nf))
+
+            knightAttacks.[sq] <- kbb
+
+            // King Logic
+            let mutable kingbb = 0uL
+
+            for df in -1 .. 1 do
+                for dr in -1 .. 1 do
+                    if df <> 0 || dr <> 0 then
+                        let nf, nr = f + df, r + dr
+
+                        if nf >= 0 && nf < 8 && nr >= 0 && nr < 8 then
+                            kingbb <- kingbb ||| (1uL <<< (nr * 8 + nf))
+
+            kingAttacks.[sq] <- kingbb
+
+        // Pawn Attack Logic
+        for sq in 0..63 do
+            let f, r = sq % 8, sq / 8
+
+            // White Pawn Attacks (North-East, North-West)
+            let mutable wPawnAttacks = 0uL
+
+            if r < 7 then
+                if f > 0 then
+                    wPawnAttacks <- wPawnAttacks ||| (1uL <<< (sq + 7))
+
+                if f < 7 then
+                    wPawnAttacks <- wPawnAttacks ||| (1uL <<< (sq + 9))
+
+            pawnAttacks.[0, sq] <- wPawnAttacks
+
+            // Black Pawn Attacks (South-East, South-West)
+            let mutable bPawnAttacks = 0uL
+
+            if r > 0 then
+                if f > 0 then
+                    bPawnAttacks <- bPawnAttacks ||| (1uL <<< (sq - 9))
+
+                if f < 7 then
+                    bPawnAttacks <- bPawnAttacks ||| (1uL <<< (sq - 7))
+
+            pawnAttacks.[1, sq] <- bPawnAttacks
+
+
+    // Initialize the tables immediately
+    do initializeLeapers ()
 
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
@@ -367,94 +526,65 @@ type Board =
 // --- ATTACK DETECTION ---
 
 module Attack =
-    /// Checks if a square is attacked by the specified colour.
+    /// Checks if a square is attacked by the specified colour using bitboards.
     let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
-        let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
+        let bbs = BitboardSet.fromMap b.Pieces
         let them = attacker
 
-        // Pawn attacks
-        let pawnDir = if them = White then -1 else 1
-        let mutable found = false
+        // 1. Pawn Attacks
+        // To see if 'sq' is attacked by a 'them' pawn, we look at where
+        // an 'us' pawn at 'sq' would attack. If a 'them' pawn is there, we are attacked.
+        let usIdx = if them = Black then 0 else 1 // Inverse index
+        let pawnAttackMask = BitboardGen.pawnAttacks.[usIdx, sq]
+        let themPawns = if them = White then bbs.WhitePawns else bbs.BlackPawns
 
-        for df in [ -1; 1 ] do
-            let nf, nr = f + df, r + pawnDir
-
-            if Square.isOnBoard nf nr then
-                let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-
-                match b.Pieces |> Map.tryFind s2 with
-                | Some p when p.Colour = them && p.Kind = Pawn -> found <- true
-                | _ -> ()
-
-        if found then
+        if (pawnAttackMask &&& themPawns) <> 0uL then
             true
         else
-            // Knight
-            let knightOffsets =
-                [ (1, 2); (1, -2); (-1, 2); (-1, -2); (2, 1); (2, -1); (-2, 1); (-2, -1) ]
+            // 2. Knight Attacks
+            let knightAttackMask = BitboardGen.knightAttacks.[sq]
+            let themKnights = if them = White then bbs.WhiteKnights else bbs.BlackKnights
 
-            let knightHit =
-                knightOffsets
-                |> List.exists (fun (df, dr) ->
-                    let nf, nr = f + df, r + dr
-
-                    if Square.isOnBoard nf nr then
-                        let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-
-                        match b.Pieces |> Map.tryFind s2 with
-                        | Some p when p.Colour = them && p.Kind = Knight -> true
-                        | _ -> false
-                    else
-                        false)
-
-            if knightHit then
+            if (knightAttackMask &&& themKnights) <> 0uL then
                 true
             else
-                // Sliding
-                let checkDir dirs =
-                    dirs
-                    |> List.exists (fun (df, dr) ->
-                        let mutable nf, nr = f + df, r + dr
-                        let mutable hit, blocked = false, false
+                // 3. King Attacks
+                let kingAttackMask = BitboardGen.kingAttacks.[sq]
+                let themKing = if them = White then bbs.WhiteKings else bbs.BlackKings
 
-                        while Square.isOnBoard nf nr && not blocked do
-                            let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-
-                            match b.Pieces |> Map.tryFind s2 with
-                            | None ->
-                                nf <- nf + df
-                                nr <- nr + dr
-                            | Some p ->
-                                blocked <- true
-
-                                if p.Colour = them then
-                                    match p.Kind with
-                                    | Queen -> hit <- true
-                                    | Rook when df = 0 || dr = 0 -> hit <- true
-                                    | Bishop when df <> 0 && dr <> 0 -> hit <- true
-                                    | _ -> ()
-
-                        hit)
-
-                if checkDir [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ] then
+                if (kingAttackMask &&& themKing) <> 0uL then
                     true
                 else
-                    // King
-                    let kingOffsets =
-                        [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ]
+                    // 4. Sliding Attacks (Hybrid: uses bitboard occupancy for speed)
+                    let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
 
-                    kingOffsets
-                    |> List.exists (fun (df, dr) ->
-                        let nf, nr = f + df, r + dr
+                    let checkDir dirs =
+                        dirs
+                        |> List.exists (fun (df, dr) ->
+                            let mutable nf, nr = f + df, r + dr
+                            let mutable hit, blocked = false, false
 
-                        if Square.isOnBoard nf nr then
-                            let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                            while Square.isOnBoard nf nr && not blocked do
+                                let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
 
-                            match b.Pieces |> Map.tryFind s2 with
-                            | Some p when p.Colour = them && p.Kind = King -> true
-                            | _ -> false
-                        else
-                            false)
+                                if Bitboard.contains s2 bbs.Occupancy then
+                                    blocked <- true
+
+                                    match b.Pieces |> Map.tryFind s2 with
+                                    | Some p when p.Colour = them ->
+                                        match p.Kind with
+                                        | Queen -> hit <- true
+                                        | Rook when df = 0 || dr = 0 -> hit <- true
+                                        | Bishop when df <> 0 && dr <> 0 -> hit <- true
+                                        | _ -> ()
+                                    | _ -> ()
+                                else
+                                    nf <- nf + df
+                                    nr <- nr + dr
+
+                            hit)
+
+                    checkDir [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ]
 
 // --- BOARD UTILS & FEN ---
 
@@ -741,33 +871,6 @@ module Board =
             printfn ""
 
         printfn "  a b c d e f g h"
-
-    /// Converts the current piece Map into a BitboardSet.
-    let getBitboards (b: Board) =
-        let mutable bbs = BitboardSet.empty
-        for (KeyValue(sq, p)) in b.Pieces do
-            let bit = 1uL <<< sq
-            match p.Colour, p.Kind with
-            | White, Pawn   -> bbs <- { bbs with WhitePawns = bbs.WhitePawns ||| bit }
-            | White, Knight -> bbs <- { bbs with WhiteKnights = bbs.WhiteKnights ||| bit }
-            | White, Bishop -> bbs <- { bbs with WhiteBishops = bbs.WhiteBishops ||| bit }
-            | White, Rook   -> bbs <- { bbs with WhiteRooks = bbs.WhiteRooks ||| bit }
-            | White, Queen  -> bbs <- { bbs with WhiteQueens = bbs.WhiteQueens ||| bit }
-            | White, King   -> bbs <- { bbs with WhiteKings = bbs.WhiteKings ||| bit }
-            | Black, Pawn   -> bbs <- { bbs with BlackPawns = bbs.BlackPawns ||| bit }
-            | Black, Knight -> bbs <- { bbs with BlackKnights = bbs.BlackKnights ||| bit }
-            | Black, Bishop -> bbs <- { bbs with BlackBishops = bbs.BlackBishops ||| bit }
-            | Black, Rook   -> bbs <- { bbs with BlackRooks = bbs.BlackRooks ||| bit }
-            | Black, Queen  -> bbs <- { bbs with BlackQueens = bbs.BlackQueens ||| bit }
-            | Black, King   -> bbs <- { bbs with BlackKings = bbs.BlackKings ||| bit }
-        
-        let whiteTotal = bbs.WhitePawns ||| bbs.WhiteKnights ||| bbs.WhiteBishops ||| bbs.WhiteRooks ||| bbs.WhiteQueens ||| bbs.WhiteKings
-        let blackTotal = bbs.BlackPawns ||| bbs.BlackKnights ||| bbs.BlackBishops ||| bbs.BlackRooks ||| bbs.BlackQueens ||| bbs.BlackKings
-        
-        { bbs with 
-            WhiteTotal = whiteTotal
-            BlackTotal = blackTotal
-            Occupancy = whiteTotal ||| blackTotal }
 
 // --- MOVE GENERATION ---
 

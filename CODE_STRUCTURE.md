@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 13/06/2026 11:25:38
+Generated on: 13/06/2026 12:05:06
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -13,6 +13,7 @@ Generated on: 13/06/2026 11:25:38
 - [CastlingRights](#-module-castlingrights)
 - [Move](#-module-move)
 - [BitboardSet](#-module-bitboardset)
+- [BitboardGen](#-module-bitboardgen)
 - [Attack](#-module-attack)
 - [Board](#-module-board)
 - [MoveGen](#-module-movegen)
@@ -143,6 +144,12 @@ Generated on: 13/06/2026 11:25:38
 ## 📦 module BitboardSet
 ---
 - **fn** `empty`
+- **fn** `fromMap`
+    - *Converts a Piece Map into a BitboardSet.*
+
+## 📦 module BitboardGen
+---
+- **fn** `private`
 
 #### 🧩 `type Board =`
 > The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
@@ -150,7 +157,7 @@ Generated on: 13/06/2026 11:25:38
 ## 📦 module Attack
 ---
 - **fn** `isSquareAttacked`
-    - *Checks if a square is attacked by the specified colour.*
+    - *Checks if a square is attacked by the specified colour using bitboards.*
 
 ## 📦 module Board
 ---
@@ -176,8 +183,6 @@ Generated on: 13/06/2026 11:25:38
     - ***Returns**: A new Board record reflecting the post-move state.*
 - **fn** `prettyPrint`
     - *Prints the board in a human-readable format.*
-- **fn** `getBitboards`
-    - *Converts the current piece Map into a BitboardSet.*
 
 ## 📦 module MoveGen
 ---
