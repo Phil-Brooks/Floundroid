@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 13/06/2026 12:05:06
+Generated on: 13/06/2026 14:14:05
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -82,12 +82,6 @@ Generated on: 13/06/2026 12:05:06
 ## 📦 module Bitboard
 ---
 - **fn** `inline`
-    - *Sets the bit at the given square.*
-- **fn** `inline`
-    - *Clears the bit at the given square.*
-- **fn** `inline`
-    - *Checks if a square is set.*
-- **fn** `inline`
     - *Returns the number of set bits (population count).*
 - **fn** `inline`
     - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
@@ -146,6 +140,12 @@ Generated on: 13/06/2026 12:05:06
 - **fn** `empty`
 - **fn** `fromMap`
     - *Converts a Piece Map into a BitboardSet.*
+- **fn** `getPieceAt`
+    - *Identifies the piece (if any) at a specific square using bitboards.*
+- **fn** `togglePiece`
+    - *A helper to flip a piece on/off. Essential for incremental updates.*
+- **fn** `allPieces`
+    - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
 
 ## 📦 module BitboardGen
 ---
@@ -162,8 +162,12 @@ Generated on: 13/06/2026 12:05:06
 ## 📦 module Board
 ---
 - **fn** `empty`
+- **fn** `isOccupied`
+    - *Checks if a square is occupied (Source of truth: Bitboards).*
+- **fn** `findKing`
+    - *Find the king square (Needed for check detection).*
 - **fn** `setPiece`
-    - *Sets a piece on a square.*
+    - *Sets a piece on a square and updates bitboards (Source of truth: Bitboards).*
 - **fn** `fromFen`
     - *Parses a FEN string and returns a Board record representing the position.*
 - **fn** `toFen`
@@ -181,6 +185,8 @@ Generated on: 13/06/2026 12:05:06
     - ***Param m**: The validated move to apply.*
     - ***Param b**: The current game state.*
     - ***Returns**: A new Board record reflecting the post-move state.*
+    - *Executes a move, updating both Bitboards and the Piece Map.*
+    - *This is the final step before the Map is removed entirely.*
 - **fn** `prettyPrint`
     - *Prints the board in a human-readable format.*
 
@@ -200,6 +206,18 @@ Generated on: 13/06/2026 12:05:06
 ---
 - **fn** `pieceValue`
     - *Assigns a base value to each piece type for evaluation purposes.*
+- **fn** `pawnPst`
+    - *The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `knightPst`
+    - *The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `bishopPst`
+    - *The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `rookPst`
+    - *The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `queenPst`
+    - *The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `kingPst`
+    - *The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
 - **fn** `evaluate`
     - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
 
@@ -209,6 +227,8 @@ Generated on: 13/06/2026 12:05:06
     - *Quiescence search: plays out all captures until the position is stable.*
 - **fn** `negamax`
     - *Negamax search with alpha-beta pruning.*
+- **fn** `findBestMove`
+    - *Iterative Deepening*
 
 #### 🧩 `type PerftSuiteItem =`
 > Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.

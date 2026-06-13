@@ -172,19 +172,16 @@ module Bitboard =
     let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
 
     /// Sets the bit at the given square.
-    let inline set (sq: Square) (bb: Bitboard) : Bitboard = 
-        bb ||| (1uL <<< sq)
+    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
 
     /// Clears the bit at the given square.
-    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = 
-        bb &&& ~~~(1uL <<< sq)
+    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
 
     /// Checks if a square is set.
-    let inline contains (sq: Square) (bb: Bitboard) : bool = 
-        (bb &&& (1uL <<< sq)) <> 0uL
+    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
 
     /// Returns the number of set bits (population count).
-    let inline count (bb: Bitboard) : int = 
+    let inline count (bb: Bitboard) : int =
         System.Numerics.BitOperations.PopCount(bb)
 
     /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
@@ -197,12 +194,16 @@ module Bitboard =
     /// Visualizes the bitboard as an 8x8 grid for debugging.
     let toString (bb: Bitboard) =
         let sb = StringBuilder()
-        for r in 7 .. -1 .. 0 do
+
+        for r in 7..-1..0 do
             sb.Append(sprintf "%d " (r + 1)) |> ignore
+
             for f in 0..7 do
                 let sq = r * 8 + f
                 sb.Append(if contains sq bb then "1 " else ". ") |> ignore
+
             sb.Append("\n") |> ignore
+
         sb.Append("  a b c d e f g h").ToString()
 
 type PieceType =
@@ -340,12 +341,22 @@ module Move =
 
 /// A collection of bitboards representing all pieces on the board.
 type BitboardSet =
-    { WhitePawns: Bitboard; WhiteKnights: Bitboard; WhiteBishops: Bitboard
-      WhiteRooks: Bitboard; WhiteQueens: Bitboard; WhiteKings: Bitboard
-      BlackPawns: Bitboard; BlackKnights: Bitboard; BlackBishops: Bitboard
-      BlackRooks: Bitboard; BlackQueens: Bitboard; BlackKings: Bitboard
+    { WhitePawns: Bitboard
+      WhiteKnights: Bitboard
+      WhiteBishops: Bitboard
+      WhiteRooks: Bitboard
+      WhiteQueens: Bitboard
+      WhiteKings: Bitboard
+      BlackPawns: Bitboard
+      BlackKnights: Bitboard
+      BlackBishops: Bitboard
+      BlackRooks: Bitboard
+      BlackQueens: Bitboard
+      BlackKings: Bitboard
       // Combined layers
-      WhiteTotal: Bitboard; BlackTotal: Bitboard; Occupancy: Bitboard }
+      WhiteTotal: Bitboard
+      BlackTotal: Bitboard
+      Occupancy: Bitboard }
 
 module BitboardSet =
     let empty =
@@ -443,6 +454,105 @@ module BitboardSet =
             BlackTotal = blackTotal
             Occupancy = whiteTotal ||| blackTotal }
 
+    /// Identifies the piece (if any) at a specific square using bitboards.
+    let getPieceAt (sq: Square) (bbs: BitboardSet) : Piece option =
+        let bit = 1uL <<< sq
+
+        if (bbs.Occupancy &&& bit) = 0uL then
+            None
+        else
+            let color = if (bbs.WhiteTotal &&& bit) <> 0uL then White else Black
+
+            let kind =
+                if (bbs.WhitePawns ||| bbs.BlackPawns) &&& bit <> 0uL then
+                    Pawn
+                elif (bbs.WhiteKnights ||| bbs.BlackKnights) &&& bit <> 0uL then
+                    Knight
+                elif (bbs.WhiteBishops ||| bbs.BlackBishops) &&& bit <> 0uL then
+                    Bishop
+                elif (bbs.WhiteRooks ||| bbs.BlackRooks) &&& bit <> 0uL then
+                    Rook
+                elif (bbs.WhiteQueens ||| bbs.BlackQueens) &&& bit <> 0uL then
+                    Queen
+                else
+                    King
+
+            Some { Colour = color; Kind = kind }
+
+    /// A helper to flip a piece on/off. Essential for incremental updates.
+    let togglePiece (p: Piece) (sq: Square) (bbs: BitboardSet) =
+        let bit = 1uL <<< sq
+
+        let newBbs =
+            match p.Colour, p.Kind with
+            | White, Pawn ->
+                { bbs with
+                    WhitePawns = bbs.WhitePawns ^^^ bit }
+            | White, Knight ->
+                { bbs with
+                    WhiteKnights = bbs.WhiteKnights ^^^ bit }
+            | White, Bishop ->
+                { bbs with
+                    WhiteBishops = bbs.WhiteBishops ^^^ bit }
+            | White, Rook ->
+                { bbs with
+                    WhiteRooks = bbs.WhiteRooks ^^^ bit }
+            | White, Queen ->
+                { bbs with
+                    WhiteQueens = bbs.WhiteQueens ^^^ bit }
+            | White, King ->
+                { bbs with
+                    WhiteKings = bbs.WhiteKings ^^^ bit }
+            | Black, Pawn ->
+                { bbs with
+                    BlackPawns = bbs.BlackPawns ^^^ bit }
+            | Black, Knight ->
+                { bbs with
+                    BlackKnights = bbs.BlackKnights ^^^ bit }
+            | Black, Bishop ->
+                { bbs with
+                    BlackBishops = bbs.BlackBishops ^^^ bit }
+            | Black, Rook ->
+                { bbs with
+                    BlackRooks = bbs.BlackRooks ^^^ bit }
+            | Black, Queen ->
+                { bbs with
+                    BlackQueens = bbs.BlackQueens ^^^ bit }
+            | Black, King ->
+                { bbs with
+                    BlackKings = bbs.BlackKings ^^^ bit }
+
+        let whiteTotal =
+            newBbs.WhitePawns
+            ||| newBbs.WhiteKnights
+            ||| newBbs.WhiteBishops
+            ||| newBbs.WhiteRooks
+            ||| newBbs.WhiteQueens
+            ||| newBbs.WhiteKings
+
+        let blackTotal =
+            newBbs.BlackPawns
+            ||| newBbs.BlackKnights
+            ||| newBbs.BlackBishops
+            ||| newBbs.BlackRooks
+            ||| newBbs.BlackQueens
+            ||| newBbs.BlackKings
+
+        { newBbs with
+            WhiteTotal = whiteTotal
+            BlackTotal = blackTotal
+            Occupancy = whiteTotal ||| blackTotal }
+
+    /// Returns a sequence of all (Square, Piece) pairs currently on the board.
+    let allPieces (bbs: BitboardSet) =
+        seq {
+            let mutable occ = bbs.Occupancy
+
+            while occ <> 0uL do
+                let sq = Bitboard.popLsb &occ
+                yield (sq, getPieceAt sq bbs |> Option.get)
+        }
+
 module BitboardGen =
     /// Pre-calculated knight attacks for every square
     let knightAttacks = Array.zeroCreate<Bitboard> 64
@@ -517,6 +627,7 @@ module BitboardGen =
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
     { Pieces: Map<Square, Piece>
+      Bitboards: BitboardSet // The new performance core
       SideToMove: Colour
       CastlingRights: CastlingRights
       EnPassantSquare: Square option
@@ -591,22 +702,53 @@ module Attack =
 module Board =
     let empty =
         { Pieces = Map.empty
+          Bitboards = BitboardSet.empty // Placeholder
           SideToMove = White
           CastlingRights = CastlingRights.none
           EnPassantSquare = None
           HalfmoveClock = 0
           FullmoveNumber = 1 }
 
-    /// Tries to get a piece from a square.
-    let tryGetPiece (b: Board) (sq: Square) = b.Pieces |> Map.tryFind sq
-    /// Checks if a square is occupied.
-    let isOccupied (b: Board) (sq: Square) = b.Pieces |> Map.containsKey sq
+    /// Tries to get a piece from a square (Source of truth: Bitboards).
+    let tryGetPiece (b: Board) (sq: Square) = BitboardSet.getPieceAt sq b.Bitboards
 
-    /// Sets a piece on a square.
+    /// Checks if a square is occupied (Source of truth: Bitboards).
+    let isOccupied (b: Board) (sq: Square) =
+        (b.Bitboards.Occupancy &&& (1uL <<< sq)) <> 0uL
+
+    /// Find the king square (Needed for check detection).
+    let findKing (colour: Colour) (b: Board) =
+        let mutable bb =
+            if colour = White then
+                b.Bitboards.WhiteKings
+            else
+                b.Bitboards.BlackKings
+
+        if bb = 0uL then -1 else Bitboard.popLsb &bb
+
+    /// Sets a piece on a square and updates bitboards (Source of truth: Bitboards).
     let setPiece (b: Board) (sq: Square) (pOpt: Piece option) =
+        let mutable newBbs = b.Bitboards
+
+        // 1. If there's already a piece at this square, we must toggle it OFF first
+        match BitboardSet.getPieceAt sq b.Bitboards with
+        | Some oldPiece -> newBbs <- BitboardSet.togglePiece oldPiece sq newBbs
+        | None -> ()
+
+        // 2. If we are setting a new piece, toggle it ON
         match pOpt with
-        | Some p -> { b with Pieces = b.Pieces.Add(sq, p) }
-        | None -> { b with Pieces = b.Pieces.Remove sq }
+        | Some p -> newBbs <- BitboardSet.togglePiece p sq newBbs
+        | None -> ()
+
+        // 3. Keep the map in sync for the moment
+        let newPieces =
+            match pOpt with
+            | Some p -> b.Pieces.Add(sq, p)
+            | None -> b.Pieces.Remove sq
+
+        { b with
+            Pieces = newPieces
+            Bitboards = newBbs }
 
     /// Parses a FEN string and returns a Board record representing the position.
     let fromFen (fen: string) =
@@ -625,16 +767,24 @@ module Board =
                     pieces <- pieces.Add(sq, Piece.fromChar char)
                     file.Value <- file.Value + 1
 
-        { Pieces = pieces
-          SideToMove = Colour.fromChar parts.[1].[0]
-          CastlingRights = CastlingRights.fromString parts.[2]
-          EnPassantSquare =
-            if parts.[3] = "-" then
-                None
-            else
-                Some(Square.fromString parts.[3])
-          HalfmoveClock = int parts.[4]
-          FullmoveNumber = int parts.[5] }
+        let b =
+            { Pieces = pieces
+              Bitboards = BitboardSet.empty
+              SideToMove = Colour.fromChar parts.[1].[0]
+              CastlingRights = CastlingRights.fromString parts.[2]
+              EnPassantSquare =
+                if parts.[3] = "-" then
+                    None
+                else
+                    Some(Square.fromString parts.[3])
+              HalfmoveClock = int parts.[4]
+              FullmoveNumber = int parts.[5] }
+
+        let finalB =
+            { b with
+                Bitboards = BitboardSet.fromMap b.Pieces }
+
+        finalB
 
     /// Converts a Board record to its FEN string representation.
     let toFen (b: Board) =
@@ -762,47 +912,65 @@ module Board =
     /// <param name="m">The validated move to apply.</param>
     /// <param name="b">The current game state.</param>
     /// <returns>A new Board record reflecting the post-move state.</returns>
+    /// <summary>
+    /// Executes a move, updating both Bitboards and the Piece Map.
+    /// This is the final step before the Map is removed entirely.
+    /// </summary>
     let applyMove (m: Move) (b: Board) =
-        match b.Pieces |> Map.tryFind m.From with
+        match tryGetPiece b m.From with
         | None -> b
         | Some piece ->
             let us, them = b.SideToMove, Colour.opposite b.SideToMove
-            let mutable newPieces = b.Pieces.Remove(m.From)
+            let mutable newBbs = b.Bitboards
+            let mutable newPieces = b.Pieces
 
+            // 1. Remove moving piece from source
+            newBbs <- BitboardSet.togglePiece piece m.From newBbs
+            newPieces <- newPieces.Remove(m.From)
+
+            // 2. Handle standard capture at destination square
+            match tryGetPiece b m.To with
+            | Some victim ->
+                newBbs <- BitboardSet.togglePiece victim m.To newBbs
+                newPieces <- newPieces.Remove(m.To)
+            | None -> ()
+
+            // 3. Handle Special Move Kinds (En Passant and Castling)
+            match m.Kind with
+            | EnPassant ->
+                let capturedSq = if us = White then m.To - 8 else m.To + 8
+                let epVictim = { Colour = them; Kind = Pawn }
+                newBbs <- BitboardSet.togglePiece epVictim capturedSq newBbs
+                newPieces <- newPieces.Remove(capturedSq)
+            | CastleKingSide ->
+                let rR = if us = White then Rank.R1 else Rank.R8
+                let rF, rT = Square.ofFileRank File.H rR, Square.ofFileRank File.F rR
+                let rook = { Colour = us; Kind = Rook }
+                newBbs <- BitboardSet.togglePiece rook rF newBbs
+                newBbs <- BitboardSet.togglePiece rook rT newBbs
+                newPieces <- newPieces.Remove(rF).Add(rT, rook)
+            | CastleQueenSide ->
+                let rR = if us = White then Rank.R1 else Rank.R8
+                let rF, rT = Square.ofFileRank File.A rR, Square.ofFileRank File.D rR
+                let rook = { Colour = us; Kind = Rook }
+                newBbs <- BitboardSet.togglePiece rook rF newBbs
+                newBbs <- BitboardSet.togglePiece rook rT newBbs
+                newPieces <- newPieces.Remove(rF).Add(rT, rook)
+            | _ -> ()
+
+            // 4. Place the piece at the destination (handling promotion)
             let pieceToPlace =
                 match m.Kind with
                 | Promotion pt -> { Colour = us; Kind = pt }
                 | _ -> piece
 
-            match m.Kind with
-            | EnPassant ->
-                let capturedSq =
-                    if us = White then
-                        Square.ofFileRank (Square.file m.To) (Rank.fromInt (Rank.toInt (Square.rank m.To) - 1))
-                    else
-                        Square.ofFileRank (Square.file m.To) (Rank.fromInt (Rank.toInt (Square.rank m.To) + 1))
-
-                newPieces <- newPieces.Remove(capturedSq)
-            | CastleKingSide ->
-                let rR = if us = White then Rank.R1 else Rank.R8
-                let rF, rT = Square.ofFileRank File.H rR, Square.ofFileRank File.F rR
-
-                if newPieces.ContainsKey rF then
-                    let rk = newPieces.[rF] in newPieces <- newPieces.Remove(rF).Add(rT, rk)
-            | CastleQueenSide ->
-                let rR = if us = White then Rank.R1 else Rank.R8
-                let rF, rT = Square.ofFileRank File.A rR, Square.ofFileRank File.D rR
-
-                if newPieces.ContainsKey rF then
-                    let rk = newPieces.[rF] in newPieces <- newPieces.Remove(rF).Add(rT, rk)
-            | _ -> ()
-
+            newBbs <- BitboardSet.togglePiece pieceToPlace m.To newBbs
             newPieces <- newPieces.Add(m.To, pieceToPlace)
 
+            // 5. Update Castling Rights
             let updateRights (cr: CastlingRights) =
                 let mutable r = cr
-
-                // King moved
+                // Revoke if King moves
                 if piece.Kind = King then
                     if us = White then
                         r <-
@@ -815,7 +983,7 @@ module Board =
                                 BlackKingSide = false
                                 BlackQueenSide = false }
 
-                // Rook moved from its home square
+                // Helper to revoke if a specific corner square is involved (move or capture)
                 let revokeForSquare sq cur =
                     match Square.file sq, Square.rank sq with
                     | File.A, Rank.R1 -> { cur with WhiteQueenSide = false }
@@ -824,15 +992,11 @@ module Board =
                     | File.H, Rank.R8 -> { cur with BlackKingSide = false }
                     | _ -> cur
 
-                r <- revokeForSquare m.From r
-
-                // Rook captured on its home square
-                match b.Pieces.TryFind m.To with
-                | Some captured when captured.Kind = Rook -> r <- revokeForSquare m.To r
-                | _ -> ()
-
+                r <- revokeForSquare m.From r // Moved from corner
+                r <- revokeForSquare m.To r // Rook captured in corner
                 r
 
+            // 6. Set En Passant target square
             let nextEp =
                 if
                     piece.Kind = Pawn
@@ -844,11 +1008,12 @@ module Board =
 
             { b with
                 Pieces = newPieces
+                Bitboards = newBbs
                 SideToMove = them
                 CastlingRights = updateRights b.CastlingRights
                 EnPassantSquare = nextEp
                 HalfmoveClock =
-                    if piece.Kind = Pawn || b.Pieces.ContainsKey m.To then
+                    if piece.Kind = Pawn || isOccupied b m.To then
                         0
                     else
                         b.HalfmoveClock + 1
@@ -1117,7 +1282,7 @@ module San =
 // --- STAGE 2.1: EVALUATION ---
 
 module Evaluation =
-    
+
     /// Assigns a base value to each piece type for evaluation purposes.
     let pieceValue =
         function
@@ -1132,84 +1297,421 @@ module Evaluation =
     // and then reversed so that index 0 = a1.
 
     /// The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let pawnPst = Array.rev [|
-        0;  0;  0;  0;  0;  0;  0;  0
-        50; 50; 50; 50; 50; 50; 50; 50
-        10; 10; 20; 30; 30; 20; 10; 10
-        5;  5; 10; 25; 25; 10;  5;  5
-        0;  0;  0; 20; 20;  0;  0;  0
-        5; -5;-10;  0;  0;-10; -5;  5
-        5; 10; 10;-20;-20; 10; 10;  5
-        0;  0;  0;  0;  0;  0;  0;  0
-    |] 
+    let pawnPst =
+        Array.rev
+            [| 0
+               0
+               0
+               0
+               0
+               0
+               0
+               0
+               50
+               50
+               50
+               50
+               50
+               50
+               50
+               50
+               10
+               10
+               20
+               30
+               30
+               20
+               10
+               10
+               5
+               5
+               10
+               25
+               25
+               10
+               5
+               5
+               0
+               0
+               0
+               20
+               20
+               0
+               0
+               0
+               5
+               -5
+               -10
+               0
+               0
+               -10
+               -5
+               5
+               5
+               10
+               10
+               -20
+               -20
+               10
+               10
+               5
+               0
+               0
+               0
+               0
+               0
+               0
+               0
+               0 |]
 
     /// The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let knightPst = Array.rev [|
-        -50;-40;-30;-30;-30;-30;-40;-50
-        -40;-20;  0;  5;  5;  0;-20;-40
-        -30;  5; 10; 15; 15; 10;  5;-30
-        -30;  0; 15; 20; 20; 15;  0;-30
-        -30;  5; 15; 20; 20; 15;  5;-30
-        -30;  0; 10; 15; 15; 10;  0;-30
-        -40;-20;  0;  0;  0;  0;-20;-40
-        -50;-40;-30;-30;-30;-30;-40;-50
-    |] 
+    let knightPst =
+        Array.rev
+            [| -50
+               -40
+               -30
+               -30
+               -30
+               -30
+               -40
+               -50
+               -40
+               -20
+               0
+               5
+               5
+               0
+               -20
+               -40
+               -30
+               5
+               10
+               15
+               15
+               10
+               5
+               -30
+               -30
+               0
+               15
+               20
+               20
+               15
+               0
+               -30
+               -30
+               5
+               15
+               20
+               20
+               15
+               5
+               -30
+               -30
+               0
+               10
+               15
+               15
+               10
+               0
+               -30
+               -40
+               -20
+               0
+               0
+               0
+               0
+               -20
+               -40
+               -50
+               -40
+               -30
+               -30
+               -30
+               -30
+               -40
+               -50 |]
 
     /// The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let bishopPst = Array.rev [|
-        -20;-10;-10;-10;-10;-10;-10;-20
-        -10;  0;  0;  0;  0;  0;  0;-10
-        -10;  0;  5; 10; 10;  5;  0;-10
-        -10;  5;  5; 10; 10;  5;  5;-10
-        -10;  0; 10; 10; 10; 10;  0;-10
-        -10; 10; 10; 10; 10; 10; 10;-10
-        -10;  5;  0;  0;  0;  0;  5;-10
-        -20;-10;-10;-10;-10;-10;-10;-20
-    |] 
+    let bishopPst =
+        Array.rev
+            [| -20
+               -10
+               -10
+               -10
+               -10
+               -10
+               -10
+               -20
+               -10
+               0
+               0
+               0
+               0
+               0
+               0
+               -10
+               -10
+               0
+               5
+               10
+               10
+               5
+               0
+               -10
+               -10
+               5
+               5
+               10
+               10
+               5
+               5
+               -10
+               -10
+               0
+               10
+               10
+               10
+               10
+               0
+               -10
+               -10
+               10
+               10
+               10
+               10
+               10
+               10
+               -10
+               -10
+               5
+               0
+               0
+               0
+               0
+               5
+               -10
+               -20
+               -10
+               -10
+               -10
+               -10
+               -10
+               -10
+               -20 |]
 
-    
+
     /// The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let rookPst = Array.rev [|
-        0;  0;  0;  0;  0;  0;  0;  0
-        5; 10; 10; 10; 10; 10; 10;  5
-        -5;  0;  0;  0;  0;  0;  0; -5
-        -5;  0;  0;  0;  0;  0;  0; -5
-        -5;  0;  0;  0;  0;  0;  0; -5
-        -5;  0;  0;  0;  0;  0;  0; -5
-        -5;  0;  0;  0;  0;  0;  0; -5
-        0;  0;  0;  5;  5;  0;  0;  0
-    |] 
+    let rookPst =
+        Array.rev
+            [| 0
+               0
+               0
+               0
+               0
+               0
+               0
+               0
+               5
+               10
+               10
+               10
+               10
+               10
+               10
+               5
+               -5
+               0
+               0
+               0
+               0
+               0
+               0
+               -5
+               -5
+               0
+               0
+               0
+               0
+               0
+               0
+               -5
+               -5
+               0
+               0
+               0
+               0
+               0
+               0
+               -5
+               -5
+               0
+               0
+               0
+               0
+               0
+               0
+               -5
+               -5
+               0
+               0
+               0
+               0
+               0
+               0
+               -5
+               0
+               0
+               0
+               5
+               5
+               0
+               0
+               0 |]
 
     /// The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let queenPst = Array.rev [|
-        -20;-10;-10; -5; -5;-10;-10;-20
-        -10;  0;  0;  0;  0;  0;  0;-10
-        -10;  0;  5;  5;  5;  5;  0;-10
-        -5;  0;  5;  5;  5;  5;  0; -5
-        0;  0;  5;  5;  5;  5;  0; -5
-        -10;  5;  5;  5;  5;  5;  0;-10
-        -10;  0;  5;  0;  0;  0;  0;-10
-        -20;-10;-10; -5; -5;-10;-10;-20
-    |]
+    let queenPst =
+        Array.rev
+            [| -20
+               -10
+               -10
+               -5
+               -5
+               -10
+               -10
+               -20
+               -10
+               0
+               0
+               0
+               0
+               0
+               0
+               -10
+               -10
+               0
+               5
+               5
+               5
+               5
+               0
+               -10
+               -5
+               0
+               5
+               5
+               5
+               5
+               0
+               -5
+               0
+               0
+               5
+               5
+               5
+               5
+               0
+               -5
+               -10
+               5
+               5
+               5
+               5
+               5
+               0
+               -10
+               -10
+               0
+               5
+               0
+               0
+               0
+               0
+               -10
+               -20
+               -10
+               -10
+               -5
+               -5
+               -10
+               -10
+               -20 |]
 
     /// The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let kingPst = Array.rev [|
-        -30;-40;-40;-50;-50;-40;-40;-30
-        -30;-40;-40;-50;-50;-40;-40;-30
-        -30;-40;-40;-50;-50;-40;-40;-30
-        -30;-40;-40;-50;-50;-40;-40;-30
-        -20;-30;-30;-40;-40;-30;-30;-20
-        -10;-20;-20;-20;-20;-20;-20;-10
-        20; 20;  0;  0;  0;  0; 20; 20
-        20; 30; 10;  0;  0; 10; 30; 20
-    |]
+    let kingPst =
+        Array.rev
+            [| -30
+               -40
+               -40
+               -50
+               -50
+               -40
+               -40
+               -30
+               -30
+               -40
+               -40
+               -50
+               -50
+               -40
+               -40
+               -30
+               -30
+               -40
+               -40
+               -50
+               -50
+               -40
+               -40
+               -30
+               -30
+               -40
+               -40
+               -50
+               -50
+               -40
+               -40
+               -30
+               -20
+               -30
+               -30
+               -40
+               -40
+               -30
+               -30
+               -20
+               -10
+               -20
+               -20
+               -20
+               -20
+               -20
+               -20
+               -10
+               20
+               20
+               0
+               0
+               0
+               0
+               20
+               20
+               20
+               30
+               10
+               0
+               0
+               10
+               30
+               20 |]
 
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
         let mutable score = 0
+
         for (KeyValue(sq, p)) in b.Pieces do
             let baseVal = pieceValue p.Kind
-            
+
             // Mirror logic: sq ^^^ 56 flips the rank for Black
             let pstIndex = if p.Colour = White then sq else sq ^^^ 56
 
@@ -1226,6 +1728,7 @@ module Evaluation =
                 score <- score + baseVal + pstBonus
             else
                 score <- score - (baseVal + pstBonus)
+
         score
 // --- STAGE 2.2: SEARCH FRAMEWORK ---
 
@@ -1237,64 +1740,79 @@ module Search =
     /// Quiescence search: plays out all captures until the position is stable.
     let rec quiesce (b: Board) (alpha: int) (beta: int) (ct: CancellationToken) : int =
         // Every few nodes, check if we should stop
-        if ct.IsCancellationRequested then alpha 
+        if ct.IsCancellationRequested then
+            alpha
         else
             let sideMult = if b.SideToMove = White then 1 else -1
             let standPat = Evaluation.evaluate b * sideMult
-            
-            if standPat >= beta then beta
+
+            if standPat >= beta then
+                beta
             else
                 let mutable currentAlpha = Math.Max(alpha, standPat)
-                let captures = 
-                    MoveGen.getLegalMoves b 
-                    |> Array.filter (fun m -> 
-                        match m.Kind with 
-                        | Capture | EnPassant | Promotion _ -> true 
+
+                let captures =
+                    MoveGen.getLegalMoves b
+                    |> Array.filter (fun m ->
+                        match m.Kind with
+                        | Capture
+                        | EnPassant
+                        | Promotion _ -> true
                         | _ -> false)
-                    
+
                 let mutable i = 0
                 let mutable exitLoop = false
+
                 while i < captures.Length && not exitLoop do
                     // Pass the token down
                     let score = -quiesce (Board.applyMove captures.[i] b) (-beta) (-currentAlpha) ct
-                    
+
                     if score >= beta then
                         currentAlpha <- beta
                         exitLoop <- true
                     else
                         if score > currentAlpha then
                             currentAlpha <- score
+
                         i <- i + 1
+
                 currentAlpha
- 
-     /// Negamax search with alpha-beta pruning.
+
+    /// Negamax search with alpha-beta pruning.
     let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL // Increment on every call
         // Check for "stop" command
-        if ct.IsCancellationRequested then (0, None)
+        if ct.IsCancellationRequested then
+            (0, None)
         elif depth = 0 then
             (quiesce b alpha beta ct, None)
         else
             let moves = MoveGen.getLegalMoves b
+
             if moves.Length = 0 then
-                if Board.isInCheck b then (-MATE_VALUE - depth, None)
-                else (0, None)
+                if Board.isInCheck b then
+                    (-MATE_VALUE - depth, None)
+                else
+                    (0, None)
             else
                 let mutable bestScore = -INF
                 let mutable bestMove = None
                 let mutable currentAlpha = alpha
-                
-                let sortedMoves = 
-                    moves |> Array.sortByDescending (fun m -> 
-                        match m.Kind with 
-                        | Capture | EnPassant -> 100
+
+                let sortedMoves =
+                    moves
+                    |> Array.sortByDescending (fun m ->
+                        match m.Kind with
+                        | Capture
+                        | EnPassant -> 100
                         | Promotion _ -> 90
                         | _ -> 0)
 
                 let mutable i = 0
                 let mutable exitLoop = false
+
                 while i < sortedMoves.Length && not exitLoop do
-                    if ct.IsCancellationRequested then 
+                    if ct.IsCancellationRequested then
                         exitLoop <- true
                     else
                         let m = sortedMoves.[i]
@@ -1306,44 +1824,53 @@ module Search =
                             bestMove <- Some m
 
                         currentAlpha <- Math.Max(currentAlpha, bestScore)
-                        if currentAlpha >= beta then exitLoop <- true
-                        else i <- i + 1
+
+                        if currentAlpha >= beta then
+                            exitLoop <- true
+                        else
+                            i <- i + 1
 
                 (bestScore, bestMove)
 
     /// Iterative Deepening
-    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) = async {
-        // This explicitly tells F# to move this work to a background thread
-        do! Async.SwitchToThreadPool() 
-        
-        nodes <- 0uL
-        let sw = Diagnostics.Stopwatch.StartNew()
-        let mutable absoluteBestMove = None
-        let mutable d = 1
-        
-        // Iterative Deepening Loop
-        while d <= maxDepth && not ct.IsCancellationRequested do
-            let score, moveOpt = negamax b d -INF INF ct
-            
-            if not ct.IsCancellationRequested then
-                let elapsed = sw.Elapsed.TotalSeconds
-                let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
-                match moveOpt with
-                | Some m -> 
-                    absoluteBestMove <- Some m
-                    // Added 'nodes' and 'nps' for CuteChess to read
-                    printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
-                | None -> ()
-            // SIMPLE TIME MANAGEMENT: 
-            // If we've used more than 60% of our allotted time, don't start the next depth
-            if sw.ElapsedMilliseconds > int64 (targetTimeMs / 2) then
-                d <- maxDepth + 1 // Exit loop
-            else
-                d <- d + 1
-            
-        return absoluteBestMove
-    }    
-    
+    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) =
+        async {
+            // This explicitly tells F# to move this work to a background thread
+            do! Async.SwitchToThreadPool()
+
+            nodes <- 0uL
+            let sw = Diagnostics.Stopwatch.StartNew()
+            let mutable absoluteBestMove = None
+            let mutable d = 1
+
+            // Iterative Deepening Loop
+            while d <= maxDepth && not ct.IsCancellationRequested do
+                let score, moveOpt = negamax b d -INF INF ct
+
+                if not ct.IsCancellationRequested then
+                    let elapsed = sw.Elapsed.TotalSeconds
+
+                    let nps =
+                        if elapsed > 0.001 then
+                            uint64 (float nodes / elapsed)
+                        else
+                            0uL
+
+                    match moveOpt with
+                    | Some m ->
+                        absoluteBestMove <- Some m
+                        // Added 'nodes' and 'nps' for CuteChess to read
+                        printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
+                    | None -> ()
+                // SIMPLE TIME MANAGEMENT:
+                // If we've used more than 60% of our allotted time, don't start the next depth
+                if sw.ElapsedMilliseconds > int64 (targetTimeMs / 2) then
+                    d <- maxDepth + 1 // Exit loop
+                else
+                    d <- d + 1
+
+            return absoluteBestMove
+        }
 
 // --- PERFT, DEBUG& UCI ---
 
