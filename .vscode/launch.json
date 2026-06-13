@@ -6,10 +6,11 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Floundroid/bin/Debug/net10.0/Floundroid.dll",
+            "program": "${workspaceFolder}/Floundroid/bin/Debug/net10.0/win-x64/Floundroid.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Floundroid",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "requireExactSource": false
         },
         {
             "name": "Run Published Engine (Fastest)",

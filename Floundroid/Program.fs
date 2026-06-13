@@ -163,6 +163,49 @@ module Square =
     /// Checks if a square is on the board.
     let isOnBoard (f: int) (r: int) = f >= 0 && f < 8 && r >= 0 && r < 8
 
+/// Bitboards are 64-bit unsigned integers where each bit represents a square.
+/// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
+type Bitboard = uint64
+
+module Bitboard =
+    let empty: Bitboard = 0uL
+    let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
+
+    /// Sets the bit at the given square.
+    let inline set (sq: Square) (bb: Bitboard) : Bitboard = 
+        bb ||| (1uL <<< sq)
+
+    /// Clears the bit at the given square.
+    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = 
+        bb &&& ~~~(1uL <<< sq)
+
+    /// Checks if a square is set.
+    let inline contains (sq: Square) (bb: Bitboard) : bool = 
+        (bb &&& (1uL <<< sq)) <> 0uL
+
+    /// Returns the number of set bits (population count).
+    let inline count (bb: Bitboard) : int = 
+        System.Numerics.BitOperations.PopCount(bb)
+
+    /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
+    /// This is a high-performance way to iterate through pieces.
+    let inline popLsb (bb: byref<Bitboard>) : Square =
+        let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
+        bb <- bb &&& (bb - 1uL)
+        lsb
+
+    /// Visualizes the bitboard as an 8x8 grid for debugging.
+    let toString (bb: Bitboard) =
+        let sb = StringBuilder()
+        for r in 7 .. -1 .. 0 do
+            sb.Append(sprintf "%d " (r + 1)) |> ignore
+            for f in 0..7 do
+                let sq = r * 8 + f
+                sb.Append(if contains sq bb then "1 " else ". ") |> ignore
+            sb.Append("\n") |> ignore
+        sb.Append("  a b c d e f g h").ToString()
+
+
 type PieceType =
     | Pawn
     | Knight
@@ -1366,37 +1409,51 @@ module UciLoop =
                     | None -> ()
             | "go" :: rest ->
                 // Basic Time Management Logic
-                let wtime = rest |> List.tryFindIndex (fun s -> s = "wtime") |> Option.map (fun i -> int rest.[i+1]) |> Option.defaultValue 100000
-                let btime = rest |> List.tryFindIndex (fun s -> s = "btime") |> Option.map (fun i -> int rest.[i+1]) |> Option.defaultValue 100000
-                
+                let wtime =
+                    rest
+                    |> List.tryFindIndex (fun s -> s = "wtime")
+                    |> Option.map (fun i -> int rest.[i + 1])
+                    |> Option.defaultValue 100000
+
+                let btime =
+                    rest
+                    |> List.tryFindIndex (fun s -> s = "btime")
+                    |> Option.map (fun i -> int rest.[i + 1])
+                    |> Option.defaultValue 100000
+
                 // Simple rule: Spend 1/20th of remaining time on this move
                 let myTime = if board.SideToMove = White then wtime else btime
-                let targetTime = myTime / 20 
+                let targetTime = myTime / 20
                 // Cancel any existing search just in case
                 searchCts.Cancel()
                 searchCts <- new CancellationTokenSource()
                 let token = searchCts.Token
-                
+
                 // UCI Parser for 'depth'
                 let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
-                let depth = 
-                    match depthIdx with 
-                    | Some i when i < rest.Length - 1 -> 
-                        match Int32.TryParse(rest.[i+1]) with
+
+                let depth =
+                    match depthIdx with
+                    | Some i when i < rest.Length - 1 ->
+                        match Int32.TryParse(rest.[i + 1]) with
                         | true, d -> d
                         | _ -> 4 // Default depth if parsing fails
                     | _ -> 4 // Default depth if 'depth' not specified
 
                 // Start the search in the background
-                Async.Start(async {
-                    let! result = Search.findBestMove board 20 targetTime searchCts.Token
-                    match result with
-                    | Some m -> printfn "bestmove %s" (Move.toUci m)
-                    | None -> 
-                        // If we have no move (e.g. cancelled at depth 0), 
-                        // we should still try to find something or print nothing safely
-                        ()
-                }, token)
+                Async.Start(
+                    async {
+                        let! result = Search.findBestMove board 20 targetTime searchCts.Token
+
+                        match result with
+                        | Some m -> printfn "bestmove %s" (Move.toUci m)
+                        | None ->
+                            // If we have no move (e.g. cancelled at depth 0),
+                            // we should still try to find something or print nothing safely
+                            ()
+                    },
+                    token
+                )
 
             | "perft" :: rest ->
                 match rest with
@@ -1419,9 +1476,15 @@ module UciLoop =
             | "verify" :: _ -> Debug.verify board
             | "attacks" :: "white" :: _ -> Debug.displayAttackMap board White
             | "attacks" :: "black" :: _ -> Debug.displayAttackMap board Black
-            | "stop" :: _ ->
-                searchCts.Cancel() // This tells the search to die
-            | "quit" :: _ -> 
+            | "testbb" :: _ ->
+                let mutable bb = Bitboard.empty
+                bb <- Bitboard.set (Square.fromString "e4") bb
+                bb <- Bitboard.set (Square.fromString "d5") bb
+                printfn "Bitboard counts: %d" (Bitboard.count bb)
+                printfn "%s" (Bitboard.toString bb)
+
+            | "stop" :: _ -> searchCts.Cancel() // This tells the search to die
+            | "quit" :: _ ->
                 searchCts.Cancel()
                 Environment.Exit(0)
             | _ -> ()

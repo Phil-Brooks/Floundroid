@@ -628,3 +628,32 @@ module SearchTests =
         let score, _ = 
             Search.negamax b 2 -Search.INF Search.INF System.Threading.CancellationToken.None
         Assert.Equal(0, score)
+
+module BitboardTests =
+
+    [<Fact>]
+    let ``Bitboard set and contains works`` () =
+        let sq = Square.fromString "e4"
+        let bb = Bitboard.empty |> Bitboard.set sq
+        Assert.True(Bitboard.contains sq bb)
+        Assert.False(Bitboard.contains (Square.fromString "e5") bb)
+
+    [<Fact>]
+    let ``Bitboard count works`` () =
+        let bb = Bitboard.empty 
+                 |> Bitboard.set (Square.fromString "a1")
+                 |> Bitboard.set (Square.fromString "h8")
+        Assert.Equal(2, Bitboard.count bb)
+
+    [<Fact>]
+    let ``Bitboard popLsb iterates and clears bits`` () =
+        let mutable bb = Bitboard.empty 
+                         |> Bitboard.set (Square.fromString "c3")
+                         |> Bitboard.set (Square.fromString "f6")
+        
+        let first = Bitboard.popLsb &bb
+        let second = Bitboard.popLsb &bb
+        
+        Assert.Equal(Square.fromString "c3", first)
+        Assert.Equal(Square.fromString "f6", second)
+        Assert.Equal(0uL, bb) // Should be empty now        
