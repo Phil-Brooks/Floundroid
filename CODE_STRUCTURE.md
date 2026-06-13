@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 12/06/2026 11:17:25
+Generated on: 13/06/2026 11:10:21
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -7,6 +7,7 @@ Generated on: 12/06/2026 11:17:25
 - [File](#-module-file)
 - [Rank](#-module-rank)
 - [Square](#-module-square)
+- [Bitboard](#-module-bitboard)
 - [PieceType](#-module-piecetype)
 - [Piece](#-module-piece)
 - [CastlingRights](#-module-castlingrights)
@@ -71,6 +72,26 @@ Generated on: 12/06/2026 11:17:25
     - *Converts a Square to its string representation.*
 - **fn** `fromString`
     - *Converts a string representation of a square (e.g., "d4") to a Square.*
+
+#### 🧩 `type Bitboard = uint64`
+> Bitboards are 64-bit unsigned integers where each bit represents a square.
+> Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
+
+## 📦 module Bitboard
+---
+- **fn** `inline`
+    - *Sets the bit at the given square.*
+- **fn** `inline`
+    - *Clears the bit at the given square.*
+- **fn** `inline`
+    - *Checks if a square is set.*
+- **fn** `inline`
+    - *Returns the number of set bits (population count).*
+- **fn** `inline`
+    - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
+    - *This is a high-performance way to iterate through pieces.*
+- **fn** `toString`
+    - *Visualizes the bitboard as an 8x8 grid for debugging.*
 
 #### 🧩 `type PieceType =`
 
@@ -173,8 +194,6 @@ Generated on: 12/06/2026 11:17:25
     - *Quiescence search: plays out all captures until the position is stable.*
 - **fn** `negamax`
     - *Negamax search with alpha-beta pruning.*
-- **fn** `findBestMove`
-    - *Iterative Deepening*
 
 #### 🧩 `type PerftSuiteItem =`
 > Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
