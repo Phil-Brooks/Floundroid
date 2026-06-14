@@ -759,11 +759,12 @@ module SlidingAttackTests =
         Assert.True(Bitboard.contains (Square.fromString "e5") mask)
 
     [<Fact>]
-    let ``Magic initialization matches slow reference for first 4 squares`` () =
-        // 1. Initialize the tables
+    let ``Table initialization matches slow reference for first 4 squares`` () =
+        // 1. Initialize the tables (leapers + sliding)
+        // This is usually done in the engine startup, but we call it here for the test
         Magic.init()
         
-        // 2. Test a1 (Square 0) Rook with some random blockers
+        // 2. Test a1 (Square 0) Rook with specific blockers
         let a1 = 0
         let entry = Magic.rookEntries.[a1]
         
@@ -771,8 +772,25 @@ module SlidingAttackTests =
         let blockers = (1uL <<< Square.fromString "a3") ||| (1uL <<< Square.fromString "d1")
         let slowResult = SlidingAttackGen.rookAttacks a1 blockers
         
-        // 3. Fast Lookup
-        let hash = ((blockers &&& entry.Mask) * entry.Magic) >>> entry.Shift
-        let fastResult = Magic.attackTable.[entry.Offset + int hash]
+        // 3. Fast Lookup using the new getIndex logic
+        let index = Magic.getIndex blockers entry.Mask
+        let fastResult = Magic.rookTable.[entry.Offset + index]
         
         Assert.Equal(slowResult, fastResult)
+
+    [<Fact>]
+    let ``Bishop table lookup matches slow reference for center square`` () =
+        Magic.init()
+        let d4 = Square.fromString "d4"
+        let entry = Magic.bishopEntries.[d4]
+        
+        // Blocker on e5
+        let blockers = (1uL <<< Square.fromString "e5")
+        let slowResult = SlidingAttackGen.bishopAttacks d4 blockers
+        
+        let index = Magic.getIndex blockers entry.Mask
+        let fastResult = Magic.bishopTable.[entry.Offset + index]
+        
+        Assert.Equal(slowResult, fastResult)    
+    
+   
