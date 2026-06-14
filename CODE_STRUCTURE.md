@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 13/06/2026 15:21:18
+Generated on: 14/06/2026 14:32:05
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -13,6 +13,8 @@ Generated on: 13/06/2026 15:21:18
 - [CastlingRights](#-module-castlingrights)
 - [Move](#-module-move)
 - [BitboardSet](#-module-bitboardset)
+- [SlidingAttackGen](#-module-slidingattackgen)
+- [Magic](#-module-magic)
 - [BitboardGen](#-module-bitboardgen)
 - [Attack](#-module-attack)
 - [Board](#-module-board)
@@ -146,6 +148,31 @@ Generated on: 13/06/2026 15:21:18
     - *A helper to flip a piece on/off. Essential for incremental updates.*
 - **fn** `allPieces`
     - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
+
+## 📦 module SlidingAttackGen
+---
+- **fn** `bishopAttacks`
+    - *Generates a bitboard of all squares a Bishop attacks from a given square,*
+    - *accounting for blockers. This is the "slow" version used for table init.*
+- **fn** `rookAttacks`
+    - *Generates a bitboard of all squares a Rook attacks from a given square,*
+    - *accounting for blockers. This is the "slow" version used for table init.*
+- **fn** `bishopMask`
+    - *The "Mask" for Magic Bitboards: This excludes the very last square*
+    - *on the edge of the board for every ray, because a blocker on the*
+    - *edge doesn't change the attack bitboard.*
+- **fn** `rookMask`
+
+## 📦 module Magic
+---
+
+#### 🧩 `type MagicEntry = { Mask: Bitboard; Offset: int }`
+- **fn** `getIndex`
+    - *This maps an occupancy bitboard to a unique index from 0 to 2^bits-1*
+    - *It is essentially a manual "PEXT" instruction.*
+- **fn** `private`
+    - *Generates every possible blocker pattern for a mask (reverse of getIndex)*
+- **fn** `init`
 
 ## 📦 module BitboardGen
 ---

@@ -620,6 +620,7 @@ module SlidingAttackGen =
         mask
 
 module Magic =
+    /// Represents a magic entry for a square, containing the mask and the offset into the attack table.
     type MagicEntry = { Mask: Bitboard; Offset: int }
 
     // Table size: 64 squares * 4096 max patterns per square = 262,144 entries
@@ -654,6 +655,7 @@ module Magic =
                 blockers <- blockers ||| (1uL <<< bitIdx)
         blockers
 
+    /// Initializes the sliding attack tables for bishops and rooks.
     let init () =
         printfn "info string Initializing Sliding Attack Tables..."
         for sq in 0 .. 63 do
