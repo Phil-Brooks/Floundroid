@@ -821,3 +821,54 @@ module ZobristTests =
         Assert.NotEqual(keyNone, keyWK)
         Assert.NotEqual(keyWK, keyBK)
         Assert.NotEqual(keyNone, keyBK)   
+
+module HashTests =
+
+    [<Fact>]
+    let ``Incremental hash matches full hash after quiet move`` () =
+        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        
+        // Nf3 (Quiet move from g1 to f3)
+        let m = { From = 6; To = 21; Kind = Quiet }
+        let b2 = Board.applyMove m b1
+        
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash handles piece captures correctly`` () =
+        // e4, then Black plays d5, then White captures exd5
+        let b1 = Board.fromFen "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
+        let capture = { From = 28; To = 35; Kind = Capture }
+        
+        let b2 = Board.applyMove capture b1
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash handles promotion correctly`` () =
+        // Pawn on a7 about to promote on a8
+        let b1 = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
+        let prom = { From = 48; To = 56; Kind = Promotion PieceType.Queen }
+        
+        let b2 = Board.applyMove prom b1
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash remains same after repetition of moves`` () =
+        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        
+        // Knight moves out and back
+        let m1 = { From = 1; To = 18; Kind = Quiet } // Nb1-c3
+        let m2 = { From = 18; To = 1; Kind = Quiet } // Nc3-b1
+        
+        // Black does the same to keep the turn cycle correct
+        let m3 = { From = 62; To = 45; Kind = Quiet } // Ng8-f6
+        let m4 = { From = 45; To = 62; Kind = Quiet } // Nf6-g8
+        
+        let bFinal = b1 
+                     |> Board.applyMove m1 |> Board.applyMove m3 
+                     |> Board.applyMove m2 |> Board.applyMove m4
+        
+        Assert.Equal(b1.Hash, bFinal.Hash)

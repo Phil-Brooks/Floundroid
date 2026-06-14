@@ -758,7 +758,8 @@ type Board =
       CastlingRights: CastlingRights
       EnPassantSquare: Square option
       HalfmoveClock: int
-      FullmoveNumber: int }
+      FullmoveNumber: int
+      Hash: uint64 }
 
 module Attack =
     let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
@@ -871,7 +872,8 @@ module Board =
           CastlingRights = CastlingRights.none
           EnPassantSquare = None
           HalfmoveClock = 0
-          FullmoveNumber = 1 }
+          FullmoveNumber = 1
+          Hash = 0UL }
 
     /// Tries to get a piece from a square (Source of truth: Bitboards).
     let tryGetPiece (b: Board) (sq: Square) = BitboardSet.getPieceAt sq b.Bitboards
@@ -907,6 +909,26 @@ module Board =
         { b with
             Bitboards = newBbs }
 
+    /// Calculates the full Zobrist hash from scratch (Used for FEN initialization)
+    let calculateHash (b: Board) =
+        let mutable h = 0UL
+        
+        // 1. Pieces
+        for (sq, piece) in BitboardSet.allPieces b.Bitboards do
+            h <- h ^^^ (Zobrist.getPieceKey piece sq)
+            
+        // 2. Side to move
+        if b.SideToMove = Colour.Black then
+            h <- h ^^^ Zobrist.Table.SideToMove
+            
+        // 3. Castling rights
+        h <- h ^^^ (Zobrist.getCastlingKey b.CastlingRights)
+        
+        // 4. En Passant
+        h <- h ^^^ (Zobrist.getEnPassantKey b.EnPassantSquare)
+        
+        h    
+    
     /// Parses a FEN string and returns a Board record representing the position.
     let fromFen (fen: string) =
         let parts = fen.Split(' ')
@@ -924,12 +946,15 @@ module Board =
                     bbs <- BitboardSet.togglePiece (Piece.fromChar char) sq bbs
                     file.Value <- file.Value + 1
 
-        { Bitboards = bbs
-          SideToMove = Colour.fromChar parts.[1].[0]
-          CastlingRights = CastlingRights.fromString parts.[2]
-          EnPassantSquare = if parts.[3] = "-" then None else Some(Square.fromString parts.[3])
-          HalfmoveClock = int parts.[4]
-          FullmoveNumber = int parts.[5] }    
+        let boardWithoutHash = 
+            { Bitboards = bbs
+              SideToMove = Colour.fromChar parts.[1].[0]
+              CastlingRights = CastlingRights.fromString parts.[2]
+              EnPassantSquare = if parts.[3] = "-" then None else Some(Square.fromString parts.[3])
+              HalfmoveClock = int parts.[4]
+              FullmoveNumber = int parts.[5]
+              Hash = 0UL } 
+        { boardWithoutHash with Hash = calculateHash boardWithoutHash }
  
     /// Converts a Board record to its FEN string representation.
     let toFen (b: Board) =
@@ -981,103 +1006,114 @@ module Board =
     /// This is the final step before the Map is removed entirely.
     /// </summary>
     let applyMove (m: Move) (b: Board) =
-        match tryGetPiece b m.From with
-        | None -> b
-        | Some piece ->
-            let us, them = b.SideToMove, Colour.opposite b.SideToMove
-            let mutable newBbs = b.Bitboards
-            
-            // 1. Remove moving piece from source
-            newBbs <- BitboardSet.togglePiece piece m.From newBbs
-            
-            // 2. Handle standard capture at destination square
-            match tryGetPiece b m.To with
+        // 1. Initialize variables for the new state
+        let mutable newBitboards = b.Bitboards
+        let mutable newHash = b.Hash
+        let movingPiece = BitboardSet.getPieceAt m.From b.Bitboards |> Option.get
+        let isPawn = movingPiece.Kind = PieceType.Pawn
+        let opponent = Colour.opposite b.SideToMove
+
+        // 2. XOR out old state from Hash (Side, Castling, EP)
+        newHash <- newHash ^^^ Zobrist.Table.SideToMove
+        newHash <- newHash ^^^ (Zobrist.getCastlingKey b.CastlingRights)
+        newHash <- newHash ^^^ (Zobrist.getEnPassantKey b.EnPassantSquare)
+
+        // 3. Remove the moving piece from the source
+        // TogglePiece XORs the bitboard and we XOR the hash
+        newBitboards <- BitboardSet.togglePiece movingPiece m.From newBitboards
+        newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece m.From)
+
+        // 4. Handle Captures (including En Passant)
+        let capturedPieceAtTo = BitboardSet.getPieceAt m.To b.Bitboards
+    
+        match m.Kind with
+        | EnPassant ->
+            let epPawnSq = if b.SideToMove = Colour.White then m.To - 8 else m.To + 8
+            let victimPawn = { Colour = opponent; Kind = PieceType.Pawn }
+            newBitboards <- BitboardSet.togglePiece victimPawn epPawnSq newBitboards
+            newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
+        | _ ->
+            // Normal captures (Quiet, Promotion, or Castling can't capture, but we check 'To' occupancy)
+            match capturedPieceAtTo with
             | Some victim ->
-                newBbs <- BitboardSet.togglePiece victim m.To newBbs
+                newBitboards <- BitboardSet.togglePiece victim m.To newBitboards
+                newHash <- newHash ^^^ (Zobrist.getPieceKey victim m.To)
             | None -> ()
 
-            // 3. Handle Special Move Kinds (En Passant and Castling)
-            match m.Kind with
-            | EnPassant ->
-                let capturedSq = if us = White then m.To - 8 else m.To + 8
-                let epVictim = { Colour = them; Kind = Pawn }
-                newBbs <- BitboardSet.togglePiece epVictim capturedSq newBbs
-            | CastleKingSide ->
-                let rR = if us = White then Rank.R1 else Rank.R8
-                let rF, rT = Square.ofFileRank File.H rR, Square.ofFileRank File.F rR
-                let rook = { Colour = us; Kind = Rook }
-                newBbs <- BitboardSet.togglePiece rook rF newBbs
-                newBbs <- BitboardSet.togglePiece rook rT newBbs
-            | CastleQueenSide ->
-                let rR = if us = White then Rank.R1 else Rank.R8
-                let rF, rT = Square.ofFileRank File.A rR, Square.ofFileRank File.D rR
-                let rook = { Colour = us; Kind = Rook }
-                newBbs <- BitboardSet.togglePiece rook rF newBbs
-                newBbs <- BitboardSet.togglePiece rook rT newBbs
-            | _ -> ()
+        // 5. Place the piece at the destination
+        match m.Kind with
+        | Promotion pType ->
+            let promotedPiece = { Colour = b.SideToMove; Kind = pType }
+            newBitboards <- BitboardSet.togglePiece promotedPiece m.To newBitboards
+            newHash <- newHash ^^^ (Zobrist.getPieceKey promotedPiece m.To)
+        | _ ->
+            newBitboards <- BitboardSet.togglePiece movingPiece m.To newBitboards
+            newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece m.To)
 
-            // 4. Place the piece at the destination (handling promotion)
-            let pieceToPlace =
-                match m.Kind with
-                | Promotion pt -> { Colour = us; Kind = pt }
-                | _ -> piece
+        // 6. Handle Special Rook Moves (Castling)
+        match m.Kind with
+        | CastleKingSide ->
+            let (rSrc, rDst) = if b.SideToMove = Colour.White then (7, 5) else (63, 61)
+            let rook = { Colour = b.SideToMove; Kind = PieceType.Rook }
+            newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
+            newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
+            newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
+        | CastleQueenSide ->
+            let (rSrc, rDst) = if b.SideToMove = Colour.White then (0, 3) else (56, 59)
+            let rook = { Colour = b.SideToMove; Kind = PieceType.Rook }
+            newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
+            newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
+            newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
+        | _ -> ()
 
-            newBbs <- BitboardSet.togglePiece pieceToPlace m.To newBbs
+        // 7. Update Castling Rights
+        // Rights are lost if King moves, or if Rooks move/are captured
+        let mutable newCR = b.CastlingRights
+        if movingPiece.Kind = PieceType.King then
+            if b.SideToMove = Colour.White then
+                newCR <- { newCR with WhiteKingSide = false; WhiteQueenSide = false }
+            else
+                newCR <- { newCR with BlackKingSide = false; BlackQueenSide = false }
             
-            // 5. Update Castling Rights
-            let updateRights (cr: CastlingRights) =
-                let mutable r = cr
-                // Revoke if King moves
-                if piece.Kind = King then
-                    if us = White then
-                        r <-
-                            { r with
-                                WhiteKingSide = false
-                                WhiteQueenSide = false }
-                    else
-                        r <-
-                            { r with
-                                BlackKingSide = false
-                                BlackQueenSide = false }
+        // If a rook moves from its starting square
+        if m.From = 0 then newCR <- { newCR with WhiteQueenSide = false }
+        if m.From = 7 then newCR <- { newCR with WhiteKingSide = false }
+        if m.From = 56 then newCR <- { newCR with BlackQueenSide = false }
+        if m.From = 63 then newCR <- { newCR with BlackKingSide = false }
+    
+        // If a rook is captured on its starting square
+        if m.To = 0 then newCR <- { newCR with WhiteQueenSide = false }
+        if m.To = 7 then newCR <- { newCR with WhiteKingSide = false }
+        if m.To = 56 then newCR <- { newCR with BlackQueenSide = false }
+        if m.To = 63 then newCR <- { newCR with BlackKingSide = false }
 
-                // Helper to revoke if a specific corner square is involved (move or capture)
-                let revokeForSquare sq cur =
-                    match Square.file sq, Square.rank sq with
-                    | File.A, Rank.R1 -> { cur with WhiteQueenSide = false }
-                    | File.H, Rank.R1 -> { cur with WhiteKingSide = false }
-                    | File.A, Rank.R8 -> { cur with BlackQueenSide = false }
-                    | File.H, Rank.R8 -> { cur with BlackKingSide = false }
-                    | _ -> cur
+        // 8. Update En Passant Square
+        // Only set if a pawn moves two squares
+        let newEPSquare =
+            if isPawn && abs (m.To - m.From) = 16 then
+                Some ((m.From + m.To) / 2)
+            else None
 
-                r <- revokeForSquare m.From r // Moved from corner
-                r <- revokeForSquare m.To r // Rook captured in corner
-                r
+        // 9. Update Clocks
+        let newHMClock =
+            if isPawn || capturedPieceAtTo.IsSome then 0
+            else b.HalfmoveClock + 1
+        
+        let newFMNumber =
+            if b.SideToMove = Colour.Black then b.FullmoveNumber + 1
+            else b.FullmoveNumber
 
-            // 6. Set En Passant target square
-            let nextEp =
-                if
-                    piece.Kind = Pawn
-                    && Math.Abs(Rank.toInt (Square.rank m.From) - Rank.toInt (Square.rank m.To)) = 2
-                then
-                    Some(Square.ofFileRank (Square.file m.From) (if us = White then Rank.R3 else Rank.R6))
-                else
-                    None
+        // 10. Finalize Hash (XOR in new Castling and new EP)
+        newHash <- newHash ^^^ (Zobrist.getCastlingKey newCR)
+        newHash <- newHash ^^^ (Zobrist.getEnPassantKey newEPSquare)
 
-            { b with
-                Bitboards = newBbs
-                SideToMove = them
-                CastlingRights = updateRights b.CastlingRights
-                EnPassantSquare = nextEp
-                HalfmoveClock =
-                    if piece.Kind = Pawn || isOccupied b m.To then
-                        0
-                    else
-                        b.HalfmoveClock + 1
-                FullmoveNumber =
-                    if us = Black then
-                        b.FullmoveNumber + 1
-                    else
-                        b.FullmoveNumber }
+        { Bitboards = newBitboards
+          SideToMove = opponent
+          CastlingRights = newCR
+          EnPassantSquare = newEPSquare
+          HalfmoveClock = newHMClock
+          FullmoveNumber = newFMNumber
+          Hash = newHash }
 
     /// Prints the board in a human-readable format.
     let prettyPrint (b: Board) =

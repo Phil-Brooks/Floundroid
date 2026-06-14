@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 14/06/2026 18:31:24
+Generated on: 14/06/2026 18:56:24
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -211,6 +211,8 @@ Generated on: 14/06/2026 18:31:24
     - *Find the king square (Needed for check detection).*
 - **fn** `setPiece`
     - *Sets a piece on a square and updates bitboards (Source of truth: Bitboards).*
+- **fn** `calculateHash`
+    - *Calculates the full Zobrist hash from scratch (Used for FEN initialization)*
 - **fn** `fromFen`
     - *Parses a FEN string and returns a Board record representing the position.*
 - **fn** `toFen`

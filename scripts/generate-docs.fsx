@@ -2,7 +2,7 @@ open System
 open System.IO
 
 let sourceFile = @"D:\Github\Floundroid\Floundroid\Program.fs" // Ensure this matches your filename
-let outputFile = "CODE_STRUCTURE.md"
+let outputFile = @"D:\Github\Floundroid\CODE_STRUCTURE.md"
 
 let cleanXml (line: string) =
     line

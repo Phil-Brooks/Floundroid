@@ -35,7 +35,7 @@ A detailed, structured task list aligned with the project roadmap.
 
 ## 3.2 Zobrist Hashing
 - [x] Generate random keys for pieces, side, castling, and EP
-- [ ] Implement incremental hash updates in `applyMove`
+- [x] Implement incremental hash updates in `applyMove`
 
 ## 3.3 Transposition Table
 - [ ] Define TT entry structure
