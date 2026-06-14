@@ -1,9 +1,8 @@
 # Floundroid
-
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-![Status](https://img.shields.io/badge/Status-Stage%203.1%20Bitboard%20Core-green)
+![Status](https://img.shields.io/badge/Status-Stage%203.3%20Transposition%20Table-green)  
 [![Latest Release](https://img.shields.io/github/v/release/Phil-Brooks/Floundroid)](https://github.com/Phil-Brooks/Floundroid/releases)
 
 <p align="center">
@@ -16,14 +15,15 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.3.1 (Bitboard Alpha)
-The **Bitboard Core** is now fully operational. This version removes the legacy `Map<Square, Piece>` and transitions to high-performance `uint64` bitboards for all board operations.
+## 🚀 Latest Stable Release: v0.3.3 (The Mechanical Brain)
+The engine now features a fully integrated **Transposition Table** and **Zobrist Hashing**, allowing it to "remember" positions and avoid redundant calculations.
 
-### **Key Improvements in v0.3.1**
-- **Bitwise MoveGen**: Pseudo-legal move generation is now driven by bitwise masks.
-- **Fixed-Offset Sliding Tables**: Rooks and Bishops use a collision-free lookup table (262,144 entries).
-- **O(1) Attack Detection**: Checking if a square is attacked no longer requires ray-casting loops.
-- 👉 [**Download Floundroid.exe v0.3.1**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Improvements in v0.3.3**
+- **Transposition Table (TT)**: 1-million entry cache for search results, significantly increasing search depth.
+- **Zobrist Hashing**: O(1) incremental position fingerprinting.
+- **Mate Distance Rooting**: Improved logic for finding the fastest checkmate.
+- **UCI Improvements**: Full support for `ucinewgame` for cleaner match resets.
+- 👉 [**Download Floundroid.exe v0.3.3**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 

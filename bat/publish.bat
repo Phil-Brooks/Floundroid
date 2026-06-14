@@ -1,25 +1,28 @@
 @echo off
-:: Move to the solution root (one level up from this script)
 pushd "%~dp0.."
 
-set VERSION=0.3.1
+set VERSION=0.3.3
 set OUTPUT_DIR=.\publish
 
-echo --- Floundroid Publish Script (v%VERSION%) ---
-echo Working directory: %CD%
+echo --- Floundroid Optimized Publish (v%VERSION%) ---
 
-echo Cleaning old builds...
 if exist %OUTPUT_DIR% rd /s /q %OUTPUT_DIR%
 
-echo.
-echo Compiling for Windows (Single File, Optimized)...
-:: This will look for your .fsproj in the current (root) directory
-dotnet publish Floundroid/Floundroid.fsproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o %OUTPUT_DIR%
+:: -p:PublishTrimmed=true : Removes unused .NET code
+:: -p:TrimMode=link : Most aggressive trimming
+:: -p:EnableCompressionInSingleFile=true : Squeezes the final EXE
+dotnet publish Floundroid/Floundroid.fsproj ^
+  -c Release ^
+  -r win-x64 ^
+  --self-contained true ^
+  -p:PublishSingleFile=true ^
+  -p:PublishReadyToRun=true ^
+  -p:PublishTrimmed=true ^
+  -p:TrimMode=link ^
+  -p:EnableCompressionInSingleFile=true ^
+  -o %OUTPUT_DIR%
 
 echo.
 echo Publish complete! 
-echo Your executable is in: %CD%\publish\Floundroid.exe
-
-:: Return to the original folder context
 popd
 pause
