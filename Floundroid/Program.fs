@@ -1854,14 +1854,16 @@ module Evaluation =
         score    
 
 module Search =
-    let mutable nodes = 0uL // Global counter for the current search
+    open System
+    open System.Threading
+
+    let mutable nodes = 0uL
     let MATE_VALUE = 30000
     let INF = 1000000
 
     /// Quiescence search: plays out all captures until the position is stable.
-    let rec quiesce (b: Board) (alpha: int) (beta: int) (ct: CancellationToken) : int =
-        // Every few nodes, check if we should stop
-        if ct.IsCancellationRequested then
+    let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
+        if ct.IsCancellationRequested then 
             alpha
         else
             let sideMult = if b.SideToMove = White then 1 else -1
@@ -1876,17 +1878,14 @@ module Search =
                     MoveGen.getLegalMoves b
                     |> Array.filter (fun m ->
                         match m.Kind with
-                        | Capture
-                        | EnPassant
-                        | Promotion _ -> true
+                        | Capture | EnPassant | Promotion _ -> true
                         | _ -> false)
 
                 let mutable i = 0
                 let mutable exitLoop = false
 
                 while i < captures.Length && not exitLoop do
-                    // Pass the token down
-                    let score = -quiesce (Board.applyMove captures.[i] b) (-beta) (-currentAlpha) ct
+                    let score = -quiesce (Board.applyMove captures.[i] b) (ply + 1) (-beta) (-currentAlpha) ct
 
                     if score >= beta then
                         currentAlpha <- beta
@@ -1894,69 +1893,105 @@ module Search =
                     else
                         if score > currentAlpha then
                             currentAlpha <- score
-
                         i <- i + 1
 
                 currentAlpha
 
-    /// Negamax search with alpha-beta pruning.
-    let rec negamax (b: Board) (depth: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
-        nodes <- nodes + 1uL // Increment on every call
-        // Check for "stop" command
-        if ct.IsCancellationRequested then
+    /// Negamax search with alpha-beta pruning and Transposition Table integration.
+    let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
+        nodes <- nodes + 1uL
+        
+        if ct.IsCancellationRequested then 
             (0, None)
-        elif depth = 0 then
-            (quiesce b alpha beta ct, None)
         else
-            let moves = MoveGen.getLegalMoves b
+            // --- 1. TT PROBE ---
+            let ttEntry = TranspositionTable.probe b.Hash
+            let mutable ttMove = None
+            let mutable ttCutoff = false
+            let mutable ttValue = 0
 
-            if moves.Length = 0 then
-                if Board.isInCheck b then
-                    (-MATE_VALUE - depth, None)
-                else
-                    (0, None)
+            match ttEntry with
+            | Some entry ->
+                ttMove <- entry.Move
+                if entry.Depth >= depth then
+                    let value = TranspositionTable.mateFromTT entry.Value ply
+                    match entry.Flag with
+                    | TranspositionTable.NodeFlag.Exact -> 
+                        ttValue <- value
+                        ttCutoff <- true
+                    | TranspositionTable.NodeFlag.Alpha when value <= alpha -> 
+                        ttValue <- value
+                        ttCutoff <- true
+                    | TranspositionTable.NodeFlag.Beta when value >= beta -> 
+                        ttValue <- value
+                        ttCutoff <- true
+                    | _ -> ()
+            | None -> ()
+
+            if ttCutoff then
+                (ttValue, ttMove)
+            elif depth <= 0 then
+                (quiesce b ply alpha beta ct, None)
             else
-                let mutable bestScore = -INF
-                let mutable bestMove = None
-                let mutable currentAlpha = alpha
+                let moves = MoveGen.getLegalMoves b
 
-                let sortedMoves =
-                    moves
-                    |> Array.sortByDescending (fun m ->
-                        match m.Kind with
-                        | Capture
-                        | EnPassant -> 100
-                        | Promotion _ -> 90
-                        | _ -> 0)
-
-                let mutable i = 0
-                let mutable exitLoop = false
-
-                while i < sortedMoves.Length && not exitLoop do
-                    if ct.IsCancellationRequested then
-                        exitLoop <- true
+                if moves.Length = 0 then
+                    if Board.isInCheck b then
+                        (-MATE_VALUE + ply, None) // Adjusted mate score
                     else
-                        let m = sortedMoves.[i]
-                        let score, _ = negamax (Board.applyMove m b) (depth - 1) (-beta) (-currentAlpha) ct
-                        let actualScore = -score
+                        (0, None)
+                else
+                    let mutable bestScore = -INF
+                    let mutable bestMove = None
+                    let mutable currentAlpha = alpha
+                    let originalAlpha = alpha
 
-                        if actualScore > bestScore then
-                            bestScore <- actualScore
-                            bestMove <- Some m
+                    // --- 2. MOVE ORDERING ---
+                    let sortedMoves =
+                        moves
+                        |> Array.sortByDescending (fun m ->
+                            if Some m = ttMove then 1000 // TT move is usually best
+                            else
+                                match m.Kind with
+                                | Capture | EnPassant -> 100
+                                | Promotion _ -> 90
+                                | _ -> 0)
 
-                        currentAlpha <- Math.Max(currentAlpha, bestScore)
+                    let mutable i = 0
+                    let mutable exitLoop = false
 
-                        if currentAlpha >= beta then
+                    while i < sortedMoves.Length && not exitLoop do
+                        if ct.IsCancellationRequested then
                             exitLoop <- true
                         else
-                            i <- i + 1
+                            let m = sortedMoves.[i]
+                            let score, _ = negamax (Board.applyMove m b) (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
+                            let actualScore = -score
 
-                (bestScore, bestMove)
+                            if actualScore > bestScore then
+                                bestScore <- actualScore
+                                bestMove <- Some m
+
+                            currentAlpha <- Math.Max(currentAlpha, bestScore)
+
+                            if currentAlpha >= beta then
+                                exitLoop <- true
+                            else
+                                i <- i + 1
+
+                    // --- 3. TT STORE ---
+                    let flag = 
+                        if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha
+                        elif bestScore >= beta then TranspositionTable.NodeFlag.Beta
+                        else TranspositionTable.NodeFlag.Exact
+                    
+                    TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+
+                    (bestScore, bestMove)
 
     /// Iterative Deepening
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) =
         async {
-            // This explicitly tells F# to move this work to a background thread
             do! Async.SwitchToThreadPool()
 
             nodes <- 0uL
@@ -1964,29 +1999,20 @@ module Search =
             let mutable absoluteBestMove = None
             let mutable d = 1
 
-            // Iterative Deepening Loop
             while d <= maxDepth && not ct.IsCancellationRequested do
-                let score, moveOpt = negamax b d -INF INF ct
+                let score, moveOpt = negamax b d 0 -INF INF ct
 
                 if not ct.IsCancellationRequested then
                     let elapsed = sw.Elapsed.TotalSeconds
-
-                    let nps =
-                        if elapsed > 0.001 then
-                            uint64 (float nodes / elapsed)
-                        else
-                            0uL
-
+                    let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
                     match moveOpt with
                     | Some m ->
                         absoluteBestMove <- Some m
-                        // Added 'nodes' and 'nps' for CuteChess to read
                         printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
                     | None -> ()
-                // SIMPLE TIME MANAGEMENT:
-                // If we've used more than 60% of our allotted time, don't start the next depth
+
                 if sw.ElapsedMilliseconds > int64 (targetTimeMs / 2) then
-                    d <- maxDepth + 1 // Exit loop
+                    d <- maxDepth + 1 
                 else
                     d <- d + 1
 
@@ -2178,6 +2204,10 @@ module UciLoop =
                 printfn "id author Phil Brooks"
                 printfn "uciok"
             | "isready" :: _ -> printfn "readyok"
+            | "ucinewgame" :: _ -> 
+                TranspositionTable.clear()
+                board <- Board.fromFen startFen            
+            
             | "position" :: rest ->
                 let (fen, moveParts) =
                     match rest with

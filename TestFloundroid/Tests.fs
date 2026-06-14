@@ -605,7 +605,7 @@ module SearchTests =
         let b = Board.fromFen "7k/5K2/6Q1/8/8/8/8/8 b - - 0 1"
 
         let score, _ =
-            Search.negamax b 2 -Search.INF Search.INF System.Threading.CancellationToken.None
+            Search.negamax b 2 0 -Search.INF Search.INF System.Threading.CancellationToken.None
 
         Assert.Equal(0, score)
 
@@ -914,3 +914,18 @@ module TTTests =
         
         let resultOld = TranspositionTable.probe hash1
         Assert.True(resultOld.IsNone) // Collision should have wiped the first entry
+
+    [<Fact>]
+    let ``TT reduces node count in transpositions`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    
+        // Search depth 4 from startpos
+        Search.nodes <- 0uL
+        TranspositionTable.clear()
+        let cts = new System.Threading.CancellationTokenSource()
+        Search.negamax b 4 0 -1000000 1000000 cts.Token |> ignore
+        let nodesWithTT = Search.nodes
+    
+        // This is hard to assert exactly, but nodesWithTT will be significantly 
+        // lower than a pure perft(4) because identical branches are pruned.
+        Assert.True(nodesWithTT < 197281uL) // 197281 is the perft count for depth 4

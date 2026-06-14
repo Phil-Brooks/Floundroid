@@ -39,7 +39,7 @@ A detailed, structured task list aligned with the project roadmap.
 
 ## 3.3 Transposition Table
 - [x] Define TT entry structure
-- [ ] Implement TT Probing and Storing logic in Search
+- [x] Implement TT Probing and Storing logic in Search
 
 ## 3.4 Move Ordering
 - [ ] TT move

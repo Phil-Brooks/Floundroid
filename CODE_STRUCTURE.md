@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 14/06/2026 20:09:49
+Generated on: 14/06/2026 20:23:28
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -284,7 +284,7 @@ Generated on: 14/06/2026 20:09:49
 - **fn** `quiesce`
     - *Quiescence search: plays out all captures until the position is stable.*
 - **fn** `negamax`
-    - *Negamax search with alpha-beta pruning.*
+    - *Negamax search with alpha-beta pruning and Transposition Table integration.*
 - **fn** `findBestMove`
     - *Iterative Deepening*
 
