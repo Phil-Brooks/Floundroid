@@ -92,6 +92,20 @@ F#'s type system ensures correctness; .NET's performance primitives ensure speed
 
 ---
 
+## 📊 Calibration & Rating
+
+Floundroid is regularly benchmarked against standard "anchor" engines to track progress.
+
+### **v0.3.1 Baseline (Bitboard Alpha)**
+*   **Estimated Rating:** `~1175 Elo` (CCRL Scale)
+*   **Anchor Opponent:** TSCP 1.81 (1550 Elo)
+*   **Performance:** Proved stable in 100+ ply games; demonstrated tactical exchange wins, but lacks endgame depth due to absence of Transposition Tables.
+*   **Nodes Per Second (NPS):** ~200k - 500k (System dependent)
+
+> *Note: This rating represents the "Raw" engine before Move Ordering and Transposition Tables are implemented.*
+
+---
+
 ## 🛠 Project Roadmap
 
 Floundroid is built in **five deliberate stages**, moving from correctness → playability → performance → strength → innovation.
