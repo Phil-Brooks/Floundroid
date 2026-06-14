@@ -1,0 +1,2 @@
+position startpos moves c2c4 f7f5 b1c3 g8f6 g2g3 b8c6 d2d4
+go wtime 228516 btime 243581 winc 2000 binc 2000 movestogo 57

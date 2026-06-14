@@ -1965,7 +1965,7 @@ module UciLoop =
                         match Int32.TryParse(rest.[i + 1]) with
                         | true, d -> d
                         | _ -> 4 // Default depth if parsing fails
-                    | _ -> 4 // Default depth if 'depth' not specified
+                    | _ -> 20 // Default depth if 'depth' not specified
 
                 // Start the search in the background
                 Async.Start(
