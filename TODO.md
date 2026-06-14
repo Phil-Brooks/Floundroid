@@ -34,7 +34,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Implement bitwise sliding attack generation (Magic Bitboards) 🟡
 
 ## 3.2 Zobrist Hashing
-- [ ] Generate random keys for pieces, side, castling, and EP
+- [x] Generate random keys for pieces, side, castling, and EP
 - [ ] Implement incremental hash updates in `applyMove`
 
 ## 3.3 Transposition Table

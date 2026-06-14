@@ -799,6 +799,71 @@ module Attack =
     
                         (rookAttacks &&& themRooks) <> 0uL                    
 
+// ... after module Piece or module CastlingRights ...
+
+module Zobrist =
+
+    /// Storage for all random keys used for hashing.
+    type ZobristTable = {
+        /// [colour (2)][pieceType (6)][square (64)]
+        Pieces: uint64[,,]
+        /// Key to XOR if it is Black to move
+        SideToMove: uint64
+        /// Keys for the 16 possible combinations of castling rights
+        Castling: uint64[]
+        /// Keys for the 8 possible files for an En Passant target
+        EnPassantFile: uint64[]
+    }
+
+    /// Maps PieceType to an index 0-5
+    let private pieceIdx = function
+        | PieceType.Pawn -> 0 | PieceType.Knight -> 1 | PieceType.Bishop -> 2
+        | PieceType.Rook -> 3 | PieceType.Queen -> 4  | PieceType.King -> 5
+
+    /// Maps Colour to index 0-1
+    let private colourIdx = function
+        | Colour.White -> 0
+        | Colour.Black -> 1
+
+    /// Pre-calculates the table with a fixed seed for reproducibility.
+    let private initializeTable () =
+        let seed = 1010101 
+        let rng = Random(seed)
+        
+        let next64 () =
+            let buffer = Array.zeroCreate<byte> 8
+            rng.NextBytes(buffer)
+            BitConverter.ToUInt64(buffer, 0)
+
+        let pieces = Array3D.init 2 6 64 (fun _ _ _ -> next64())
+        let side = next64()
+        let castling = Array.init 16 (fun _ -> next64())
+        let ep = Array.init 8 (fun _ -> next64())
+
+        { Pieces = pieces; SideToMove = side; Castling = castling; EnPassantFile = ep }
+
+    /// The global lookup table for Zobrist keys.
+    let Table = initializeTable()
+
+    /// Gets the key for a specific piece on a square.
+    let getPieceKey (pc: Piece) (sq: Square) =
+        Table.Pieces.[colourIdx pc.Colour, pieceIdx pc.Kind, sq]
+
+    /// Gets the key for a specific set of castling rights.
+    let getCastlingKey (cr: CastlingRights) =
+        let mutable index = 0
+        if cr.WhiteKingSide  then index <- index ||| 1
+        if cr.WhiteQueenSide then index <- index ||| 2
+        if cr.BlackKingSide  then index <- index ||| 4
+        if cr.BlackQueenSide then index <- index ||| 8
+        Table.Castling.[index]
+
+    /// Gets the key for an En Passant file (0-7).
+    let getEnPassantKey (sq: Square option) =
+        match sq with
+        | Some s -> Table.EnPassantFile.[s % 8]
+        | None -> 0UL
+
 module Board =
     let empty =
         { Bitboards = BitboardSet.empty // Placeholder

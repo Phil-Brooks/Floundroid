@@ -793,4 +793,31 @@ module SlidingAttackTests =
         
         Assert.Equal(slowResult, fastResult)    
     
-   
+module ZobristTests =
+
+    [<Fact>]
+    let ``Zobrist Table is deterministic with fixed seed`` () =
+        let key1 = Zobrist.Table.SideToMove
+        let key2 = Zobrist.Table.SideToMove
+        Assert.Equal(key1, key2)
+
+    [<Fact>]
+    let ``Keys are unique for different pieces and squares`` () =
+        let p1 = { Colour = Colour.White; Kind = PieceType.Pawn }
+        let k1 = Zobrist.getPieceKey p1 0 // a1
+        let k2 = Zobrist.getPieceKey p1 1 // b1
+        Assert.NotEqual(k1, k2)
+
+    [<Fact>]
+    let ``Castling combinations result in different keys`` () =
+        let none = CastlingRights.none
+        let whiteKing = { none with WhiteKingSide = true }
+        let blackKing = { none with BlackKingSide = true }
+        
+        let keyNone = Zobrist.getCastlingKey none
+        let keyWK = Zobrist.getCastlingKey whiteKing
+        let keyBK = Zobrist.getCastlingKey blackKing
+        
+        Assert.NotEqual(keyNone, keyWK)
+        Assert.NotEqual(keyWK, keyBK)
+        Assert.NotEqual(keyNone, keyBK)   

@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 14/06/2026 14:32:05
+Generated on: 14/06/2026 18:31:24
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -17,6 +17,7 @@ Generated on: 14/06/2026 14:32:05
 - [Magic](#-module-magic)
 - [BitboardGen](#-module-bitboardgen)
 - [Attack](#-module-attack)
+- [Zobrist](#-module-zobrist)
 - [Board](#-module-board)
 - [MoveGen](#-module-movegen)
 - [San](#-module-san)
@@ -167,12 +168,14 @@ Generated on: 14/06/2026 14:32:05
 ---
 
 #### 🧩 `type MagicEntry = { Mask: Bitboard; Offset: int }`
+> Represents a magic entry for a square, containing the mask and the offset into the attack table.
 - **fn** `getIndex`
     - *This maps an occupancy bitboard to a unique index from 0 to 2^bits-1*
     - *It is essentially a manual "PEXT" instruction.*
 - **fn** `private`
     - *Generates every possible blocker pattern for a mask (reverse of getIndex)*
 - **fn** `init`
+    - *Initializes the sliding attack tables for bishops and rooks.*
 
 ## 📦 module BitboardGen
 ---
@@ -184,6 +187,20 @@ Generated on: 14/06/2026 14:32:05
 ## 📦 module Attack
 ---
 - **fn** `isSquareAttacked`
+
+## 📦 module Zobrist
+---
+
+#### 🧩 `type ZobristTable = {`
+> Storage for all random keys used for hashing.
+- **fn** `private`
+    - *Pre-calculates the table with a fixed seed for reproducibility.*
+- **fn** `getPieceKey`
+    - *Gets the key for a specific piece on a square.*
+- **fn** `getCastlingKey`
+    - *Gets the key for a specific set of castling rights.*
+- **fn** `getEnPassantKey`
+    - *Gets the key for an En Passant file (0-7).*
 
 ## 📦 module Board
 ---
