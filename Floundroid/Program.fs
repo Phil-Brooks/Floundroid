@@ -4,8 +4,6 @@ open System
 open System.Text
 open System.Threading
 
-// --- CORE TYPES ---
-
 /// Colours are represented as a discriminated union with two cases: White and Black.
 type Colour =
     | White
@@ -553,6 +551,131 @@ module BitboardSet =
                 yield (sq, getPieceAt sq bbs |> Option.get)
         }
 
+module SlidingAttackGen =
+    /// Generates a bitboard of all squares a Bishop attacks from a given square, 
+    /// accounting for blockers. This is the "slow" version used for table init.
+    let bishopAttacks (sq: Square) (blockers: Bitboard) =
+        let mutable attacks = 0uL
+        let r, f = sq / 8, sq % 8
+        let directions = [| (1, 1); (1, -1); (-1, 1); (-1, -1) |]
+        
+        for (dr, df) in directions do
+            let mutable nr, nf = r + dr, f + df
+            let mutable blocked = false
+            while nr >= 0 && nr < 8 && nf >= 0 && nf < 8 && not blocked do
+                let targetSq = nr * 8 + nf
+                let bit = 1uL <<< targetSq
+                attacks <- attacks ||| bit
+                if (blockers &&& bit) <> 0uL then 
+                    blocked <- true // Hit a piece, can't go further
+                nr <- nr + dr
+                nf <- nf + df
+        attacks
+
+    /// Generates a bitboard of all squares a Rook attacks from a given square, 
+    /// accounting for blockers. This is the "slow" version used for table init.
+    let rookAttacks (sq: Square) (blockers: Bitboard) =
+        let mutable attacks = 0uL
+        let r, f = sq / 8, sq % 8
+        let directions = [| (1, 0); (-1, 0); (0, 1); (0, -1) |]
+        
+        for (dr, df) in directions do
+            let mutable nr, nf = r + dr, f + df
+            let mutable blocked = false
+            while nr >= 0 && nr < 8 && nf >= 0 && nf < 8 && not blocked do
+                let targetSq = nr * 8 + nf
+                let bit = 1uL <<< targetSq
+                attacks <- attacks ||| bit
+                if (blockers &&& bit) <> 0uL then 
+                    blocked <- true
+                nr <- nr + dr
+                nf <- nf + df
+        attacks
+
+    /// The "Mask" for Magic Bitboards: This excludes the very last square 
+    /// on the edge of the board for every ray, because a blocker on the 
+    /// edge doesn't change the attack bitboard.
+    let bishopMask (sq: Square) =
+        let mutable mask = 0uL
+        let r, f = sq / 8, sq % 8
+        let directions = [| (1, 1); (1, -1); (-1, 1); (-1, -1) |]
+        for (dr, df) in directions do
+            let mutable nr, nf = r + dr, f + df
+            // Notice the check is > 0 and < 7 (excludes edges)
+            while nr > 0 && nr < 7 && nf > 0 && nf < 7 do
+                mask <- mask ||| (1uL <<< (nr * 8 + nf))
+                nr <- nr + dr
+                nf <- nf + df
+        mask
+
+    let rookMask (sq: Square) =
+        let mutable mask = 0uL
+        let r, f = sq / 8, sq % 8
+        // Vertical
+        for nr in r + 1 .. 6 do mask <- mask ||| (1uL <<< (nr * 8 + f))
+        for nr in r - 1 .. -1 .. 1 do mask <- mask ||| (1uL <<< (nr * 8 + f))
+        // Horizontal
+        for nf in f + 1 .. 6 do mask <- mask ||| (1uL <<< (r * 8 + nf))
+        for nf in f - 1 .. -1 .. 1 do mask <- mask ||| (1uL <<< (r * 8 + nf))
+        mask
+
+module Magic =
+    type MagicEntry = { Mask: Bitboard; Offset: int }
+
+    // Table size: 64 squares * 4096 max patterns per square = 262,144 entries
+    // This uses about 2MB of RAM, which is perfectly fine.
+    let bishopTable = Array.zeroCreate<Bitboard> (64 * 4096)
+    let rookTable = Array.zeroCreate<Bitboard> (64 * 4096)
+    let bishopEntries = Array.zeroCreate<MagicEntry> 64
+    let rookEntries = Array.zeroCreate<MagicEntry> 64
+
+    /// This maps an occupancy bitboard to a unique index from 0 to 2^bits-1
+    /// It is essentially a manual "PEXT" instruction.
+    let getIndex (occ: Bitboard) (mask: Bitboard) : int =
+        let mutable index = 0
+        let mutable tempMask = mask
+        let bits = Bitboard.count mask
+        for i in 0 .. bits - 1 do
+            let bitIdx = System.Numerics.BitOperations.TrailingZeroCount(tempMask)
+            tempMask <- tempMask &&& (tempMask - 1uL)
+            if (occ &&& (1uL <<< bitIdx)) <> 0uL then
+                index <- index ||| (1 <<< i)
+        index
+
+    /// Generates every possible blocker pattern for a mask (reverse of getIndex)
+    let private getBlockers (index: int) (mask: Bitboard) : Bitboard =
+        let mutable blockers = 0uL
+        let mutable tempMask = mask
+        let bits = Bitboard.count mask
+        for i in 0 .. bits - 1 do
+            let bitIdx = System.Numerics.BitOperations.TrailingZeroCount(tempMask)
+            tempMask <- tempMask &&& (tempMask - 1uL)
+            if (index &&& (1 <<< i)) <> 0 then
+                blockers <- blockers ||| (1uL <<< bitIdx)
+        blockers
+
+    let init () =
+        printfn "info string Initializing Sliding Attack Tables..."
+        for sq in 0 .. 63 do
+            // Bishops
+            let bMask = SlidingAttackGen.bishopMask sq
+            let bBits = Bitboard.count bMask
+            bishopEntries.[sq] <- { Mask = bMask; Offset = sq * 4096 }
+            for i in 0 .. (1 <<< bBits) - 1 do
+                let blockers = getBlockers i bMask
+                let tableIdx = (sq * 4096) + i
+                bishopTable.[tableIdx] <- SlidingAttackGen.bishopAttacks sq blockers
+
+            // Rooks
+            let rMask = SlidingAttackGen.rookMask sq
+            let rBits = Bitboard.count rMask
+            rookEntries.[sq] <- { Mask = rMask; Offset = sq * 4096 }
+            for i in 0 .. (1 <<< rBits) - 1 do
+                let blockers = getBlockers i rMask
+                let tableIdx = (sq * 4096) + i
+                rookTable.[tableIdx] <- SlidingAttackGen.rookAttacks sq blockers
+        printfn "info stringSliding Attack Tables initialized."
+
 module BitboardGen =
     /// Pre-calculated knight attacks for every square
     let knightAttacks = Array.zeroCreate<Bitboard> 64
@@ -622,7 +745,9 @@ module BitboardGen =
 
 
     // Initialize the tables immediately
-    do initializeLeapers ()
+    do 
+        initializeLeapers ()
+        Magic.init ()
 
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
@@ -633,13 +758,12 @@ type Board =
       HalfmoveClock: int
       FullmoveNumber: int }
 
-// --- ATTACK DETECTION ---
-
 module Attack =
     let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
         let bbs = b.Bitboards
         let them = attacker
 
+        // 1. Pawn, Knight, King (Keep existing logic)
         let usIdx = if them = Black then 0 else 1
         let pawnAttackMask = BitboardGen.pawnAttacks.[usIdx, sq]
         let themPawns = if them = White then bbs.WhitePawns else bbs.BlackPawns
@@ -654,31 +778,24 @@ module Attack =
                 let themKing = if them = White then bbs.WhiteKings else bbs.BlackKings
                 if (kingAttackMask &&& themKing) <> 0uL then true
                 else
-                    let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
-                    let checkDir dirs =
-                        dirs |> List.exists (fun (df, dr) ->
-                            let mutable nf, nr = f + df, r + dr
-                            let mutable hit, blocked = false, false
-                            while Square.isOnBoard nf nr && not blocked do
-                                let s2 = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-                                if Bitboard.contains s2 bbs.Occupancy then
-                                    blocked <- true
-                                    // Use BitboardSet directly since Board module is below us
-                                    match BitboardSet.getPieceAt s2 bbs with
-                                    | Some p when p.Colour = them ->
-                                        match p.Kind with
-                                        | Queen -> hit <- true
-                                        | Rook when df = 0 || dr = 0 -> hit <- true
-                                        | Bishop when df <> 0 && dr <> 0 -> hit <- true
-                                        | _ -> ()
-                                    | _ -> ()
-                                else
-                                    nf <- nf + df
-                                    nr <- nr + dr
-                            hit)
-                    checkDir [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ]
+                    // Inside Attack.isSquareAttacked, replace the sliding logic with:
+                    let occ = bbs.Occupancy
 
-// --- BOARD UTILS & FEN ---
+                    // Bishop & Queen
+                    let bEntry = Magic.bishopEntries.[sq]
+                    let bIdx = bEntry.Offset + Magic.getIndex occ bEntry.Mask
+                    let bishopAttacks = Magic.bishopTable.[bIdx]
+                    let themBishops = if them = White then (bbs.WhiteBishops ||| bbs.WhiteQueens) else (bbs.BlackBishops ||| bbs.BlackQueens)
+
+                    if (bishopAttacks &&& themBishops) <> 0uL then true
+                    else
+                        // Rook & Queen
+                        let rEntry = Magic.rookEntries.[sq]
+                        let rIdx = rEntry.Offset + Magic.getIndex occ rEntry.Mask
+                        let rookAttacks = Magic.rookTable.[rIdx]
+                        let themRooks = if them = White then (bbs.WhiteRooks ||| bbs.WhiteQueens) else (bbs.BlackRooks ||| bbs.BlackQueens)
+    
+                        (rookAttacks &&& themRooks) <> 0uL                    
 
 module Board =
     let empty =
@@ -907,8 +1024,6 @@ module Board =
             printfn ""
         printfn "  a b c d e f g h"
 
-// --- MOVE GENERATION ---
-
 module MoveGen =
     let dirs =
         Map
@@ -1008,21 +1123,25 @@ module MoveGen =
                         if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
                             moves.Add({ From = sq; To = c1; Kind = CastleQueenSide })
 
-                | Bishop | Rook | Queen ->
-                    // Sliders (Hybrid: loop ray until blocked)
-                    for (df, dr) in dirs.[p.Kind] do
-                        let mutable nf, nr, blocked = f + df, r + dr, false
-                        while Square.isOnBoard nf nr && not blocked do
-                            let t = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
-                            match Board.tryGetPiece b t with
-                            | Some target ->
-                                if target.Colour = them then
-                                    moves.Add({ From = sq; To = t; Kind = Capture })
-                                blocked <- true
-                            | None ->
-                                moves.Add({ From = sq; To = t; Kind = Quiet })
-                                nf <- nf + df
-                                nr <- nr + dr
+                | Bishop | Rook | Queen as kind ->
+                    let occ = b.Bitboards.Occupancy
+                    let mutable combinedAttacks = 0uL
+
+                    if kind = Bishop || kind = Queen then
+                        let e = Magic.bishopEntries.[sq]
+                        combinedAttacks <- combinedAttacks ||| Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+
+                    if kind = Rook || kind = Queen then
+                        let e = Magic.rookEntries.[sq]
+                        combinedAttacks <- combinedAttacks ||| Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+
+                    let usTotal = if us = White then b.Bitboards.WhiteTotal else b.Bitboards.BlackTotal
+                    let mutable targets = combinedAttacks &&& ~~~usTotal
+    
+                    while targets <> 0uL do
+                        let t = Bitboard.popLsb &targets
+                        if Board.isOccupied b t then moves.Add({ From = sq; To = t; Kind = Capture })
+                        else moves.Add({ From = sq; To = t; Kind = Quiet })
 
         moves.ToArray()    
 
@@ -1128,8 +1247,6 @@ module San =
                 else ""
 
             moveStr + suffix
-
-// --- STAGE 2.1: EVALUATION ---
 
 module Evaluation =
 
@@ -1580,8 +1697,6 @@ module Evaluation =
             else score <- score - (baseVal + pstBonus)
         score    
 
-// --- STAGE 2.2: SEARCH FRAMEWORK ---
-
 module Search =
     let mutable nodes = 0uL // Global counter for the current search
     let MATE_VALUE = 30000
@@ -1721,8 +1836,6 @@ module Search =
 
             return absoluteBestMove
         }
-
-// --- PERFT, DEBUG& UCI ---
 
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =

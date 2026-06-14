@@ -31,7 +31,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Remove `Map<Square, Piece>` as source of truth
 - [x] Implement bitwise pawn/knight/king attack generation (Lookup tables)
 - [x] Port `isSquareAttacked` to bitboard logic
-- [ ] Implement bitwise sliding attack generation (Magic Bitboards or PEXT) 🟡
+- [x] Implement bitwise sliding attack generation (Magic Bitboards or PEXT) 🟡
 
 ## 3.2 Zobrist Hashing
 - [ ] Generate random keys for pieces, side, castling, and EP

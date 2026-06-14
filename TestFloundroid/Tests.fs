@@ -690,3 +690,89 @@ module BitboardTests =
         // Should only hit b3 (sq 17), not h1 or anything else
         Assert.Equal(1, Bitboard.count attacks)
         Assert.True(Bitboard.contains (Square.fromString "b3") attacks)
+
+module SlidingAttackTests =
+
+    [<Fact>]
+    let ``Rook slow attacks are blocked correctly`` () =
+        let e4 = Square.fromString "e4"
+        // Place a blocker on e6 and c4
+        let blockers = (1uL <<< Square.fromString "e6") ||| (1uL <<< Square.fromString "c4")
+        
+        let attacks = SlidingAttackGen.rookAttacks e4 blockers
+        
+        // Should hit e5 and e6 (the blocker), but NOT e7
+        Assert.True(Bitboard.contains (Square.fromString "e5") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "e6") attacks)
+        Assert.False(Bitboard.contains (Square.fromString "e7") attacks)
+        
+        // Should hit d4 and c4 (the blocker), but NOT b4
+        Assert.True(Bitboard.contains (Square.fromString "d4") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "c4") attacks)
+        Assert.False(Bitboard.contains (Square.fromString "b4") attacks)
+
+    [<Fact>]
+    let ``Bishop slow attacks hit diagonals`` () =
+        let d4 = Square.fromString "d4"
+        let attacks = SlidingAttackGen.bishopAttacks d4 0uL // Empty board
+        
+        // Check a few diagonal squares
+        Assert.True(Bitboard.contains (Square.fromString "c3") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "b2") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "a1") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "e5") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "h8") attacks)
+        
+        // Should NOT hit horizontal/vertical
+        Assert.False(Bitboard.contains (Square.fromString "d5") attacks)
+        Assert.False(Bitboard.contains (Square.fromString "e4") attacks)
+
+    [<Fact>]
+    let ``Rook mask excludes edges`` () =
+        let e4 = Square.fromString "e4"
+        let mask = SlidingAttackGen.rookMask e4
+        
+        // The mask for e4 should NOT include e1, e8, a4, or h4
+        Assert.False(Bitboard.contains (Square.fromString "e1") mask, "Rook mask should exclude edge e1")
+        Assert.False(Bitboard.contains (Square.fromString "e8") mask, "Rook mask should exclude edge e8")
+        Assert.False(Bitboard.contains (Square.fromString "a4") mask, "Rook mask should exclude edge a4")
+        Assert.False(Bitboard.contains (Square.fromString "h4") mask, "Rook mask should exclude edge h4")
+        
+        // But it SHOULD include the inner squares
+        Assert.True(Bitboard.contains (Square.fromString "e2") mask)
+        Assert.True(Bitboard.contains (Square.fromString "e7") mask)
+
+    [<Fact>]
+    let ``Bishop mask excludes edges`` () =
+        let d4 = Square.fromString "d4"
+        let mask = SlidingAttackGen.bishopMask d4
+        
+        // Diagonal from d4 hits edges at a1, g1, a7, h8. 
+        // These should all be 0 in the mask.
+        Assert.False(Bitboard.contains (Square.fromString "a1") mask)
+        Assert.False(Bitboard.contains (Square.fromString "g1") mask)
+        Assert.False(Bitboard.contains (Square.fromString "a7") mask)
+        Assert.False(Bitboard.contains (Square.fromString "h8") mask)
+        
+        // Inner diagonal squares should be 1
+        Assert.True(Bitboard.contains (Square.fromString "c3") mask)
+        Assert.True(Bitboard.contains (Square.fromString "e5") mask)
+
+    [<Fact>]
+    let ``Magic initialization matches slow reference for first 4 squares`` () =
+        // 1. Initialize the tables
+        Magic.init()
+        
+        // 2. Test a1 (Square 0) Rook with some random blockers
+        let a1 = 0
+        let entry = Magic.rookEntries.[a1]
+        
+        // Test with a piece on a3 and d1
+        let blockers = (1uL <<< Square.fromString "a3") ||| (1uL <<< Square.fromString "d1")
+        let slowResult = SlidingAttackGen.rookAttacks a1 blockers
+        
+        // 3. Fast Lookup
+        let hash = ((blockers &&& entry.Mask) * entry.Magic) >>> entry.Shift
+        let fastResult = Magic.attackTable.[entry.Offset + int hash]
+        
+        Assert.Equal(slowResult, fastResult)

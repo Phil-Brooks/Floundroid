@@ -17,6 +17,7 @@
     
     <!-- 3. Optimization for size -->
     <OptimizationPreference>Size</OptimizationPreference>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

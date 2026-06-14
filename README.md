@@ -3,7 +3,7 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-![Status](https://img.shields.io/badge/Status-Stage%203%20Bitboard%20Core-yellow)
+![Status](https://img.shields.io/badge/Status-Stage%203.1%20Bitboard%20Core-green)
 [![Latest Release](https://img.shields.io/github/v/release/Phil-Brooks/Floundroid)](https://github.com/Phil-Brooks/Floundroid/releases)
 
 <p align="center">
@@ -16,14 +16,14 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.3.0 (Alpha)
-The **Bitboard Core** is now live. This version removes the functional `Map` and transitions to a high-performance `uint64` bitboard representation for piece storage and attack generation.
+## 🚀 Latest Stable Release: v0.3.1 (Bitboard Alpha)
+The **Bitboard Core** is now fully operational. This version removes the legacy `Map<Square, Piece>` and transitions to high-performance `uint64` bitboards for all board operations.
 
-### **Performance**
-- **Bitboard representation:** Complete removal of Map-based board state.
-- **Hardware Intrinsics:** Utilizing `.NET` bitwise primitives for population count and bit-scanning.
-- **Leaper Lookups:** Pre-calculated attack tables for Knights, Kings, and Pawns.
-👉 [**Download Floundroid.exe v0.3.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Improvements in v0.3.1**
+- **Bitwise MoveGen**: Pseudo-legal move generation is now driven by bitwise masks.
+- **Fixed-Offset Sliding Tables**: Rooks and Bishops use a collision-free lookup table (262,144 entries).
+- **O(1) Attack Detection**: Checking if a square is attacked no longer requires ray-casting loops.
+- 👉 [**Download Floundroid.exe v0.3.1**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 

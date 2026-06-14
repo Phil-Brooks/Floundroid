@@ -1,10 +1,18 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/Solution Items/">
     <File Path="CODE_STRUCTURE.md" />
     <File Path="generate-docs.fsx" />
     <File Path="README.md" />
     <File Path="TODO.md" />
   </Folder>
-  <Project Path="Floundroid/Floundroid.fsproj" Id="f8144d16-8951-45a2-9976-8dba2f10ce43" />
-  <Project Path="TestFloundroid/TestFloundroid.fsproj" Id="25a39fc7-3746-42c7-9b90-4ff38e7cb668" />
+  <Project Path="Floundroid/Floundroid.fsproj" Id="f8144d16-8951-45a2-9976-8dba2f10ce43">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="TestFloundroid/TestFloundroid.fsproj" Id="25a39fc7-3746-42c7-9b90-4ff38e7cb668">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
 </Solution>
