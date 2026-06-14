@@ -865,6 +865,59 @@ module Zobrist =
         | Some s -> Table.EnPassantFile.[s % 8]
         | None -> 0UL
 
+module TranspositionTable =
+
+    /// Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)
+    type NodeFlag = 
+        | Exact = 0 
+        | Alpha = 1 
+        | Beta = 2
+
+    [<Struct>]
+    type TTEntry = {
+        Hash: uint64
+        Move: Move option
+        Value: int
+        Depth: int
+        Flag: NodeFlag
+    }
+
+    /// Default entry (empty)
+    let emptyEntry = { Hash = 0UL; Move = None; Value = 0; Depth = -1; Flag = NodeFlag.Alpha }
+
+    /// A table size of 2^20 is roughly 32-64MB depending on padding.
+    let SIZE = 1 <<< 20 
+    let table: TTEntry[] = Array.create SIZE emptyEntry
+
+    /// Adjusts mate scores from the search to be relative to the root.
+    /// This ensures "Mate in 5" found at depth 10 is stored correctly.
+    let mateToTT (score: int) (ply: int) =
+        if score > 20000 then score + ply
+        elif score < -20000 then score - ply
+        else score
+
+    let mateFromTT (score: int) (ply: int) =
+        if score > 20000 then score - ply
+        elif score < -20000 then score + ply
+        else score
+
+    let clear () =
+        Array.fill table 0 SIZE emptyEntry
+
+    let store (hash: uint64) (depth: int) (ply: int) (flag: NodeFlag) (value: int) (m: Move option) =
+        let index = int (hash % uint64 SIZE)
+        let adjustedValue = mateToTT value ply
+        
+        // Replacement strategy: Always replace if deeper or same depth
+        // This is a simple but effective strategy.
+        if table.[index].Depth <= depth then
+            table.[index] <- { Hash = hash; Move = m; Value = adjustedValue; Depth = depth; Flag = flag }
+
+    let probe (hash: uint64) =
+        let index = int (hash % uint64 SIZE)
+        let entry = table.[index]
+        if entry.Hash = hash then Some entry else None
+
 module Board =
     let empty =
         { Bitboards = BitboardSet.empty // Placeholder

@@ -38,7 +38,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Implement incremental hash updates in `applyMove`
 
 ## 3.3 Transposition Table
-- [ ] Define TT entry structure
+- [x] Define TT entry structure
 - [ ] Implement TT Probing and Storing logic in Search
 
 ## 3.4 Move Ordering

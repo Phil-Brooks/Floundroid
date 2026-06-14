@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 14/06/2026 18:56:24
+Generated on: 14/06/2026 20:09:49
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -18,6 +18,7 @@ Generated on: 14/06/2026 18:56:24
 - [BitboardGen](#-module-bitboardgen)
 - [Attack](#-module-attack)
 - [Zobrist](#-module-zobrist)
+- [TranspositionTable](#-module-transpositiontable)
 - [Board](#-module-board)
 - [MoveGen](#-module-movegen)
 - [San](#-module-san)
@@ -201,6 +202,21 @@ Generated on: 14/06/2026 18:56:24
     - *Gets the key for a specific set of castling rights.*
 - **fn** `getEnPassantKey`
     - *Gets the key for an En Passant file (0-7).*
+
+## 📦 module TranspositionTable
+---
+
+#### 🧩 `type NodeFlag =`
+> Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)
+
+#### 🧩 `type TTEntry = {`
+- **fn** `mateToTT`
+    - *Adjusts mate scores from the search to be relative to the root.*
+    - *This ensures "Mate in 5" found at depth 10 is stored correctly.*
+- **fn** `mateFromTT`
+- **fn** `clear`
+- **fn** `store`
+- **fn** `probe`
 
 ## 📦 module Board
 ---

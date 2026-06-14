@@ -872,3 +872,45 @@ module HashTests =
                      |> Board.applyMove m2 |> Board.applyMove m4
         
         Assert.Equal(b1.Hash, bFinal.Hash)
+
+module TTTests =
+    open TranspositionTable   
+    [<Fact>]
+    let ``TT can store and retrieve an entry`` () =
+        let hash = 12345UL
+        let move = Some { From = 12; To = 28; Kind = Quiet }
+        
+        TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
+        let result = TranspositionTable.probe hash
+        
+        Assert.True(result.IsSome)
+        Assert.Equal(100, result.Value.Value)
+        Assert.Equal(5, result.Value.Depth)
+        Assert.Equal(move, result.Value.Move)
+
+    [<Fact>]
+    let ``Mate scores are adjusted correctly for ply`` () =
+        let mateValue = 30000 // MATE_VALUE from your search
+        let ply = 5
+        
+        // When storing, we "push" the mate further away
+        let stored = mateToTT mateValue ply
+        Assert.Equal(30005, stored)
+        
+        // When retrieving, we "pull" it back to the current context
+        let retrieved = mateFromTT stored ply
+        Assert.Equal(30000, retrieved)
+
+    [<Fact>]
+    let ``TT handles collisions via replacement`` () =
+        let hash1 = 1UL
+        let hash2 = uint64 TranspositionTable.SIZE + 1UL // Different hash, same index
+        
+        TranspositionTable.store hash1 5 0 NodeFlag.Exact 100 None
+        TranspositionTable.store hash2 6 0 NodeFlag.Exact 200 None // Deeper, should replace
+        
+        let result = TranspositionTable.probe hash2
+        Assert.Equal(200, result.Value.Value)
+        
+        let resultOld = TranspositionTable.probe hash1
+        Assert.True(resultOld.IsNone) // Collision should have wiped the first entry
