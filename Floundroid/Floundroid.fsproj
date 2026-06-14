@@ -3,21 +3,16 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- We keep these for local building, but we will override them for publishing -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <!-- 1. Enable Trimming: Removes unused .NET libraries -->
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>partial</TrimMode>
+    <SelfContained>false</SelfContained>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
 
-    <!-- 2. Enable Compression: Squeezes the final bundle -->
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    
-    <!-- 3. Optimization for size -->
-    <OptimizationPreference>Size</OptimizationPreference>
-    <Platforms>AnyCPU;x64</Platforms>
+    <!-- Disable the settings causing the error -->
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

@@ -674,7 +674,7 @@ module Magic =
                 let blockers = getBlockers i rMask
                 let tableIdx = (sq * 4096) + i
                 rookTable.[tableIdx] <- SlidingAttackGen.rookAttacks sq blockers
-        printfn "info stringSliding Attack Tables initialized."
+        printfn "info string Sliding Attack Tables initialized."
 
 module BitboardGen =
     /// Pre-calculated knight attacks for every square
