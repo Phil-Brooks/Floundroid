@@ -94,15 +94,16 @@ F#'s type system ensures correctness; .NET's performance primitives ensure speed
 
 ## 📊 Calibration & Rating
 
-Floundroid is regularly benchmarked against standard "anchor" engines to track progress.
+Floundroid is regularly benchmarked against TSCP 1.81 (1550 Elo) to track development progress.
 
 ### **v0.3.1 Baseline (Bitboard Alpha)**
-*   **Estimated Rating:** `~1175 Elo` (CCRL Scale)
-*   **Anchor Opponent:** TSCP 1.81 (1550 Elo)
-*   **Performance:** Proved stable in 100+ ply games; demonstrated tactical exchange wins, but lacks endgame depth due to absence of Transposition Tables.
-*   **Nodes Per Second (NPS):** ~200k - 500k (System dependent)
-
-> *Note: This rating represents the "Raw" engine before Move Ordering and Transposition Tables are implemented.*
+*   **Final Rating:** `1087 Elo` (+/- 113)
+*   **Record:** 1 Win, 11 Draws, 88 Losses (vs TSCP 1.81)
+*   **Performance:** 
+    *   Proved 100% stable over 100 games (Zero crashes/illegal moves).
+    *   Stronger as Black (10.0% score) than White (3.0% score).
+    *   Draws were achieved exclusively via 3-fold repetition.
+*   **Status:** Tactically capable within a 4-6 ply horizon. Significant Elo gains expected following implementation of Transposition Tables and Move Ordering.
 
 ---
 
