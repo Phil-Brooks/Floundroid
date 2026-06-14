@@ -3,9 +3,16 @@
     <Platform Name="Any CPU" />
     <Platform Name="x64" />
   </Configurations>
+  <Folder Name="/bat/">
+    <File Path="bat/commands.txt" />
+    <File Path="bat/git_tag.bat" />
+    <File Path="bat/publish.bat" />
+  </Folder>
+  <Folder Name="/scripts/">
+    <File Path="scripts/generate-docs.fsx" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path="CODE_STRUCTURE.md" />
-    <File Path="generate-docs.fsx" />
     <File Path="README.md" />
     <File Path="TODO.md" />
   </Folder>
