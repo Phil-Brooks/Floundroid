@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 14/06/2026 20:23:28
+Generated on: 15/06/2026 17:22:53
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)

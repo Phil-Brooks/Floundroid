@@ -1885,15 +1885,18 @@ module Search =
                 let mutable exitLoop = false
 
                 while i < captures.Length && not exitLoop do
-                    let score = -quiesce (Board.applyMove captures.[i] b) (ply + 1) (-beta) (-currentAlpha) ct
-
-                    if score >= beta then
-                        currentAlpha <- beta
+                    if ct.IsCancellationRequested then 
                         exitLoop <- true
                     else
-                        if score > currentAlpha then
-                            currentAlpha <- score
-                        i <- i + 1
+                        let score = -quiesce (Board.applyMove captures.[i] b) (ply + 1) (-beta) (-currentAlpha) ct
+
+                        if score >= beta then
+                            currentAlpha <- beta
+                            exitLoop <- true
+                        else
+                            if score > currentAlpha then
+                                currentAlpha <- score
+                            i <- i + 1
 
                 currentAlpha
 
@@ -1901,7 +1904,7 @@ module Search =
     let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL
         
-        if ct.IsCancellationRequested then 
+        if (nodes &&& 1023uL) = 0uL && ct.IsCancellationRequested then 
             (0, None)
         else
             // --- 1. TT PROBE ---
@@ -1980,15 +1983,18 @@ module Search =
                                 i <- i + 1
 
                     // --- 3. TT STORE ---
-                    let flag = 
-                        if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha
-                        elif bestScore >= beta then TranspositionTable.NodeFlag.Beta
-                        else TranspositionTable.NodeFlag.Exact
+                    // FIX: Only store the result if the search actually finished.
+                    // If we were cancelled, bestScore is likely -INF or an incomplete score.
+                    if not ct.IsCancellationRequested then
+                        let flag = 
+                            if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha
+                            elif bestScore >= beta then TranspositionTable.NodeFlag.Beta
+                            else TranspositionTable.NodeFlag.Exact
+                        
+                        TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+
+                    (bestScore, bestMove)                    
                     
-                    TranspositionTable.store b.Hash depth ply flag bestScore bestMove
-
-                    (bestScore, bestMove)
-
     /// Iterative Deepening
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) =
         async {
@@ -2011,14 +2017,22 @@ module Search =
                         printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
                     | None -> ()
 
-                if sw.ElapsedMilliseconds > int64 (targetTimeMs / 2) then
+                if sw.ElapsedMilliseconds > int64 (targetTimeMs * 8 / 10) then
                     d <- maxDepth + 1 
                 else
                     d <- d + 1
 
-            return absoluteBestMove
-        }
+            // --- STEP 2 FIX: FALLBACK ---
+            // If we have no move (because the search was cancelled before depth 1 finished),
+            // we MUST return something legal to satisfy the UCI protocol.
+            if absoluteBestMove.IsNone then
+                let legalMoves = MoveGen.getLegalMoves b
+                if legalMoves.Length > 0 then
+                    absoluteBestMove <- Some legalMoves.[0]
 
+            return absoluteBestMove
+        }    
+ 
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =
     { Name: string
@@ -2234,7 +2248,7 @@ module UciLoop =
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
             | "go" :: rest ->
-                // Basic Time Management Logic
+                // 1. Calculate Time Management
                 let wtime =
                     rest
                     |> List.tryFindIndex (fun s -> s = "wtime")
@@ -2247,40 +2261,41 @@ module UciLoop =
                     |> Option.map (fun i -> int rest.[i + 1])
                     |> Option.defaultValue 100000
 
-                // Simple rule: Spend 1/20th of remaining time on this move
                 let myTime = if board.SideToMove = White then wtime else btime
                 let targetTime = myTime / 20
-                // Cancel any existing search just in case
+
+                // 2. Cancel the OLD search and prepare the NEW one
                 searchCts.Cancel()
                 searchCts <- new CancellationTokenSource()
-                let token = searchCts.Token
+                
+                // 3. CAPTURE state locally for the background thread
+                let searchBoard = board 
+                let currentCts = searchCts 
 
-                // UCI Parser for 'depth'
+                // 4. Parse Depth
                 let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
-
                 let depth =
                     match depthIdx with
                     | Some i when i < rest.Length - 1 ->
                         match Int32.TryParse(rest.[i + 1]) with
                         | true, d -> d
-                        | _ -> 4 // Default depth if parsing fails
-                    | _ -> 20 // Default depth if 'depth' not specified
+                        | _ -> 4
+                    | _ -> 20
 
-                // Start the search in the background
+                // 5. Start search without passing 'token' to Async.Start
                 Async.Start(
                     async {
-                        let! result = Search.findBestMove board depth targetTime searchCts.Token
+                        // The search itself still uses the token to stop early
+                        let! result = Search.findBestMove searchBoard depth targetTime currentCts.Token
 
+                        // Because the OUTER async block isn't killed, this will ALWAYS run
                         match result with
                         | Some m -> printfn "bestmove %s" (Move.toUci m)
-                        | None ->
-                            // If we have no move (e.g. cancelled at depth 0),
-                            // we should still try to find something or print nothing safely
-                            ()
-                    },
-                    token
-                )
-
+                        | None -> () 
+                    }
+                    // NOTICE: No 'token' passed here anymore
+                )            
+            
             | "perft" :: rest ->
                 match rest with
                 | "suite" :: d :: _ ->

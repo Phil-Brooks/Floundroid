@@ -609,6 +609,22 @@ module SearchTests =
 
         Assert.Equal(0, score)
 
+    [<Fact>]
+    let ``Search returns a fallback move when immediately cancelled`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let cts = new System.Threading.CancellationTokenSource()
+        cts.Cancel() // Cancel it before it even starts
+        
+        let bestMoveOpt =
+            Search.findBestMove b 5 1000 cts.Token
+            |> Async.RunSynchronously
+
+        // ASSERT: Iterative deepening should still provide a move from the fallback
+        Assert.True(bestMoveOpt.IsSome, "Search must return a move fallback to satisfy UCI")
+        
+        let legalMoves = MoveGen.getLegalMoves b
+        Assert.Contains(bestMoveOpt.Value, legalMoves)
+
 module BitboardTests =
 
     [<Fact>]
@@ -929,3 +945,22 @@ module TTTests =
         // This is hard to assert exactly, but nodesWithTT will be significantly 
         // lower than a pure perft(4) because identical branches are pruned.
         Assert.True(nodesWithTT < 197281uL) // 197281 is the perft count for depth 4
+
+    [<Fact>]
+    let ``Search does not poison TT when cancelled`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        TranspositionTable.clear()
+        
+        // 1. Create a cancellation token and cancel it immediately
+        let cts = new System.Threading.CancellationTokenSource()
+        cts.Cancel()
+        
+        // 2. Run negamax with the cancelled token
+        let _ = Search.negamax b 3 0 -Search.INF Search.INF cts.Token
+        
+        // 3. Probe the TT for this position
+        let entry = TranspositionTable.probe b.Hash
+        
+        // 4. ASSERT: The entry should be None because we cancelled 
+        // before the search could find a valid result.
+        Assert.True(entry.IsNone, "TT should not store results from a cancelled search")
