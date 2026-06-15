@@ -800,8 +800,6 @@ module Attack =
     
                         (rookAttacks &&& themRooks) <> 0uL                    
 
-// ... after module Piece or module CastlingRights ...
-
 module Zobrist =
 
     /// Storage for all random keys used for hashing.
@@ -1854,16 +1852,31 @@ module Evaluation =
         score    
 
 module Search =
-    open System
-    open System.Threading
-
     let mutable nodes = 0uL
     let MATE_VALUE = 30000
     let INF = 1000000
 
+    // Stores two quiet moves per ply that caused a beta cutoff
+    let killerMoves: Move option[,] = Array2D.create 2 256 None
+
+    // Add this to clear killers at the start of every search
+    let clearKillers () =
+        for i in 0 .. 1 do
+            for j in 0 .. 255 do
+                killerMoves.[i, j] <- None
+    
+    // History table: [Side][From][To]
+    let historyTable = Array3D.create 2 64 64 0
+
+    let clearHistory () =
+        for c in 0..1 do
+            for f in 0..63 do
+                for t in 0..63 do
+                    historyTable.[c, f, t] <- 0    
+    
     /// Quiescence search: plays out all captures until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
-        if ct.IsCancellationRequested then 
+        if (nodes &&& 1023uL) = 0uL && ct.IsCancellationRequested then
             alpha
         else
             let sideMult = if b.SideToMove = White then 1 else -1
@@ -1874,6 +1887,16 @@ module Search =
             else
                 let mutable currentAlpha = Math.Max(alpha, standPat)
 
+                
+                let captures =
+                    MoveGen.getPseudoLegalMoves b
+                    |> Array.filter (fun m ->
+                        match m.Kind with
+                        | Capture | EnPassant | Promotion _ -> true
+                        | _ -> false)
+                    // Only check legality for captures we actually want to search
+                    |> Array.filter (fun m -> not (Board.isInCheckFor b.SideToMove (Board.applyMove m b)))                
+                
                 let captures =
                     MoveGen.getLegalMoves b
                     |> Array.filter (fun m ->
@@ -1904,14 +1927,14 @@ module Search =
     let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL
         
-        if (nodes &&& 1023uL) = 0uL && ct.IsCancellationRequested then 
+        if (nodes &&& 4095uL) = 0uL && ct.IsCancellationRequested then
             (0, None)
         else
             // --- 1. TT PROBE ---
             let ttEntry = TranspositionTable.probe b.Hash
             let mutable ttMove = None
-            let mutable ttCutoff = false
             let mutable ttValue = 0
+            let mutable ttCutoff = false
 
             match ttEntry with
             | Some entry ->
@@ -1919,88 +1942,105 @@ module Search =
                 if entry.Depth >= depth then
                     let value = TranspositionTable.mateFromTT entry.Value ply
                     match entry.Flag with
-                    | TranspositionTable.NodeFlag.Exact -> 
-                        ttValue <- value
-                        ttCutoff <- true
-                    | TranspositionTable.NodeFlag.Alpha when value <= alpha -> 
-                        ttValue <- value
-                        ttCutoff <- true
-                    | TranspositionTable.NodeFlag.Beta when value >= beta -> 
-                        ttValue <- value
-                        ttCutoff <- true
+                    | TranspositionTable.NodeFlag.Exact -> (ttValue <- value; ttCutoff <- true)
+                    | TranspositionTable.NodeFlag.Alpha when value <= alpha -> (ttValue <- value; ttCutoff <- true)
+                    | TranspositionTable.NodeFlag.Beta when value >= beta -> (ttValue <- value; ttCutoff <- true)
                     | _ -> ()
             | None -> ()
 
-            if ttCutoff then
-                (ttValue, ttMove)
-            elif depth <= 0 then
-                (quiesce b ply alpha beta ct, None)
+            if ttCutoff then (ttValue, ttMove)
+            elif depth <= 0 then (quiesce b ply alpha beta ct, None)
             else
-                let moves = MoveGen.getLegalMoves b
+                // 1. Generate Pseudo-Legal moves
+                let moves = MoveGen.getPseudoLegalMoves b
+                let mutable bestScore = -INF
+                let mutable bestMove = None
+                let mutable currentAlpha = alpha
+                let originalAlpha = alpha
+                let mutable legalMovesFound = 0
+                
+                // Calculate side index once for the scoring loop
+                let sideIdx = if b.SideToMove = White then 0 else 1
 
-                if moves.Length = 0 then
-                    if Board.isInCheck b then
-                        (-MATE_VALUE + ply, None) // Adjusted mate score
+                // 2. High-Performance Primitive Sorting
+                let scores = Array.zeroCreate moves.Length
+                for i in 0 .. moves.Length - 1 do
+                    let m = moves.[i]
+                    let score = 
+                        if Some m = ttMove then 1000000 
+                        else
+                            match m.Kind with
+                            | Capture | EnPassant ->
+                                let victimVal = 
+                                    if Board.isOccupied b m.To then 
+                                        (match Board.tryGetPiece b m.To with Some p -> Evaluation.pieceValue p.Kind | None -> 0) 
+                                    else 100 // En Passant
+                                let attackerVal = 
+                                    match Board.tryGetPiece b m.From with Some p -> Evaluation.pieceValue p.Kind | None -> 0
+                                10000 + (victimVal * 10) - attackerVal
+                            | Promotion pt -> 9000 + Evaluation.pieceValue pt
+                            | _ -> 
+                                if Some m = killerMoves.[0, ply] then 8000
+                                elif Some m = killerMoves.[1, ply] then 7000
+                                else 
+                                    // FIXED: Use the pre-calculated sideIdx here
+                                    Math.Min(historyTable.[sideIdx, m.From, m.To], 6000)
+                    scores.[i] <- -score 
+
+                System.Array.Sort(scores, moves)
+
+                let mutable i = 0
+                let mutable exitLoop = false
+                
+                while i < moves.Length && not exitLoop do
+                    let m = moves.[i]
+                    let nextB = Board.applyMove m b
+                    
+                    // 3. Legality Check
+                    if Board.isInCheckFor b.SideToMove nextB then
+                        i <- i + 1
                     else
-                        (0, None)
-                else
-                    let mutable bestScore = -INF
-                    let mutable bestMove = None
-                    let mutable currentAlpha = alpha
-                    let originalAlpha = alpha
+                        legalMovesFound <- legalMovesFound + 1
+                        let score, _ = negamax nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
+                        let actualScore = -score
 
-                    // --- 2. MOVE ORDERING ---
-                    let sortedMoves =
-                        moves
-                        |> Array.sortByDescending (fun m ->
-                            if Some m = ttMove then 1000 // TT move is usually best
-                            else
-                                match m.Kind with
-                                | Capture | EnPassant -> 100
-                                | Promotion _ -> 90
-                                | _ -> 0)
+                        if actualScore > bestScore then
+                            bestScore <- actualScore
+                            bestMove <- Some m
 
-                    let mutable i = 0
-                    let mutable exitLoop = false
+                        currentAlpha <- Math.Max(currentAlpha, bestScore)
 
-                    while i < sortedMoves.Length && not exitLoop do
-                        if ct.IsCancellationRequested then
+                        if currentAlpha >= beta then
+                            // Beta Cutoff: Store Killers and History
+                            match m.Kind with
+                            | Quiet | CastleKingSide | CastleQueenSide ->
+                                if killerMoves.[0, ply] <> Some m then
+                                    killerMoves.[1, ply] <- killerMoves.[0, ply]
+                                    killerMoves.[0, ply] <- Some m
+                                // Use pre-calculated sideIdx
+                                historyTable.[sideIdx, m.From, m.To] <- historyTable.[sideIdx, m.From, m.To] + (depth * depth)
+                            | _ -> ()
                             exitLoop <- true
                         else
-                            let m = sortedMoves.[i]
-                            let score, _ = negamax (Board.applyMove m b) (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
-                            let actualScore = -score
+                            i <- i + 1           
 
-                            if actualScore > bestScore then
-                                bestScore <- actualScore
-                                bestMove <- Some m
-
-                            currentAlpha <- Math.Max(currentAlpha, bestScore)
-
-                            if currentAlpha >= beta then
-                                exitLoop <- true
-                            else
-                                i <- i + 1
-
-                    // --- 3. TT STORE ---
-                    // FIX: Only store the result if the search actually finished.
-                    // If we were cancelled, bestScore is likely -INF or an incomplete score.
+                if legalMovesFound = 0 then
+                    if Board.isInCheck b then (-MATE_VALUE + ply, None) else (0, None)
+                else
                     if not ct.IsCancellationRequested then
-                        let flag = 
-                            if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha
-                            elif bestScore >= beta then TranspositionTable.NodeFlag.Beta
-                            else TranspositionTable.NodeFlag.Exact
-                        
+                        let flag = if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha elif bestScore >= beta then TranspositionTable.NodeFlag.Beta else TranspositionTable.NodeFlag.Exact
                         TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+                    (bestScore, bestMove)
 
-                    (bestScore, bestMove)                    
-                    
     /// Iterative Deepening
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) =
         async {
             do! Async.SwitchToThreadPool()
 
             nodes <- 0uL
+            clearKillers()
+            clearHistory() // --- NEW: Added for Step 3.4 ---
+            
             let sw = Diagnostics.Stopwatch.StartNew()
             let mutable absoluteBestMove = None
             let mutable d = 1
@@ -2017,14 +2057,17 @@ module Search =
                         printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
                     | None -> ()
 
-                if sw.ElapsedMilliseconds > int64 (targetTimeMs * 8 / 10) then
+                // --- SIMPLIFIED TIMER ---
+                let totalElapsed = sw.ElapsedMilliseconds
+                
+                // Only stop if we've used 80% of our target. 
+                // We remove the 50ms buffer to ensure we don't bail out at Depth 1.
+                if totalElapsed > int64 (targetTimeMs * 6 / 10) then
                     d <- maxDepth + 1 
                 else
                     d <- d + 1
 
             // --- STEP 2 FIX: FALLBACK ---
-            // If we have no move (because the search was cancelled before depth 1 finished),
-            // we MUST return something legal to satisfy the UCI protocol.
             if absoluteBestMove.IsNone then
                 let legalMoves = MoveGen.getLegalMoves b
                 if legalMoves.Length > 0 then
@@ -2032,7 +2075,8 @@ module Search =
 
             return absoluteBestMove
         }    
- 
+    
+     
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =
     { Name: string
@@ -2247,53 +2291,43 @@ module UciLoop =
                     match legalMoves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
+            
             | "go" :: rest ->
-                // 1. Calculate Time Management
-                let wtime =
-                    rest
-                    |> List.tryFindIndex (fun s -> s = "wtime")
-                    |> Option.map (fun i -> int rest.[i + 1])
-                    |> Option.defaultValue 100000
-
-                let btime =
-                    rest
-                    |> List.tryFindIndex (fun s -> s = "btime")
-                    |> Option.map (fun i -> int rest.[i + 1])
-                    |> Option.defaultValue 100000
-
+                // 1. Calculate time
+                let wtime = rest |> List.tryFindIndex (fun s -> s = "wtime") |> Option.map (fun i -> int rest.[i + 1]) |> Option.defaultValue 100000
+                let btime = rest |> List.tryFindIndex (fun s -> s = "btime") |> Option.map (fun i -> int rest.[i + 1]) |> Option.defaultValue 100000
                 let myTime = if board.SideToMove = White then wtime else btime
+                
+                // 2. Set target time (1/20th of remaining time)
                 let targetTime = myTime / 20
 
-                // 2. Cancel the OLD search and prepare the NEW one
+                // 3. Prepare Cancellation
                 searchCts.Cancel()
                 searchCts <- new CancellationTokenSource()
                 
-                // 3. CAPTURE state locally for the background thread
+                // --- THE ALARM CLOCK ---
+                // This tells the token to automatically trigger 'Cancel' after targetTime ms
+                let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
+                if depthIdx.IsNone then
+                    searchCts.CancelAfter(targetTime)
+
                 let searchBoard = board 
                 let currentCts = searchCts 
 
-                // 4. Parse Depth
-                let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
                 let depth =
                     match depthIdx with
                     | Some i when i < rest.Length - 1 ->
                         match Int32.TryParse(rest.[i + 1]) with
-                        | true, d -> d
-                        | _ -> 4
+                        | true, d -> d | _ -> 4
                     | _ -> 20
 
-                // 5. Start search without passing 'token' to Async.Start
                 Async.Start(
                     async {
-                        // The search itself still uses the token to stop early
                         let! result = Search.findBestMove searchBoard depth targetTime currentCts.Token
-
-                        // Because the OUTER async block isn't killed, this will ALWAYS run
                         match result with
                         | Some m -> printfn "bestmove %s" (Move.toUci m)
                         | None -> () 
                     }
-                    // NOTICE: No 'token' passed here anymore
                 )            
             
             | "perft" :: rest ->

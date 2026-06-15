@@ -42,10 +42,10 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Implement TT Probing and Storing logic in Search
 
 ## 3.4 Move Ordering
-- [ ] TT move
-- [ ] Killer moves
-- [ ] History heuristic
-- [ ] MVV‑LVA for captures
+- [x] TT move
+- [x] Killer moves
+- [x] History heuristic
+- [x] MVV‑LVA for captures
 
 ## 3.5 Quiescence Search
 - [ ] Stand‑pat evaluation
@@ -53,9 +53,9 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Check extensions (optional)
 
 ## 3.6 Time Management
-- [ ] Soft time limit
-- [ ] Hard time limit
-- [ ] Node counting
+- [x] Soft time limit
+- [x] Hard time limit
+- [x] Node counting
 
 ---
 

@@ -3,10 +3,6 @@
 open Xunit
 open Floundroid
 
-// =========================
-// === CORE TYPE TESTS   ===
-// =========================
-
 module ColourTests =
 
     [<Fact>]
@@ -22,7 +18,6 @@ module ColourTests =
             let col = Colour.fromChar c
             Assert.Equal(c.ToString().ToLower()[0], Colour.toChar col)
 
-
 module FileTests =
 
     [<Fact>]
@@ -37,7 +32,6 @@ module FileTests =
             let f = File.fromChar c
             Assert.Equal(c, File.toChar f)
 
-
 module RankTests =
 
     [<Fact>]
@@ -51,7 +45,6 @@ module RankTests =
         for c in [ '1' .. '8' ] do
             let r = Rank.fromChar c
             Assert.Equal(c, Rank.toChar r)
-
 
 module SquareTests =
 
@@ -74,7 +67,6 @@ module SquareTests =
             let sq = Square.fromString s
             Assert.Equal(s, Square.toString sq)
 
-
 module PieceTypeTests =
 
     [<Fact>]
@@ -85,7 +77,6 @@ module PieceTypeTests =
             let pt = PieceType.fromChar c
             Assert.Equal(c, PieceType.toChar pt)
 
-
 module PieceTests =
 
     [<Fact>]
@@ -95,11 +86,6 @@ module PieceTests =
         for c in chars do
             let p = Piece.fromChar c
             Assert.Equal(c, Piece.toChar p)
-
-
-// =========================
-// === MOVE & BOARD TESTS ===
-// =========================
 
 module MoveTests =
 
@@ -114,7 +100,6 @@ module MoveTests =
 
         if uci.Length = 4 then
             Assert.Equal(Quiet, m.Kind)
-
 
 module BoardTests =
 
@@ -215,10 +200,6 @@ module BoardTests =
 
         Assert.False(b2.CastlingRights.WhiteKingSide)
 
-// =========================
-// === FEN & MOVEGEN TESTS ==
-// =========================
-
 module FenTests =
 
     [<Theory>]
@@ -229,7 +210,6 @@ module FenTests =
         let board = Board.fromFen fen
         let output = Board.toFen board
         Assert.Equal(fen, output)
-
 
 module MoveGenTests =
 
@@ -289,10 +269,6 @@ module MoveGenTests =
 
         Assert.Equal(20, moves.Length)
 
-// =========================
-// === PROMOTION TESTS    ===
-// =========================
-
 module PromotionTests =
 
     [<Fact>]
@@ -339,10 +315,6 @@ module PromotionTests =
 
         Assert.Equal(4, promos.Length)
 
-// =========================
-// === ATTACK TESTS       ===
-// =========================
-
 module AttackTests =
 
     [<Fact>]
@@ -376,10 +348,6 @@ module AttackTests =
         // EXPECTED: true
         Assert.True(Attack.isSquareAttacked b target White)
 
-// =========================
-// === CHECK DETECTION    ===
-// =========================
-
 module CheckDetectionTests =
 
     [<Fact>]
@@ -396,10 +364,6 @@ module CheckDetectionTests =
     let ``Black is in check from knight`` () =
         let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
         Assert.True(Board.isInCheck b)
-
-// =========================
-// === LEGAL MOVE FILTER ===
-// =========================
 
 module LegalMoveFilteringTests =
 
@@ -428,10 +392,6 @@ module LegalMoveFilteringTests =
         let moves = MoveGen.getLegalMoves b
 
         Assert.DoesNotContain(moves, fun m -> m.Kind = CastleKingSide)
-
-// =========================
-// === SAN NOTATION TESTS ===
-// =========================
 
 module SanTests =
 
@@ -472,10 +432,6 @@ module SanTests =
         let fen = "3r3k/4P3/8/8/8/8/8/7K w - - 0 1"
         Assert.Equal("exd8=Q+", getSan fen "e7d8q")
 
-// =========================
-// === PERFT DRIVER TESTS ===
-// =========================
-
 module PerftTests =
 
     [<Fact>]
@@ -504,10 +460,6 @@ module PerftTests =
         // This position tests specific pawn/rook interactions
         let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
         Assert.Equal(2812uL, Perft.countNodes 3 b)
-
-// =========================
-// === EVALUATION TESTS   ===
-// =========================
 
 module EvaluationTests =
 
@@ -563,10 +515,6 @@ module EvaluationTests =
     let ``Evaluating an empty board returns 0`` () =
         let b = Board.empty
         Assert.Equal(0, Evaluation.evaluate b)
-
-// =========================
-// === SEARCH TESTS       ===
-// =========================
 
 module SearchTests =
     open Xunit
@@ -964,3 +912,37 @@ module TTTests =
         // 4. ASSERT: The entry should be None because we cancelled 
         // before the search could find a valid result.
         Assert.True(entry.IsNone, "TT should not store results from a cancelled search")
+
+module MoveOrderingTests =
+
+    [<Fact>]
+    let ``MVV-LVA prefers Pawn takes Queen over Queen takes Pawn`` () =
+        // Setup: White Pawn on e4, White Queen on d1. Black Queen on d5, Black Pawn on f3.
+        let b = Board.fromFen "rnb1kbnr/ppp1p1pp/8/3q4/4P3/5p2/PPPP1PPP/RNBQKBNR w KQkq - 0 1"
+        
+        // We need to simulate the sorting logic inside search
+        let moves = MoveGen.getLegalMoves b
+        
+        // Helper to mimic the internal search scoring (simplified for test)
+        let getScore (m: Move) =
+            match m.Kind with
+            | Capture -> 
+                let v = Board.tryGetPiece b m.To |> Option.map (fun p -> Evaluation.pieceValue p.Kind) |> Option.defaultValue 100
+                let a = Board.tryGetPiece b m.From |> Option.map (fun p -> Evaluation.pieceValue p.Kind) |> Option.defaultValue 0
+                10000 + (v * 10) - a
+            | _ -> 0
+
+        let sorted = moves |> Array.sortByDescending getScore
+        
+        let bestMove = sorted.[0]
+        let secondBest = sorted.[1]
+
+        // Best move should be e4xd5 (Pawn takes Queen)
+        Assert.Equal(Square.fromString "e4", bestMove.From)
+        Assert.Equal(Square.fromString "d5", bestMove.To)
+        
+        // Second best should be d1xf3 (Queen takes Pawn) 
+        // (Wait, d1xd5 is also Queen takes Queen, which is 10,000 + 9000 - 900 = 18100)
+        // (e4xd5 is 10,000 + 9000 - 100 = 18900. Correct!)
+        Assert.True(getScore bestMove > getScore secondBest)
+
