@@ -1876,7 +1876,8 @@ module Search =
     
     /// Quiescence search: plays out all captures until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
-        if (nodes &&& 1023uL) = 0uL && ct.IsCancellationRequested then
+        nodes <- nodes + 1uL
+        if ct.IsCancellationRequested then
             alpha
         else
             let sideMult = if b.SideToMove = White then 1 else -1
@@ -1927,7 +1928,7 @@ module Search =
     let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL
         
-        if (nodes &&& 4095uL) = 0uL && ct.IsCancellationRequested then
+        if ct.IsCancellationRequested then
             (0, None)
         else
             // --- 1. TT PROBE ---
@@ -1994,35 +1995,57 @@ module Search =
                 
                 while i < moves.Length && not exitLoop do
                     let m = moves.[i]
-                    let nextB = Board.applyMove m b
-                    
-                    // 3. Legality Check
-                    if Board.isInCheckFor b.SideToMove nextB then
+    
+                    // --- FIX: Add specific validation for Castling ---
+                    let isIllegalCastle = 
+                        match m.Kind with
+                        | CastleKingSide | CastleQueenSide ->
+                            let us = b.SideToMove
+                            let them = Colour.opposite us
+                            let rnk = if us = White then Rank.R1 else Rank.R8
+            
+                            // 1. Cannot castle OUT OF check
+                            if Board.isInCheck b then true
+                            else
+                                // 2. Cannot castle THROUGH check
+                                let midFile = if m.Kind = CastleKingSide then File.F else File.D
+                                let midSquare = Square.ofFileRank midFile rnk
+                                Attack.isSquareAttacked b midSquare them
+                        | _ -> false
+
+                    if isIllegalCastle then
                         i <- i + 1
                     else
-                        legalMovesFound <- legalMovesFound + 1
-                        let score, _ = negamax nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
-                        let actualScore = -score
-
-                        if actualScore > bestScore then
-                            bestScore <- actualScore
-                            bestMove <- Some m
-
-                        currentAlpha <- Math.Max(currentAlpha, bestScore)
-
-                        if currentAlpha >= beta then
-                            // Beta Cutoff: Store Killers and History
-                            match m.Kind with
-                            | Quiet | CastleKingSide | CastleQueenSide ->
-                                if killerMoves.[0, ply] <> Some m then
-                                    killerMoves.[1, ply] <- killerMoves.[0, ply]
-                                    killerMoves.[0, ply] <- Some m
-                                // Use pre-calculated sideIdx
-                                historyTable.[sideIdx, m.From, m.To] <- historyTable.[sideIdx, m.From, m.To] + (depth * depth)
-                            | _ -> ()
-                            exitLoop <- true
+                        let nextB = Board.applyMove m b
+        
+                        // 3. Legality Check (handles normal moves and "into check" for castling)
+                        if Board.isInCheckFor b.SideToMove nextB then
+                            i <- i + 1
                         else
-                            i <- i + 1           
+                            legalMovesFound <- legalMovesFound + 1
+                        
+                            let score, _ = negamax nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
+                            let actualScore = -score
+
+                            if actualScore > bestScore then
+                                bestScore <- actualScore
+                                bestMove <- Some m
+
+                            currentAlpha <- Math.Max(currentAlpha, bestScore)
+
+                            if currentAlpha >= beta then
+                                // Beta Cutoff: Store Killers and History
+                                match m.Kind with
+                                | Quiet | CastleKingSide | CastleQueenSide ->
+                                    if killerMoves.[0, ply] <> Some m then
+                                        killerMoves.[1, ply] <- killerMoves.[0, ply]
+                                        killerMoves.[0, ply] <- Some m
+                                    // Use pre-calculated sideIdx
+                                    historyTable.[sideIdx, m.From, m.To] <- historyTable.[sideIdx, m.From, m.To] + (depth * depth)
+                                | _ -> ()
+                                exitLoop <- true
+                            else
+                                i <- i + 1           
 
                 if legalMovesFound = 0 then
                     if Board.isInCheck b then (-MATE_VALUE + ply, None) else (0, None)
@@ -2042,7 +2065,11 @@ module Search =
             clearHistory() // --- NEW: Added for Step 3.4 ---
             
             let sw = Diagnostics.Stopwatch.StartNew()
-            let mutable absoluteBestMove = None
+            // CHANGE: Initialize with a fallback immediately instead of None
+            // This guarantees a valid move is returned even if cancelled at Depth 1
+            let legalMoves = MoveGen.getLegalMoves b
+            let mutable absoluteBestMove = if legalMoves.Length > 0 then Some legalMoves.[0] else None
+
             let mutable d = 1
 
             while d <= maxDepth && not ct.IsCancellationRequested do
@@ -2075,7 +2102,6 @@ module Search =
 
             return absoluteBestMove
         }    
-    
      
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =
@@ -2249,6 +2275,7 @@ module UciLoop =
     let mutable board = Board.fromFen startFen
     // Track the current search task and its cancellation token
     let mutable searchCts = new CancellationTokenSource()
+    let mutable currentSearchId = 0
 
     let rec run () =
         let line = Console.ReadLine()
@@ -2263,7 +2290,10 @@ module UciLoop =
                 printfn "uciok"
             | "isready" :: _ -> printfn "readyok"
             | "ucinewgame" :: _ -> 
+                searchCts.Cancel() // Stop any running search immediately
                 TranspositionTable.clear()
+                Search.clearKillers() 
+                Search.clearHistory() 
                 board <- Board.fromFen startFen            
             
             | "position" :: rest ->
@@ -2286,9 +2316,9 @@ module UciLoop =
                 board <- Board.fromFen fen
 
                 for mStr in moveParts do
-                    let legalMoves = MoveGen.getLegalMoves board
-
-                    match legalMoves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
+                    // Faster: Only generate pseudo-legal moves to find the kind
+                    let moves = MoveGen.getPseudoLegalMoves board 
+                    match moves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
             
@@ -2304,7 +2334,12 @@ module UciLoop =
                 // 3. Prepare Cancellation
                 searchCts.Cancel()
                 searchCts <- new CancellationTokenSource()
-                
+                currentSearchId <- currentSearchId + 1
+                // 2. CAPTURE CURRENT STATE FOR THE ASYNC THREAD
+                let mySearchId = currentSearchId
+                let currentCts = searchCts 
+                let searchBoard = board 
+
                 // --- THE ALARM CLOCK ---
                 // This tells the token to automatically trigger 'Cancel' after targetTime ms
                 let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
@@ -2323,12 +2358,24 @@ module UciLoop =
 
                 Async.Start(
                     async {
-                        let! result = Search.findBestMove searchBoard depth targetTime currentCts.Token
-                        match result with
-                        | Some m -> printfn "bestmove %s" (Move.toUci m)
-                        | None -> () 
+                        try                        
+                            // Use the token for the search itself
+                            let! result = Search.findBestMove searchBoard depth targetTime currentCts.Token
+        
+                            if mySearchId = currentSearchId then
+                                match result with
+                                | Some m -> printfn "bestmove %s" (Move.toUci m)
+                                | None -> 
+                                    // Fallback: If search failed, try to find any legal move
+                                    let legals = MoveGen.getLegalMoves searchBoard
+                                    if legals.Length > 0 then
+                                        printfn "bestmove %s" (Move.toUci legals.[0])
+                                    else
+                                        printfn "bestmove (none)" // UCI standard for no legal moves
+                        with
+                        | ex -> printfn "info string Error in search: %s" ex.Message
                     }
-                )            
+                )                
             
             | "perft" :: rest ->
                 match rest with

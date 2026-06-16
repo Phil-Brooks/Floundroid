@@ -269,6 +269,36 @@ module MoveGenTests =
 
         Assert.Equal(20, moves.Length)
 
+    [<Fact>]
+    let ``Black cannot castle out of check after d1d8`` () =
+        // This is the position reached after the move sequence provided:
+        // position startpos moves e2e4 b8c6 d2d4 d7d5 f1b5 d5e4 d4d5 a7a6 b5c6 b7c6 d5c6 d8d1 e1d1 g8f6 c1f4 f6d5 f4e5 e4e3 d1e2 d5b4 b1c3 c8g4 f2f3 g4f5 e5c7 a8c8 c7b6 b4c2 a1d1 e7e5 c6c7 f8b4 d1d8
+        let fenAfterCheck = "2rRkb1r/p1P1ppbp/bB6/4p3/1n2P3/2N2P2/PPP1K1PP/8 b k - 1 18"
+        let b = Board.fromFen fenAfterCheck
+
+        // Verify black is actually in check
+        Assert.True(Board.isInCheck b, "Black should be in check from the Rook on d8")
+
+        // Get legal moves
+        let moves = MoveGen.getLegalMoves b
+        
+        // Assert that e8g8 (CastleKingSide) is NOT in the legal move list
+        let hasCastling = moves |> Array.exists (fun m -> m.Kind = CastleKingSide)
+        
+        Assert.False(hasCastling, "Castling (e8g8) should be illegal because the King is in check")
+
+    [<Fact>]
+    let ``Black cannot castle through check`` () =
+        // Setup: White rook guards f8, Black King on e8. 
+        // King is NOT in check, but must pass through f8 to castle.
+        let fen = "r3k2r/8/8/8/8/5R2/8/4K3 b kq - 0 1"
+        let b = Board.fromFen fen
+        
+        let moves = MoveGen.getLegalMoves b
+        let canCastleKingside = moves |> Array.exists (fun m -> m.Kind = CastleKingSide)
+        
+        Assert.False(canCastleKingside, "Black cannot castle through f8 because it is attacked by the White Rook")
+
 module PromotionTests =
 
     [<Fact>]
