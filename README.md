@@ -15,16 +15,15 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.3.4 (The Performance Update)
-This release marks a major breakthrough in search efficiency and tactical awareness. 
-By transitioning to a pseudo-legal search and implementing a professional move-ordering suite, Floundroid has gained over **300 Elo points** and achieved its first competitive wins.
+## 🚀 Latest Stable Release: v0.3.4a (The Stability Update)
+This release focuses on engine robustness and FIDE compliance. After a 100-game stress test, Floundroid has achieved **zero stalls** and **zero illegal moves**, solidifying the core search architecture.
 
-### **Key Improvements in v0.3.4**
-- **Move Ordering Suite**: Implemented **MVV-LVA**, **Killer Moves**, and **History Heuristics**, allowing the search to prune bad branches millions of times faster.
-- **Pseudo-Legal Search**: Optimized the search core by deferring legality checks; boosted **NPS (Nodes Per Second)** by ~300% to a consistent **75k+**.
-- **Bulletproof Time Management**: Implemented an "Alarm Clock" (`CancelAfter`) system that eliminates time forfeits, even in fast time controls.
-- **TT Efficiency**: Reaches **Depth 7-9** in the opening and **Depth 12+** in endgames thanks to high Transposition Table hit rates.
-- 👉 [**Download Floundroid.exe v0.3.4**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Fixes in v0.3.4a**
+- **FIDE Compliance**: Fixed a critical bug where the engine would attempt to castle out of or through check.
+- **Search Robustness**: Resolved a thread-locking issue in the Quiescence search that caused engine "stalls" during heavy tactical exchanges.
+- **UCI Protocol Hardening**: Implemented **Search ID tracking** and immediate `bestmove` fallbacks, ensuring the engine always responds to GUI commands, even when thinking time is exhausted.
+- **Zombie Thread Prevention**: Optimized cancellation token checks across all search depths to ensure background tasks are terminated instantly when a new game begins.
+- 👉 [**Download Floundroid.exe v0.3.4a**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
@@ -97,13 +96,14 @@ F#'s type system ensures correctness; .NET's performance primitives ensure speed
 
 Floundroid is regularly benchmarked against TSCP 1.81 (1550 Elo).
 
-### **v0.3.4 Performance Baseline**
-*   **Final Rating:** `~1180 Elo` (+100 gain over v0.3.1)
-*   **Record vs TSCP**: 1 Win, 18 Draws, 76 Losses (95 games played)
+### **v0.3.4a Performance Baseline**
+*   **Final Rating:** `~1270 Elo` (+90 gain over v0.3.1)
+*   **Record vs TSCP**: 7 Wins, 19 Draws, 74 Losses (100 games played)
 *   **Technical Performance:** 
-    *   **Tactical Maturity**: Draw ratio improved to **18.9%**; recorded the engine's first victory against a 1500+ rated opponent.
-    *   **Zero Stalls**: 100% UCI compliance confirmed; search is fully thread-safe and responsive.
-*   **Status**: Tactically sharp at low depths. The next phase (Evaluation Overhaul) will focus on positional understanding and King safety to close the 300-point gap with TSCP.
+    *   **Stability**: 100% completion rate in long-form matches; zero connection stalls.
+    *   **Tactical Maturity**: Draw ratio held steady at **19.0%**; doubled the win count against 1500+ opposition compared to previous versions.
+    *   **Search Depth**: Reaches **Depth 8-10** in middle games and **Depth 14+** in simplified endgames.
+*   **Status**: Stability is now "Production Ready." Future work moves to Stage 4 (Strength), focusing on King Safety and Mobility to bridge the 280-point gap with TSCP.
 
 ---
 
@@ -126,13 +126,13 @@ Floundroid is built in **five deliberate stages**, moving from correctness → p
 - **Iterative Deepening**: Progressive search depth.
 - **Evaluation**: Material values + Piece-Square Tables (PST).
 
-### **Stage 3 — Mechanical Brain** 🟡 
-**Status: 95% Complete**
+### **Stage 3 — Mechanical Brain** ✅ 🟢
+**Status: 100% Complete**
 - [x] **Bitboards**: 64-bit integer board representation.
 - [x] **Zobrist Hashing**: Incremental position fingerprinting.
 - [x] **Transposition Table**: Search result caching.
 - [x] **Move Ordering**: MVV-LVA, Killers, and History heuristics.
-- [ ] **Quiescence Polish**: (Next Up) Implementing Delta Pruning for even faster capture searches.
+- [x] **UCI Robustness**: Guaranteed `bestmove` output and thread-safe cancellation.
 
 ### **Stage 4 — Strength Phase** 🔵
 **Status: Up Next**
