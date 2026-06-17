@@ -1967,6 +1967,9 @@ module Search =
                 for t in 0..63 do
                     historyTable.[c, f, t] <- 0    
     
+    let isRepetition (hash: uint64) (history: uint64 list) =
+        history |> List.contains hash
+    
     /// Quiescence search: plays out tactical moves until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
         nodes <- nodes + 1uL
@@ -2022,10 +2025,12 @@ module Search =
                 currentAlpha    
     
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
-    let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
+    let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL
         
         if ct.IsCancellationRequested then
+            (0, None)
+        elif ply > 0 && isRepetition b.Hash history then
             (0, None)
         else
             // --- 1. TT PROBE ---
@@ -2121,7 +2126,7 @@ module Search =
                         else
                             legalMovesFound <- legalMovesFound + 1
                         
-                            let score, _ = negamax nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) ct
+                            let score, _ = negamax nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) (b.Hash :: history) ct
                             let actualScore = -score
 
                             if actualScore > bestScore then
@@ -2153,7 +2158,7 @@ module Search =
                     (bestScore, bestMove)
 
     /// Iterative Deepening
-    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (ct: CancellationToken) =
+    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
         async {
             do! Async.SwitchToThreadPool()
 
@@ -2170,7 +2175,7 @@ module Search =
             let mutable d = 1
 
             while d <= maxDepth && not ct.IsCancellationRequested do
-                let score, moveOpt = negamax b d 0 -INF INF ct
+                let score, moveOpt = negamax b d 0 -INF INF history ct
 
                 if not ct.IsCancellationRequested then
                     let elapsed = sw.Elapsed.TotalSeconds
@@ -2370,6 +2375,7 @@ module Debug =
 module UciLoop =
     let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     let mutable board = Board.fromFen startFen
+    let mutable positionHistory: uint64 list = []
     // Track the current search task and its cancellation token
     let mutable searchCts = new CancellationTokenSource()
     let mutable currentSearchId = 0
@@ -2392,6 +2398,7 @@ module UciLoop =
                 Search.clearKillers() 
                 Search.clearHistory() 
                 board <- Board.fromFen startFen            
+                positionHistory <- []
             
             | "position" :: rest ->
                 let (fen, moveParts) =
@@ -2411,12 +2418,19 @@ module UciLoop =
                     | _ -> (startFen, [])
 
                 board <- Board.fromFen fen
+                positionHistory <- [ board.Hash ]
 
                 for mStr in moveParts do
                     // Faster: Only generate pseudo-legal moves to find the kind
                     let moves = MoveGen.getPseudoLegalMoves board 
                     match moves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
-                    | Some m -> board <- Board.applyMove m board
+                    | Some m -> 
+                        board <- Board.applyMove m board
+                        // Reset history on capture or pawn move
+                        if m.Kind = Capture || m.Kind = EnPassant || (Board.tryGetPiece board m.To |> Option.map (fun p -> p.Kind = Pawn) |> Option.defaultValue false) then
+                            positionHistory <- [ board.Hash ]
+                        else
+                            positionHistory <- board.Hash :: positionHistory
                     | None -> ()
                 TranspositionTable.advanceAge()
             
@@ -2437,15 +2451,13 @@ module UciLoop =
                 let mySearchId = currentSearchId
                 let currentCts = searchCts 
                 let searchBoard = board 
+                let currentHistory = positionHistory
 
                 // --- THE ALARM CLOCK ---
                 // This tells the token to automatically trigger 'Cancel' after targetTime ms
                 let depthIdx = rest |> List.tryFindIndex (fun s -> s = "depth")
                 if depthIdx.IsNone then
                     searchCts.CancelAfter(targetTime)
-
-                let searchBoard = board 
-                let currentCts = searchCts 
 
                 let depth =
                     match depthIdx with
@@ -2458,7 +2470,7 @@ module UciLoop =
                     async {
                         try                        
                             // Use the token for the search itself
-                            let! result = Search.findBestMove searchBoard depth targetTime currentCts.Token
+                            let! result = Search.findBestMove searchBoard depth targetTime currentHistory currentCts.Token
         
                             if mySearchId = currentSearchId then
                                 match result with

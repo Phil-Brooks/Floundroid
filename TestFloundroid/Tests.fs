@@ -653,7 +653,7 @@ module SearchTests =
             Board.fromFen "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
 
         let bestMoveOpt =
-            Search.findBestMove b 2 2000 System.Threading.CancellationToken.None
+            Search.findBestMove b 2 2000 [] System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
         match bestMoveOpt with
@@ -666,7 +666,7 @@ module SearchTests =
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPP11PPP/RNBQKBNR w KQkq - 0 1"
 
         let bestMoveOpt =
-            Search.findBestMove b 3 2000 System.Threading.CancellationToken.None
+            Search.findBestMove b 3 2000 [] System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
         match bestMoveOpt with
@@ -679,7 +679,7 @@ module SearchTests =
         let b = Board.fromFen "7k/5K2/6Q1/8/8/8/8/8 b - - 0 1"
 
         let score, _ =
-            Search.negamax b 2 0 -Search.INF Search.INF System.Threading.CancellationToken.None
+            Search.negamax b 2 0 -Search.INF Search.INF [] System.Threading.CancellationToken.None
 
         Assert.Equal(0, score)
 
@@ -690,7 +690,7 @@ module SearchTests =
         cts.Cancel() // Cancel it before it even starts
         
         let bestMoveOpt =
-            Search.findBestMove b 5 1000 cts.Token
+            Search.findBestMove b 5 1000 [] cts.Token
             |> Async.RunSynchronously
 
         // ASSERT: Iterative deepening should still provide a move from the fallback
@@ -1013,7 +1013,7 @@ module TTTests =
         Search.nodes <- 0uL
         TranspositionTable.clear()
         let cts = new System.Threading.CancellationTokenSource()
-        Search.negamax b 4 0 -1000000 1000000 cts.Token |> ignore
+        Search.negamax b 4 0 -1000000 1000000 [] cts.Token |> ignore
         let nodesWithTT = Search.nodes
     
         // This is hard to assert exactly, but nodesWithTT will be significantly 
@@ -1030,7 +1030,7 @@ module TTTests =
         cts.Cancel()
         
         // 2. Run negamax with the cancelled token
-        let _ = Search.negamax b 3 0 -Search.INF Search.INF cts.Token
+        let _ = Search.negamax b 3 0 -Search.INF Search.INF [] cts.Token
         
         // 3. Probe the TT for this position
         let entry = TranspositionTable.probe b.Hash
@@ -1122,3 +1122,19 @@ module UciParsingTests =
         Assert.False(Board.isOccupied board (Square.fromString "e2"))
 
 
+
+module RepetitionTests =
+    [<Fact>]
+    let ``Negamax returns 0 immediately if current position is a repetition`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        // If the current hash is already in history and we are not at the root (ply > 0)
+        let history = [ b.Hash ]
+        let score, _ = Search.negamax b 2 1 -Search.INF Search.INF history System.Threading.CancellationToken.None
+        Assert.Equal(0, score)
+
+    [<Fact>]
+    let ``isRepetition correctly identifies hash in history`` () =
+        let hash = 12345uL
+        let history = [ 54321uL; 12345uL; 67890uL ]
+        Assert.True(Search.isRepetition hash history)
+        Assert.False(Search.isRepetition 999uL history)

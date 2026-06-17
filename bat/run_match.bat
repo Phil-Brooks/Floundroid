@@ -18,6 +18,5 @@ pause
 
 rem update runlog
 del D:\Github\Floundroid\runlog.txt
-copy log.txt D:\Github\Floundroid\runlog.txt
-
+copy log.txt D:\Github\Floundroid\bat\runlog.txt
 pause
