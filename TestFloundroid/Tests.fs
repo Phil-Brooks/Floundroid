@@ -200,6 +200,46 @@ module BoardTests =
 
         Assert.False(b2.CastlingRights.WhiteKingSide)
 
+    [<Fact>]
+    let ``Moving King removes all castling rights`` () =
+        let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
+        let m = { From = Square.fromString "e1"; To = Square.fromString "e2"; Kind = Quiet }
+        let b2 = Board.applyMove m b
+        Assert.False(b2.CastlingRights.WhiteKingSide)
+        Assert.False(b2.CastlingRights.WhiteQueenSide)
+        Assert.True(b2.CastlingRights.BlackKingSide)
+        Assert.True(b2.CastlingRights.BlackQueenSide)
+
+    [<Fact>]
+    let ``Capturing opponent rook removes their castling rights`` () =
+        let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
+        // White Rook on a1 captures Black Rook on a8
+        let m = { From = Square.fromString "a1"; To = Square.fromString "a8"; Kind = Capture }
+        let b2 = Board.applyMove m b
+        Assert.False(b2.CastlingRights.BlackQueenSide)
+        Assert.True(b2.CastlingRights.BlackKingSide)
+
+    [<Fact>]
+    let ``Pawn move resets halfmove clock`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 10 1"
+        let m = { From = Square.fromString "e2"; To = Square.fromString "e4"; Kind = Quiet }
+        let b2 = Board.applyMove m b
+        Assert.Equal(0, b2.HalfmoveClock)
+
+    [<Fact>]
+    let ``Capture resets halfmove clock`` () =
+        let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR w KQkq - 5 1"
+        let m = { From = Square.fromString "d1"; To = Square.fromString "d5"; Kind = Capture }
+        let b2 = Board.applyMove m b
+        Assert.Equal(0, b2.HalfmoveClock)
+
+    [<Fact>]
+    let ``Quiet non-pawn move increments halfmove clock`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let m = { From = Square.fromString "g1"; To = Square.fromString "f3"; Kind = Quiet }
+        let b2 = Board.applyMove m b
+        Assert.Equal(1, b2.HalfmoveClock)
+
 module FenTests =
 
     [<Theory>]
@@ -1052,4 +1092,33 @@ module MoveOrderingTests =
         // (Wait, d1xd5 is also Queen takes Queen, which is 10,000 + 9000 - 900 = 18100)
         // (e4xd5 is 10,000 + 9000 - 100 = 18900. Correct!)
         Assert.True(getScore bestMove > getScore secondBest)
+
+module InsufficientMaterialTests =
+
+    [<Theory>]
+    [<InlineData("8/8/8/8/8/8/8/k6K w - - 0 1", 0)>] // K vs K
+    [<InlineData("8/8/8/8/3N4/8/8/k6K w - - 0 1", 300)>] // KN vs K (White up ~300)
+    [<InlineData("8/8/8/8/3B4/8/8/k6K w - - 0 1", 300)>] // KB vs K (White up ~300)
+    let ``Current engine evaluates insufficient material as a material advantage`` (fen: string, minExpected: int) =
+        let b = Board.fromFen fen
+        let score = Evaluation.evaluate b
+        Assert.True(abs score >= minExpected, $"Should detect material advantage of at least {minExpected}, got {score}")
+
+module UciParsingTests =
+
+    [<Fact>]
+    let ``Position startpos moves e2e4 results in correct board`` () =
+        let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let mutable board = Board.fromFen startFen
+        let moves = [ "e2e4" ]
+
+        for mStr in moves do
+            let legals = MoveGen.getLegalMoves board
+            let m = legals |> Array.find (fun x -> Move.toUci x = mStr)
+            board <- Board.applyMove m board
+
+        Assert.Equal(Black, board.SideToMove)
+        Assert.True(Board.isOccupied board (Square.fromString "e4"))
+        Assert.False(Board.isOccupied board (Square.fromString "e2"))
+
 
