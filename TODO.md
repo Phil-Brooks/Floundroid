@@ -61,6 +61,12 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] Hard time limit
 - [x] Node counting
 
+## 3.7 Draw Detection & Correctness (Target: v0.3.7)
+- [ ] Implement **3-fold repetition** detection using a history hash table
+- [ ] Implement **50-move rule** (using `HalfmoveClock` logic from unit tests)
+- [ ] Implement **Insufficient Material** draw detection (K vs K, KN vs K, KB vs K)
+- [ ] Add explicit draw-score (0) to `negamax` when draws are detected
+
 ---
 
 # Stage 4 — Strength Phase
