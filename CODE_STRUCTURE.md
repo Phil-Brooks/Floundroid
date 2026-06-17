@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 17/06/2026 15:08:18
+Generated on: 17/06/2026 15:35:06
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -249,6 +249,8 @@ Generated on: 17/06/2026 15:08:18
     - ***Returns**: A new Board record reflecting the post-move state.*
     - *Executes a move, updating both Bitboards and the Piece Map.*
     - *This is the final step before the Map is removed entirely.*
+- **fn** `hasInsufficientMaterial`
+    - *Checks if the board has insufficient material for checkmate.*
 - **fn** `prettyPrint`
     - *Prints the board in a human-readable format.*
 

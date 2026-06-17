@@ -1096,13 +1096,28 @@ module MoveOrderingTests =
 module InsufficientMaterialTests =
 
     [<Theory>]
-    [<InlineData("8/8/8/8/8/8/8/k6K w - - 0 1", 0)>] // K vs K
-    [<InlineData("8/8/8/8/3N4/8/8/k6K w - - 0 1", 300)>] // KN vs K (White up ~300)
-    [<InlineData("8/8/8/8/3B4/8/8/k6K w - - 0 1", 300)>] // KB vs K (White up ~300)
-    let ``Current engine evaluates insufficient material as a material advantage`` (fen: string, minExpected: int) =
+    [<InlineData("8/8/8/8/8/8/8/k6K w - - 0 1")>] // K vs K
+    [<InlineData("8/8/8/8/3N4/8/8/k6K w - - 0 1")>] // KN vs K
+    [<InlineData("8/8/8/8/3B4/8/8/k6K w - - 0 1")>] // KB vs K
+    [<InlineData("k7/8/8/8/8/8/8/K1b1b3 w - - 0 1")>] // K vs KBB (same color bishops)
+    let ``Search identifies insufficient material as draw (0)`` (fen: string) =
         let b = Board.fromFen fen
-        let score = Evaluation.evaluate b
-        Assert.True(abs score >= minExpected, $"Should detect material advantage of at least {minExpected}, got {score}")
+        // Search at depth 1 should see the draw immediately if implemented in negamax/eval
+        let score, _ = Search.negamax b 1 0 -Search.INF Search.INF [] System.Threading.CancellationToken.None
+        Assert.Equal(0, score)
+
+    [<Fact>]
+    let ``KB vs KB same color is a draw`` () =
+        // Bishops on same color (e.g. c1 and f1 are both white squares?) 
+        // a1 is black. a1=0, b1=1. 
+        // Square 2 (c1) is black. Square 5 (f1) is black.
+        // Wait, rank 1: a1(0,B), b1(1,W), c1(2,B), d1(3,W), e1(4,B), f1(5,W), g1(6,B), h1(7,W)
+        // c1 is black, f1 is white.
+        // Let's use squares on same color.
+        let fen = "k7/8/8/8/8/8/8/K1B1b3 w - - 0 1" // White Bishop on c1 (black), Black Bishop on e1 (black)
+        let b = Board.fromFen fen
+        let score, _ = Search.negamax b 1 0 -Search.INF Search.INF [] System.Threading.CancellationToken.None
+        Assert.Equal(0, score)
 
 module UciParsingTests =
 

@@ -1185,6 +1185,34 @@ module Board =
           FullmoveNumber = newFMNumber
           Hash = newHash }
 
+    /// Checks if the board has insufficient material for checkmate.
+    let hasInsufficientMaterial (b: Board) =
+        let bbs = b.Bitboards
+        if bbs.WhitePawns <> 0uL || bbs.BlackPawns <> 0uL || 
+           bbs.WhiteRooks <> 0uL || bbs.BlackRooks <> 0uL || 
+           bbs.WhiteQueens <> 0uL || bbs.BlackQueens <> 0uL then
+            false
+        else
+            let whiteKnights = Bitboard.count bbs.WhiteKnights
+            let blackKnights = Bitboard.count bbs.BlackKnights
+            let whiteBishops = Bitboard.count bbs.WhiteBishops
+            let blackBishops = Bitboard.count bbs.BlackBishops
+            
+            let whiteMinors = whiteKnights + whiteBishops
+            let blackMinors = blackKnights + blackBishops
+            
+            if whiteMinors = 0 && blackMinors = 0 then true // K vs K
+            elif whiteMinors = 1 && blackMinors = 0 then true // KN vs K or KB vs K
+            elif whiteMinors = 0 && blackMinors = 1 then true // K vs KN or K vs KB
+            elif whiteKnights = 0 && blackKnights = 0 then
+                // Only Bishops left. Draw if all bishops are on the same color.
+                let whiteSquaresMask = 0xAA55AA55AA55AA55uL
+                let allBishops = bbs.WhiteBishops ||| bbs.BlackBishops
+                let onWhite = (allBishops &&& whiteSquaresMask) <> 0uL
+                let onBlack = (allBishops &&& ~~~whiteSquaresMask) <> 0uL
+                not (onWhite && onBlack) 
+            else false
+
     /// Prints the board in a human-readable format.
     let prettyPrint (b: Board) =
         for r in 7..-1..0 do
@@ -2030,7 +2058,7 @@ module Search =
         
         if ct.IsCancellationRequested then
             (0, None)
-        elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100) then
+        elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100 || Board.hasInsufficientMaterial b) then
             (0, None)
         else
             // --- 1. TT PROBE ---
