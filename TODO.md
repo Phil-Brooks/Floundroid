@@ -48,8 +48,8 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] MVV‑LVA for captures
 
 ## 3.5 Quiescence Search
-- [ ] Stand‑pat evaluation
-- [ ] Capture search
+- [x] Stand‑pat evaluation
+- [x] Capture search
 - [ ] Check extensions (optional)
 
 ## 3.6 Time Management
