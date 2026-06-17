@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 15/06/2026 21:35:50
+Generated on: 17/06/2026 09:50:46
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -214,8 +214,11 @@ Generated on: 15/06/2026 21:35:50
     - *Adjusts mate scores from the search to be relative to the root.*
     - *This ensures "Mate in 5" found at depth 10 is stored correctly.*
 - **fn** `mateFromTT`
+    - *Adjusts mate scores from the TT back to the search, reversing the previous adjustment.*
 - **fn** `clear`
+    - *Clears the transposition table, resetting all entries to empty.*
 - **fn** `store`
+    - *Stores an entry in the transposition table with the given parameters.*
 - **fn** `probe`
 
 ## 📦 module Board

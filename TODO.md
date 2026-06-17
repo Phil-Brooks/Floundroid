@@ -40,20 +40,24 @@ A detailed, structured task list aligned with the project roadmap.
 ## 3.3 Transposition Table
 - [x] Define TT entry structure
 - [x] Implement TT Probing and Storing logic in Search
+- [x] Implement TT Ageing (to prevent opening transpositions from clogging the endgame)
 
 ## 3.4 Move Ordering
 - [x] TT move
+- [ ] Optimize QS MoveGen (Stop generating full legal moves; generate only captures)
 - [x] Killer moves
 - [x] History heuristic
 - [x] MVV‑LVA for captures
 
 ## 3.5 Quiescence Search
+- [ ] Add Promotions to Quiescence Search
 - [x] Stand‑pat evaluation
 - [x] Capture search
 - [ ] Check extensions (optional)
 
 ## 3.6 Time Management
 - [x] Soft time limit
+- [ ] Update Time Management to support winc / binc parameters
 - [x] Hard time limit
 - [x] Node counting
 

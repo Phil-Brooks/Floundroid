@@ -943,6 +943,27 @@ module TTTests =
         // before the search could find a valid result.
         Assert.True(entry.IsNone, "TT should not store results from a cancelled search")
 
+    [<Fact>]
+    let ``TT Ageing replaces shallow new move over deep old move`` () =
+        TranspositionTable.clear()
+        let hash = 999UL
+        
+        // 1. Store a very deep search in Age 0
+        TranspositionTable.currentAge <- 0uy
+        TranspositionTable.store hash 20 0 TranspositionTable.NodeFlag.Exact 100 None
+        
+        // 2. Advance Age
+        TranspositionTable.advanceAge() // Age is now 1
+        
+        // 3. Store a shallow search in Age 1
+        TranspositionTable.store hash 2 0 TranspositionTable.NodeFlag.Exact 200 None
+        
+        // 4. Probe
+        let entry = TranspositionTable.probe hash
+        Assert.Equal(2, entry.Value.Depth)
+        Assert.Equal(200, entry.Value.Value)
+        Assert.Equal(1uy, entry.Value.Age)
+
 module MoveOrderingTests =
 
     [<Fact>]

@@ -7,6 +7,9 @@
     <File Path="bat/commands.txt" />
     <File Path="bat/git_tag.bat" />
     <File Path="bat/publish.bat" />
+    <File Path="bat/run_match.bat" />
+    <File Path="bat/run_match4.bat" />
+    <File Path="bat/run_match8.bat" />
   </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/generate-docs.fsx" />

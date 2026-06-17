@@ -877,11 +877,18 @@ module TranspositionTable =
         Move: Move option
         Value: int
         Depth: int
+        Age : byte
         Flag: NodeFlag
     }
 
-    /// Default entry (empty)
-    let emptyEntry = { Hash = 0UL; Move = None; Value = 0; Depth = -1; Flag = NodeFlag.Alpha }
+    // Update empty entry
+    let emptyEntry = { Hash = 0UL; Move = None; Value = 0; Depth = -1; Age = 0uy; Flag = NodeFlag.Alpha }
+
+    // Global age counter
+    let mutable currentAge = 0uy
+
+    /// Advances the age of the transposition table, allowing for aging out old entries.
+    let advanceAge () = currentAge <- currentAge + 1uy
 
     /// A table size of 2^20 is roughly 32-64MB depending on padding.
     let SIZE = 1 <<< 20 
@@ -894,22 +901,34 @@ module TranspositionTable =
         elif score < -20000 then score - ply
         else score
 
+    /// Adjusts mate scores from the TT back to the search, reversing the previous adjustment.
     let mateFromTT (score: int) (ply: int) =
         if score > 20000 then score - ply
         elif score < -20000 then score + ply
         else score
 
+    /// Clears the transposition table, resetting all entries to empty.
     let clear () =
         Array.fill table 0 SIZE emptyEntry
 
+    /// Stores an entry in the transposition table with the given parameters.
     let store (hash: uint64) (depth: int) (ply: int) (flag: NodeFlag) (value: int) (m: Move option) =
         let index = int (hash % uint64 SIZE)
         let adjustedValue = mateToTT value ply
         
-        // Replacement strategy: Always replace if deeper or same depth
-        // This is a simple but effective strategy.
-        if table.[index].Depth <= depth then
-            table.[index] <- { Hash = hash; Move = m; Value = adjustedValue; Depth = depth; Flag = flag }
+        let existing = table.[index]
+
+        // REPLACEMENT STRATEGY: 
+        // 1. Always replace if the slot is empty or the hash matches (updating existing info)
+        // 2. Always replace if the existing entry is from an OLDER age
+        // 3. Otherwise, only replace if the new search is deeper
+        let isOld = existing.Age <> currentAge
+        
+        if existing.Hash = 0UL || existing.Hash = hash || isOld || depth >= existing.Depth then
+            table.[index] <- { 
+                Hash = hash; Move = m; Value = adjustedValue; 
+                Depth = depth; Flag = flag; Age = currentAge // <-- Store current age
+            }
 
     let probe (hash: uint64) =
         let index = int (hash % uint64 SIZE)
@@ -2321,6 +2340,7 @@ module UciLoop =
                     match moves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
                     | Some m -> board <- Board.applyMove m board
                     | None -> ()
+                TranspositionTable.advanceAge()
             
             | "go" :: rest ->
                 // 1. Calculate time
