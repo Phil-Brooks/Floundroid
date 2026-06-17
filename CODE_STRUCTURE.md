@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 17/06/2026 09:50:46
+Generated on: 17/06/2026 10:00:50
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -257,6 +257,8 @@ Generated on: 17/06/2026 09:50:46
 - **fn** `getPseudoLegalMoves`
 - **fn** `getLegalMoves`
     - *Gets all legal moves for the current position.*
+- **fn** `getCaptureMoves`
+    - *Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.*
 
 ## 📦 module San
 ---
@@ -287,7 +289,7 @@ Generated on: 17/06/2026 09:50:46
 - **fn** `clearKillers`
 - **fn** `clearHistory`
 - **fn** `quiesce`
-    - *Quiescence search: plays out all captures until the position is stable.*
+    - *Quiescence search: plays out tactical moves until the position is stable.*
 - **fn** `negamax`
     - *Negamax search with alpha-beta pruning and Transposition Table integration.*
 - **fn** `findBestMove`

@@ -44,7 +44,7 @@ A detailed, structured task list aligned with the project roadmap.
 
 ## 3.4 Move Ordering
 - [x] TT move
-- [ ] Optimize QS MoveGen (Stop generating full legal moves; generate only captures)
+- [x] Optimize QS MoveGen (Stop generating full legal moves; generate only captures)
 - [x] Killer moves
 - [x] History heuristic
 - [x] MVV‑LVA for captures

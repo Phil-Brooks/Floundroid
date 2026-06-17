@@ -299,6 +299,18 @@ module MoveGenTests =
         
         Assert.False(canCastleKingside, "Black cannot castle through f8 because it is attacked by the White Rook")
 
+    [<Fact>]
+    let ``getCaptureMoves ignores quiet moves`` () =
+        // Position: White Pawn on e2 (can move to e3, e4), White Rook on a1. 
+        // Black Pawn on d3.
+        let b = Board.fromFen "8/8/8/8/8/3p4/4P3/R3K3 w Q - 0 1"
+        let captures = MoveGen.getCaptureMoves b
+        
+        // Should find e2xd3 but NOT e2e3 or e2e4
+        Assert.Contains(captures, fun m -> Square.toString m.To = "d3")
+        Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e3")
+        Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e4")
+
 module PromotionTests =
 
     [<Fact>]

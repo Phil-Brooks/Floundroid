@@ -1347,6 +1347,80 @@ module MoveGen =
 
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
+    /// Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.
+    let getCaptureMoves (b: Board) =
+        let moves = ResizeArray<Move>()
+        let us, them = b.SideToMove, Colour.opposite b.SideToMove
+
+        for (sq, p) in BitboardSet.allPieces b.Bitboards do
+            if p.Colour = us then
+                let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
+
+                match p.Kind with
+                | Pawn ->
+                    let d = if us = White then 1 else -1
+                    let targetRank = if us = White then 7 else 0
+                    
+                    // 1. Captures (Normal + Promotion Captures)
+                    for df in [ -1; 1 ] do
+                        let nf, nr = f + df, r + d
+                        if Square.isOnBoard nf nr then
+                            let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                            match Board.tryGetPiece b cap with
+                            | Some victim when victim.Colour = them ->
+                                if nr = targetRank then
+                                    for pt in [ Queen; Rook; Bishop; Knight ] do
+                                        moves.Add({ From = sq; To = cap; Kind = Promotion pt })
+                                else
+                                    moves.Add({ From = sq; To = cap; Kind = Capture })
+                            | _ -> ()
+
+                    // 2. En passant
+                    match b.EnPassantSquare with
+                    | Some ep ->
+                        if abs (File.toInt (Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
+                            moves.Add({ From = sq; To = ep; Kind = EnPassant })
+                    | None -> ()
+                    
+                    // 3. Quiet Promotions (important for QS)
+                    let nr1 = r + d
+                    if nr1 = targetRank then
+                        let p1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr1)
+                        if not (Board.isOccupied b p1) then
+                            for pt in [ Queen; Rook; Bishop; Knight ] do
+                                moves.Add({ From = sq; To = p1; Kind = Promotion pt })
+
+                | Knight ->
+                    let mutable attacks = BitboardGen.knightAttacks.[sq] &&& (if us = White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
+                    while attacks <> 0uL do
+                        let t = Bitboard.popLsb &attacks
+                        moves.Add({ From = sq; To = t; Kind = Capture })
+
+                | King ->
+                    let mutable attacks = BitboardGen.kingAttacks.[sq] &&& (if us = White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
+                    while attacks <> 0uL do
+                        let t = Bitboard.popLsb &attacks
+                        moves.Add({ From = sq; To = t; Kind = Capture })
+
+                | Bishop | Rook | Queen as kind ->
+                    let occ = b.Bitboards.Occupancy
+                    let mutable combinedAttacks = 0uL
+                    if kind = Bishop || kind = Queen then
+                        let e = Magic.bishopEntries.[sq]
+                        combinedAttacks <- combinedAttacks ||| Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                    if kind = Rook || kind = Queen then
+                        let e = Magic.rookEntries.[sq]
+                        combinedAttacks <- combinedAttacks ||| Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+
+                    let themTotal = if us = White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal
+                    let mutable targets = combinedAttacks &&& themTotal
+    
+                    while targets <> 0uL do
+                        let t = Bitboard.popLsb &targets
+                        moves.Add({ From = sq; To = t; Kind = Capture })
+
+        moves.ToArray()
+
 module San =
     /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
     let toSan (b: Board) (m: Move) =
@@ -1893,45 +1967,49 @@ module Search =
                 for t in 0..63 do
                     historyTable.[c, f, t] <- 0    
     
-    /// Quiescence search: plays out all captures until the position is stable.
+    /// Quiescence search: plays out tactical moves until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
         nodes <- nodes + 1uL
-        if ct.IsCancellationRequested then
-            alpha
+        if ct.IsCancellationRequested then alpha
         else
             let sideMult = if b.SideToMove = White then 1 else -1
             let standPat = Evaluation.evaluate b * sideMult
 
-            if standPat >= beta then
-                beta
+            if standPat >= beta then beta
             else
                 let mutable currentAlpha = Math.Max(alpha, standPat)
 
+                // 1. Generate only tactical moves
+                let moves = MoveGen.getCaptureMoves b
                 
-                let captures =
-                    MoveGen.getPseudoLegalMoves b
-                    |> Array.filter (fun m ->
-                        match m.Kind with
-                        | Capture | EnPassant | Promotion _ -> true
-                        | _ -> false)
-                    // Only check legality for captures we actually want to search
-                    |> Array.filter (fun m -> not (Board.isInCheckFor b.SideToMove (Board.applyMove m b)))                
-                
-                let captures =
-                    MoveGen.getLegalMoves b
-                    |> Array.filter (fun m ->
-                        match m.Kind with
-                        | Capture | EnPassant | Promotion _ -> true
-                        | _ -> false)
+                // 2. Simple MVV-LVA Scoring for QS
+                let scores = Array.zeroCreate moves.Length
+                for i in 0 .. moves.Length - 1 do
+                    let m = moves.[i]
+                    let victimVal = 
+                        match Board.tryGetPiece b m.To with 
+                        | Some p -> Evaluation.pieceValue p.Kind 
+                        | None -> 100 // En Passant
+                    let attackerVal = 
+                        match Board.tryGetPiece b m.From with 
+                        | Some p -> Evaluation.pieceValue p.Kind 
+                        | None -> 0
+                    scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
+
+                System.Array.Sort(scores, moves)
 
                 let mutable i = 0
                 let mutable exitLoop = false
 
-                while i < captures.Length && not exitLoop do
-                    if ct.IsCancellationRequested then 
-                        exitLoop <- true
+                while i < moves.Length && not exitLoop do
+                    let m = moves.[i]
+                    let nextB = Board.applyMove m b
+                    
+                    // 3. Legality Check
+                    if Board.isInCheckFor b.SideToMove nextB then
+                        i <- i + 1
                     else
-                        let score = -quiesce (Board.applyMove captures.[i] b) (ply + 1) (-beta) (-currentAlpha) ct
+                        let score = -quiesce nextB (ply + 1) (-beta) (-currentAlpha) ct
 
                         if score >= beta then
                             currentAlpha <- beta
@@ -1941,8 +2019,8 @@ module Search =
                                 currentAlpha <- score
                             i <- i + 1
 
-                currentAlpha
-
+                currentAlpha    
+    
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
     let rec negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int * Move option =
         nodes <- nodes + 1uL
