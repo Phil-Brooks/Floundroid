@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 17/06/2026 10:00:50
+Generated on: 17/06/2026 15:08:18
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -288,6 +288,7 @@ Generated on: 17/06/2026 10:00:50
 ---
 - **fn** `clearKillers`
 - **fn** `clearHistory`
+- **fn** `isRepetition`
 - **fn** `quiesce`
     - *Quiescence search: plays out tactical moves until the position is stable.*
 - **fn** `negamax`
