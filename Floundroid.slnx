@@ -10,6 +10,8 @@
     <File Path="bat/run_match.bat" />
     <File Path="bat/run_match4.bat" />
     <File Path="bat/run_match8.bat" />
+    <File Path="bat/run_match8_2.bat" />
+    <File Path="runlog.txt" />
   </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/generate-docs.fsx" />

@@ -311,6 +311,52 @@ module MoveGenTests =
         Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e3")
         Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e4")
 
+    [<Fact>]
+    let ``Pawn cannot jump over a piece with double push`` () =
+        // FEN: White pawn on e2, Black Knight on e3. e4 is empty.
+        let fen = "rnbqkbnr/pppp1ppp/8/8/4n3/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let board = Board.fromFen fen
+        let moves = MoveGen.getPseudoLegalMoves board
+    
+        // Check if the move e2-e4 (which jumps over e3) is generated
+        let hasJump = moves |> Array.exists (fun m -> 
+            Square.toString m.From = "e2" && Square.toString m.To = "e4")
+    
+        Assert.False(hasJump, "White pawn at e2 should be blocked from jumping to e4 by the piece on e3")
+
+    [<Fact>]
+    let ``UCI move parser identifies e1g1 as a Castling move not a Quiet move`` () =
+        // Standard starting position
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let board = Board.fromFen fen
+    
+        // Position after 1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5
+        // (Clearing the way for White to castle)
+        let movesToPlay = ["e2e4"; "e7e5"; "g1f3"; "b8c6"; "f1c4"; "f8c5"]
+        let mutable currentBoard = board
+        for mStr in movesToPlay do
+            let legals = MoveGen.getLegalMoves currentBoard
+            let m = legals |> Array.find (fun x -> Move.toUci x = mStr)
+            currentBoard <- Board.applyMove m currentBoard
+
+        // Now White wants to castle: e1g1
+        let uciCastling = "e1g1"
+        let allMoves = MoveGen.getLegalMoves currentBoard
+    
+        // Find how many moves match "e1g1"
+        let matchingMoves = allMoves |> Array.filter (fun m -> Move.toUci m = uciCastling)
+    
+        // ASSERT 1: There should really only be one move in a perfect generator, 
+        // but if there are two, we must ensure we don't pick 'Quiet'.
+        Assert.NotEmpty(matchingMoves)
+    
+        // This is the logic currently in your UciLoop:
+        let selectedMove = allMoves |> Array.find (fun m -> Move.toUci m = uciCastling)
+    
+        // ASSERT 2: The selected move MUST be Castling.
+        // This will likely FAIL in your current version and return 'Quiet'.
+        Assert.Equal(CastleKingSide, selectedMove.Kind)
+
 module PromotionTests =
 
     [<Fact>]
@@ -559,8 +605,6 @@ module EvaluationTests =
         Assert.Equal(0, Evaluation.evaluate b)
 
 module SearchTests =
-    open Xunit
-    open Floundroid
 
     [<Fact>]
     let ``Search finds a mate in one (Scholars Mate)`` () =

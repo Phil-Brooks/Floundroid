@@ -50,14 +50,14 @@ A detailed, structured task list aligned with the project roadmap.
 - [x] MVV‑LVA for captures
 
 ## 3.5 Quiescence Search
-- [ ] Add Promotions to Quiescence Search
+- [x] Add Promotions to Quiescence Search
 - [x] Stand‑pat evaluation
 - [x] Capture search
-- [ ] Check extensions (optional)
+- [ ] Check extensions (optional - we'll leave this for Stage 4)
 
 ## 3.6 Time Management
 - [x] Soft time limit
-- [ ] Update Time Management to support winc / binc parameters
+- [x] Update Time Management to support winc / binc parameters
 - [x] Hard time limit
 - [x] Node counting
 
