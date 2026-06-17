@@ -6,6 +6,7 @@
   <Folder Name="/bat/">
     <File Path="bat/commands.txt" />
     <File Path="bat/git_tag.bat" />
+    <File Path="bat/log8.txt" />
     <File Path="bat/publish.bat" />
     <File Path="bat/run_match.bat" />
     <File Path="bat/run_match4.bat" />

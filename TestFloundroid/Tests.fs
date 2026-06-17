@@ -1138,3 +1138,22 @@ module RepetitionTests =
         let history = [ 54321uL; 12345uL; 67890uL ]
         Assert.True(Search.isRepetition hash history)
         Assert.False(Search.isRepetition 999uL history)
+
+module FiftyMoveRuleTests =
+    [<Fact>]
+    let ``Negamax returns 0 if halfmove clock is 100`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 100 1"
+        let score, _ = Search.negamax b 2 1 -Search.INF Search.INF [] System.Threading.CancellationToken.None
+        Assert.Equal(0, score)
+
+    [<Fact>]
+    let ``Negamax returns 0 if halfmove clock reaches 100 during search`` () =
+        // 99 halfmoves, White to move. Any quiet non-pawn move will lead to 100.
+        let b = Board.fromFen "4k3/8/8/8/8/8/8/4K2R w K - 99 1"
+        // Try to move rook Rh1-h2
+        let m = { From = Square.fromString "h1"; To = Square.fromString "h2"; Kind = Quiet }
+        let nextB = Board.applyMove m b
+        Assert.Equal(100, nextB.HalfmoveClock)
+        
+        let score, _ = Search.negamax nextB 1 1 -Search.INF Search.INF [] System.Threading.CancellationToken.None
+        Assert.Equal(0, score)

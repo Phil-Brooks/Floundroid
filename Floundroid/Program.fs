@@ -2030,7 +2030,7 @@ module Search =
         
         if ct.IsCancellationRequested then
             (0, None)
-        elif ply > 0 && isRepetition b.Hash history then
+        elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100) then
             (0, None)
         else
             // --- 1. TT PROBE ---
