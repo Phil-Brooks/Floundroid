@@ -15,15 +15,14 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.3.6 (The "Mechanical Brain" Update)
-This release marks the **100% completion of Stage 3**. The engine has transitioned fully to a high-performance bitboard architecture with professional-grade search heuristics.
+## 🚀 Latest Stable Release: v0.3.7 (The "Draw Detection" Update)
+This release focuses on **Search Correctness** and rules compliance, ensuring the engine recognizes draws precisely as defined in FIDE rules.
 
-### **Key Features in v0.3.6**
-- **Magic Bitboards**: Implemented high-speed bitwise sliding attack generation, significantly increasing nodes-per-second (NPS).
-- **Transposition Table (TT) Maturity**: Added **TT Ageing** and optimized probing, allowing the engine to retain critical search data across turns without clogging memory.
-- **Advanced Move Ordering**: Integrated **MVV-LVA**, **Killer Moves**, and **History Heuristics** to prune the search tree more aggressively.
-- **Enhanced Tenacity**: The engine is now significantly harder to "topple," evidenced by a nearly 50% increase in draw rate against higher-rated opposition.
-- 👉 [**Download Floundroid.exe v0.3.6**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Features in v0.3.7**
+- **50-Move Rule**: The engine now correctly identifies draws when the half-move clock reaches 100, preventing infinite loops in quiet endgames.
+- **Insufficient Material Detection**: Implemented logic to recognize dead-draw positions (K vs K, KN vs K, KB vs K, and same-colored bishop endgames), saving search time in non-winnable scenarios.
+- **Improved Tenacity**: The engine's defensive profile is significantly enhanced by its ability to actively seek draws in losing positions using the new rules.
+- 👉 [**Download Floundroid.exe v0.3.7**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
@@ -44,6 +43,7 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 - **Bitboard representation** using **Magic Bitboards** for sliding pieces.
 - **Transposition Table** with Zobrist hashing and aging logic.
 - **Heuristics**: MVV-LVA, Killers, and History moves.
+- **Draw Detection**: 3-fold repetition, 50-move rule, and Insufficient Material.
 
 ### **UCI Support**
 - Full UCI protocol compliance.
@@ -55,13 +55,13 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 
 Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 
-### **v0.3.6 Performance Baseline**
-*   **Final Rating:** `~1249 Elo` (-301 relative to TSCP)
-*   **Record vs TSCP**: 1 Win, 28 Draws, 71 Losses (100 games played)
+### **v0.3.7 Performance Baseline**
+*   **Final Rating:** `~1242 Elo` (-308 relative to TSCP)
+*   **Record vs TSCP**: 7 Wins, 15 Draws, 78 Losses (100 games played)
 *   **Technical Performance:** 
-    *   **Resilience**: The **Draw Ratio** jumped to **28.0%** (up from 19.0% in v0.3.4), showing massive improvements in defensive stability.
-    *   **Playing as Black**: Achieved a 40% draw rate as the second player, proving the search architecture's robustness.
-*   **Status**: Stage 3 is officially closed. The engine is mechanically "complete"; future gains will come from evaluation tuning (Stage 4).
+    *   **Draw Detection in Action**: Of the 15 draws achieved, **7 were via the 50-move rule** and **5 were via insufficient material**, directly validating the new implementation.
+    *   **Asymmetric Performance**: Achieved a 25.0% score as Black, significantly outperforming White (4.0%), likely due to more robust defensive responses to aggressive opening play.
+*   **Status**: Stage 3 (Performance & Correctness) is officially closed. The engine is mechanically "complete"; future gains will come from evaluation tuning (Stage 4).
 
 ---
 
@@ -79,6 +79,7 @@ Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 - [x] **Zobrist Hashing**: Incremental position fingerprinting.
 - [x] **Transposition Table**: Advanced caching and entry ageing.
 - [x] **Move Ordering**: Heuristics (Killers, History, MVV-LVA).
+- [x] **Draw Detection**: 3-fold repetition, 50-move rule, Insufficient Material.
 
 ### **Stage 4 — Strength Phase** 🔵
 **Status: In Progress**
@@ -102,3 +103,4 @@ Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 git clone https://github.com/Phil-Brooks/Floundroid.git
 cd Floundroid
 dotnet build -c Release
+```
