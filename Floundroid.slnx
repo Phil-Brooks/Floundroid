@@ -8,11 +8,11 @@
     <File Path="bat/git_tag.bat" />
     <File Path="bat/log8.txt" />
     <File Path="bat/publish.bat" />
+    <File Path="bat/runlog.txt" />
     <File Path="bat/run_match.bat" />
     <File Path="bat/run_match4.bat" />
     <File Path="bat/run_match8.bat" />
     <File Path="bat/run_match8_2.bat" />
-    <File Path="runlog.txt" />
   </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/generate-docs.fsx" />
