@@ -644,6 +644,51 @@ module EvaluationTests =
         let b = Board.empty
         Assert.Equal(0, Evaluation.evaluate b)
 
+    [<Fact>]
+    let ``Starting position pawn structure is symmetrical`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        Assert.Equal(0, Evaluation.pawnStructureScore b)
+
+    [<Fact>]
+    let ``Doubled pawns are penalized`` () =
+        let healthy = Board.fromFen "4k3/8/8/8/8/8/3P4/4K3 w - - 0 1"
+        let doubled = Board.fromFen "4k3/8/8/8/8/3P4/3P4/4K3 w - - 0 1"
+
+        Assert.True(
+            Evaluation.pawnStructureScore doubled < Evaluation.pawnStructureScore healthy,
+            "Doubled white pawns should score worse than a single healthy pawn."
+        )
+
+    [<Fact>]
+    let ``Isolated pawns are penalized compared with connected pawns`` () =
+        let isolated = Board.fromFen "4k3/8/8/8/8/8/2P2P2/4K3 w - - 0 1"
+        let connected = Board.fromFen "4k3/8/8/8/8/8/2PP4/4K3 w - - 0 1"
+
+        Assert.True(
+            Evaluation.pawnStructureScore connected > Evaluation.pawnStructureScore isolated,
+            "Connected pawns should score better than isolated pawns."
+        )
+
+    [<Fact>]
+    let ``Passed pawns are rewarded`` () =
+        let blocked = Board.fromFen "4k3/8/3p4/8/3P4/8/8/4K3 w - - 0 1"
+        let passed = Board.fromFen "4k3/8/8/8/3P4/8/8/4K3 w - - 0 1"
+
+        Assert.True(
+            Evaluation.pawnStructureScore passed > Evaluation.pawnStructureScore blocked,
+            "Passed white pawns should score better than blocked pawns."
+        )
+
+    [<Fact>]
+    let ``Black passed pawn scores for black`` () =
+        let b = Board.fromFen "4k3/8/8/8/3p4/8/8/4K3 b - - 0 1"
+
+        Assert.True(
+            Evaluation.pawnStructureScore b < 0,
+            "A black passed pawn should make the white-perspective score negative."
+        )
+
 module SearchTests =
 
     [<Fact>]

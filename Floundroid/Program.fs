@@ -1561,415 +1561,143 @@ module Evaluation =
     /// The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let pawnPst =
         Array.rev
-            [| 0
-               0
-               0
-               0
-               0
-               0
-               0
-               0
-               50
-               50
-               50
-               50
-               50
-               50
-               50
-               50
-               10
-               10
-               20
-               30
-               30
-               20
-               10
-               10
-               5
-               5
-               10
-               25
-               25
-               10
-               5
-               5
-               0
-               0
-               0
-               20
-               20
-               0
-               0
-               0
-               5
-               -5
-               -10
-               0
-               0
-               -10
-               -5
-               5
-               5
-               10
-               10
-               -20
-               -20
-               10
-               10
-               5
-               0
-               0
-               0
-               0
-               0
-               0
-               0
-               0 |]
+            [| 0; 0; 0; 0; 0; 0; 0; 0
+               50; 50; 50; 50; 50; 50; 50; 50
+               10; 10; 20; 30; 30; 20; 10; 10
+               5; 5; 10; 25; 25; 10; 5; 5
+               0; 0; 0; 20; 20; 0; 0; 0
+               5; -5; -10; 0; 0; -10; -5; 5
+               5; 10; 10; -20; -20; 10; 10; 5
+               0; 0; 0; 0; 0; 0; 0; 0 |]
 
     /// The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let knightPst =
         Array.rev
-            [| -50
-               -40
-               -30
-               -30
-               -30
-               -30
-               -40
-               -50
-               -40
-               -20
-               0
-               5
-               5
-               0
-               -20
-               -40
-               -30
-               5
-               10
-               15
-               15
-               10
-               5
-               -30
-               -30
-               0
-               15
-               20
-               20
-               15
-               0
-               -30
-               -30
-               5
-               15
-               20
-               20
-               15
-               5
-               -30
-               -30
-               0
-               10
-               15
-               15
-               10
-               0
-               -30
-               -40
-               -20
-               0
-               0
-               0
-               0
-               -20
-               -40
-               -50
-               -40
-               -30
-               -30
-               -30
-               -30
-               -40
-               -50 |]
+            [| -50; -40; -30; -30; -30; -30; -40; -50
+               -40; -20; 0; 5; 5; 0; -20; -40
+               -30; 5; 10; 15; 15; 10; 5; -30
+               -30; 0; 15; 20; 20; 15; 0; -30
+               -30; 5; 15; 20; 20; 15; 5; -30
+               -30; 0; 10; 15; 15; 10; 0; -30
+               -40; -20; 0; 0; 0; 0; -20; -40
+               -50; -40; -30; -30; -30; -30; -40; -50 |]
 
     /// The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let bishopPst =
         Array.rev
-            [| -20
-               -10
-               -10
-               -10
-               -10
-               -10
-               -10
-               -20
-               -10
-               0
-               0
-               0
-               0
-               0
-               0
-               -10
-               -10
-               0
-               5
-               10
-               10
-               5
-               0
-               -10
-               -10
-               5
-               5
-               10
-               10
-               5
-               5
-               -10
-               -10
-               0
-               10
-               10
-               10
-               10
-               0
-               -10
-               -10
-               10
-               10
-               10
-               10
-               10
-               10
-               -10
-               -10
-               5
-               0
-               0
-               0
-               0
-               5
-               -10
-               -20
-               -10
-               -10
-               -10
-               -10
-               -10
-               -10
-               -20 |]
+            [| -20; -10; -10; -10; -10; -10; -10; -20
+               -10; 0; 0; 0; 0; 0; 0; -10
+               -10; 0; 5; 10; 10; 5; 0; -10
+               -10; 5; 5; 10; 10; 5; 5; -10
+               -10; 0; 10; 10; 10; 10; 0; -10
+               -10; 10; 10; 10; 10; 10; 10; -10
+               -10; 5; 0; 0; 0; 0; 5; -10
+               -20; -10; -10; -10; -10; -10; -10; -20 |]
 
 
     /// The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let rookPst =
         Array.rev
-            [| 0
-               0
-               0
-               0
-               0
-               0
-               0
-               0
-               5
-               10
-               10
-               10
-               10
-               10
-               10
-               5
-               -5
-               0
-               0
-               0
-               0
-               0
-               0
-               -5
-               -5
-               0
-               0
-               0
-               0
-               0
-               0
-               -5
-               -5
-               0
-               0
-               0
-               0
-               0
-               0
-               -5
-               -5
-               0
-               0
-               0
-               0
-               0
-               0
-               -5
-               -5
-               0
-               0
-               0
-               0
-               0
-               0
-               -5
-               0
-               0
-               0
-               5
-               5
-               0
-               0
-               0 |]
+            [| 0; 0; 0; 0; 0; 0; 0; 0
+               5; 10; 10; 10; 10; 10; 10; 5
+               -5; 0; 0; 0; 0; 0; 0; -5
+               -5; 0; 0; 0; 0; 0; 0; -5
+               -5; 0; 0; 0; 0; 0; 0; -5
+               -5; 0; 0; 0; 0; 0; 0; -5
+               -5; 0; 0; 0; 0; 0; 0; -5
+               0; 0; 0; 5; 5; 0; 0; 0 |]
 
     /// The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let queenPst =
         Array.rev
-            [| -20
-               -10
-               -10
-               -5
-               -5
-               -10
-               -10
-               -20
-               -10
-               0
-               0
-               0
-               0
-               0
-               0
-               -10
-               -10
-               0
-               5
-               5
-               5
-               5
-               0
-               -10
-               -5
-               0
-               5
-               5
-               5
-               5
-               0
-               -5
-               0
-               0
-               5
-               5
-               5
-               5
-               0
-               -5
-               -10
-               5
-               5
-               5
-               5
-               5
-               0
-               -10
-               -10
-               0
-               5
-               0
-               0
-               0
-               0
-               -10
-               -20
-               -10
-               -10
-               -5
-               -5
-               -10
-               -10
-               -20 |]
+            [| -20; -10; -10; -5; -5; -10; -10; -20
+               -10; 0; 0; 0; 0; 0; 0; -10
+               -10; 0; 5; 5; 5; 5; 0; -10
+               -5; 0; 5; 5; 5; 5; 0; -5
+               0; 0; 5; 5; 5; 5; 0; -5
+               -10; 5; 5; 5; 5; 5; 0; -10
+               -10; 0; 5; 0; 0; 0; 0; -10
+               -20; -10; -10; -5; -5; -10; -10; -20 |]
 
     /// The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let kingPst =
         Array.rev
-            [| -30
-               -40
-               -40
-               -50
-               -50
-               -40
-               -40
-               -30
-               -30
-               -40
-               -40
-               -50
-               -50
-               -40
-               -40
-               -30
-               -30
-               -40
-               -40
-               -50
-               -50
-               -40
-               -40
-               -30
-               -30
-               -40
-               -40
-               -50
-               -50
-               -40
-               -40
-               -30
-               -20
-               -30
-               -30
-               -40
-               -40
-               -30
-               -30
-               -20
-               -10
-               -20
-               -20
-               -20
-               -20
-               -20
-               -20
-               -10
-               20
-               20
-               0
-               0
-               0
-               0
-               20
-               20
-               20
-               30
-               10
-               0
-               0
-               10
-               30
-               20 |]
+            [| -30; -40; -40; -50; -50; -40; -40; -30
+               -30; -40; -40; -50; -50; -40; -40; -30
+               -30; -40; -40; -50; -50; -40; -40; -30
+               -30; -40; -40; -50; -50; -40; -40; -30
+               -20; -30; -30; -40; -40; -30; -30; -20
+               -10; -20; -20; -20; -20; -20; -20; -10
+               20; 20; 0; 0; 0; 0; 20; 20
+               20; 30; 10; 0; 0; 10; 30; 20 |]
+
+    let private pawnFileCounts (pawns: Bitboard) =
+        let counts = Array.zeroCreate 8
+        let mutable remaining = pawns
+
+        while remaining <> 0uL do
+            let sq = Bitboard.popLsb &remaining
+            counts.[sq % 8] <- counts.[sq % 8] + 1
+
+        counts
+
+    let private isPassedPawn (colour: Colour) (sq: Square) (enemyPawns: Bitboard) =
+        let file = sq % 8
+        let rank = sq / 8
+        let mutable blocked = false
+
+        for targetFile in Math.Max(0, file - 1) .. Math.Min(7, file + 1) do
+            if colour = White then
+                for targetRank in rank + 1 .. 7 do
+                    if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
+                        blocked <- true
+            else
+                for targetRank in rank - 1 .. -1 .. 0 do
+                    if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
+                        blocked <- true
+
+        not blocked
+
+    let private passedPawnBonus (colour: Colour) (sq: Square) =
+        let rank = sq / 8
+        let progress = if colour = White then rank else 7 - rank
+        [| 0; 0; 6; 12; 20; 35; 55; 0 |].[progress]
+
+    let private evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
+        let fileCounts = pawnFileCounts friendlyPawns
+        let mutable score = 0
+        let mutable remaining = friendlyPawns
+
+        for file in 0..7 do
+            if fileCounts.[file] > 1 then
+                score <- score - ((fileCounts.[file] - 1) * 6)
+
+        while remaining <> 0uL do
+            let sq = Bitboard.popLsb &remaining
+            let file = sq % 8
+
+            let hasLeftPawn = file > 0 && fileCounts.[file - 1] > 0
+            let hasRightPawn = file < 7 && fileCounts.[file + 1] > 0
+
+            if not hasLeftPawn && not hasRightPawn then
+                score <- score - 5
+            else
+                score <- score + 2
+
+            if isPassedPawn colour sq enemyPawns then
+                score <- score + passedPawnBonus colour sq
+
+        score
+
+    let pawnStructureScore (b: Board) =
+        let bbs = b.Bitboards
+        let whiteScore = evaluatePawnSide White bbs.WhitePawns bbs.BlackPawns
+        let blackScore = evaluatePawnSide Black bbs.BlackPawns bbs.WhitePawns
+        whiteScore - blackScore
 
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
-        let mutable score = 0
+        let mutable score = pawnStructureScore b
         let mutable occ = b.Bitboards.Occupancy
         
         while occ <> 0uL do

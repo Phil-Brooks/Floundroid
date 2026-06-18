@@ -2,324 +2,322 @@ Started game 2 of 100 (TSCP vs Floundroid)
 Started game 1 of 100 (Floundroid vs TSCP)
 Started game 3 of 100 (Floundroid vs TSCP)
 Started game 4 of 100 (TSCP vs Floundroid)
-Finished game 3 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 0 - 1 - 0  [0.000] 1
+Finished game 4 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 1 - 0 - 0  [1.000] 1
 Started game 5 of 100 (Floundroid vs TSCP)
-Finished game 5 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 0 - 2 - 0  [0.000] 2
+Finished game 3 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 1 - 1 - 0  [0.500] 2
 Started game 6 of 100 (TSCP vs Floundroid)
-Finished game 1 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 0 - 3 - 0  [0.000] 3
-Started game 7 of 100 (Floundroid vs TSCP)
-Finished game 4 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 0 - 4 - 0  [0.000] 4
-Started game 8 of 100 (TSCP vs Floundroid)
 Finished game 2 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 1 - 4 - 0  [0.200] 5
-Started game 9 of 100 (Floundroid vs TSCP)
-Finished game 9 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 1 - 5 - 0  [0.167] 6
-Started game 10 of 100 (TSCP vs Floundroid)
+Score of Floundroid vs TSCP: 2 - 1 - 0  [0.667] 3
+Started game 7 of 100 (Floundroid vs TSCP)
+Finished game 1 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 2 - 2 - 0  [0.500] 4
+Started game 8 of 100 (TSCP vs Floundroid)
 Finished game 6 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 2 - 5 - 0  [0.286] 7
+Score of Floundroid vs TSCP: 3 - 2 - 0  [0.600] 5
+Started game 9 of 100 (Floundroid vs TSCP)
+Finished game 5 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 4 - 2 - 0  [0.667] 6
+Started game 10 of 100 (TSCP vs Floundroid)
+Finished game 8 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 5 - 2 - 0  [0.714] 7
 Started game 11 of 100 (Floundroid vs TSCP)
 Finished game 7 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 2 - 6 - 0  [0.250] 8
+Score of Floundroid vs TSCP: 5 - 3 - 0  [0.625] 8
 Started game 12 of 100 (TSCP vs Floundroid)
-Finished game 10 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 2 - 6 - 1  [0.278] 9
+Finished game 9 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 6 - 3 - 0  [0.667] 9
 Started game 13 of 100 (Floundroid vs TSCP)
-Finished game 11 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 2 - 7 - 1  [0.250] 10
+Finished game 10 (TSCP vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs TSCP: 6 - 4 - 0  [0.600] 10
 Started game 14 of 100 (TSCP vs Floundroid)
-Finished game 8 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 2 - 7 - 2  [0.273] 11
+Finished game 11 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 7 - 4 - 0  [0.636] 11
 Started game 15 of 100 (Floundroid vs TSCP)
-Finished game 13 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 2 - 8 - 2  [0.250] 12
+Finished game 14 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 8 - 4 - 0  [0.667] 12
 Started game 16 of 100 (TSCP vs Floundroid)
-Finished game 12 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 3 - 8 - 2  [0.308] 13
+Finished game 16 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 9 - 4 - 0  [0.692] 13
 Started game 17 of 100 (Floundroid vs TSCP)
-Finished game 15 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 3 - 9 - 2  [0.286] 14
+Finished game 13 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 10 - 4 - 0  [0.714] 14
 Started game 18 of 100 (TSCP vs Floundroid)
-Finished game 17 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 3 - 10 - 2  [0.267] 15
+Finished game 15 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 11 - 4 - 0  [0.733] 15
 Started game 19 of 100 (Floundroid vs TSCP)
-Finished game 19 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 3 - 11 - 2  [0.250] 16
+Finished game 12 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 11 - 4 - 1  [0.719] 16
 Started game 20 of 100 (TSCP vs Floundroid)
-Finished game 14 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 3 - 11 - 3  [0.265] 17
+Finished game 19 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 12 - 4 - 1  [0.735] 17
 Started game 21 of 100 (Floundroid vs TSCP)
-Finished game 16 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 3 - 11 - 4  [0.278] 18
+Finished game 17 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 12 - 5 - 1  [0.694] 18
 Started game 22 of 100 (TSCP vs Floundroid)
-Finished game 21 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 3 - 12 - 4  [0.263] 19
-Started game 23 of 100 (Floundroid vs TSCP)
 Finished game 18 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 4 - 12 - 4  [0.300] 20
+Score of Floundroid vs TSCP: 13 - 5 - 1  [0.711] 19
+Started game 23 of 100 (Floundroid vs TSCP)
+Finished game 20 (TSCP vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs TSCP: 13 - 6 - 1  [0.675] 20
 Started game 24 of 100 (TSCP vs Floundroid)
-Finished game 23 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 4 - 13 - 4  [0.286] 21
+Finished game 22 (TSCP vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs TSCP: 13 - 6 - 2  [0.667] 21
 Started game 25 of 100 (Floundroid vs TSCP)
-Finished game 24 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 4 - 14 - 4  [0.273] 22
+Finished game 24 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 14 - 6 - 2  [0.682] 22
 Started game 26 of 100 (TSCP vs Floundroid)
-Finished game 25 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 4 - 15 - 4  [0.261] 23
+Finished game 21 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 14 - 7 - 2  [0.652] 23
 Started game 27 of 100 (Floundroid vs TSCP)
-Finished game 26 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 5 - 15 - 4  [0.292] 24
+Finished game 25 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 14 - 8 - 2  [0.625] 24
 Started game 28 of 100 (TSCP vs Floundroid)
-Finished game 20 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 6 - 15 - 4  [0.320] 25
+Finished game 23 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 15 - 8 - 2  [0.640] 25
 Started game 29 of 100 (Floundroid vs TSCP)
-Finished game 27 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 6 - 16 - 4  [0.308] 26
+Finished game 26 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 16 - 8 - 2  [0.654] 26
 Started game 30 of 100 (TSCP vs Floundroid)
-Finished game 22 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 6 - 17 - 4  [0.296] 27
+Finished game 28 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 17 - 8 - 2  [0.667] 27
 Started game 31 of 100 (Floundroid vs TSCP)
-Finished game 29 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 6 - 18 - 4  [0.286] 28
+Finished game 27 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 18 - 8 - 2  [0.679] 28
 Started game 32 of 100 (TSCP vs Floundroid)
-Finished game 31 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 6 - 19 - 4  [0.276] 29
+Finished game 29 (Floundroid vs TSCP): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs TSCP: 18 - 8 - 3  [0.672] 29
 Started game 33 of 100 (Floundroid vs TSCP)
-Finished game 33 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 6 - 20 - 4  [0.267] 30
+Finished game 31 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 19 - 8 - 3  [0.683] 30
 Started game 34 of 100 (TSCP vs Floundroid)
-Finished game 32 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 7 - 20 - 4  [0.290] 31
+Finished game 30 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 20 - 8 - 3  [0.694] 31
 Started game 35 of 100 (Floundroid vs TSCP)
-Finished game 30 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 7 - 20 - 5  [0.297] 32
+Finished game 34 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 21 - 8 - 3  [0.703] 32
 Started game 36 of 100 (TSCP vs Floundroid)
-Finished game 28 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 7 - 20 - 6  [0.303] 33
+Finished game 32 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 21 - 8 - 4  [0.697] 33
 Started game 37 of 100 (Floundroid vs TSCP)
 Finished game 35 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 8 - 20 - 6  [0.324] 34
+Score of Floundroid vs TSCP: 22 - 8 - 4  [0.706] 34
 Started game 38 of 100 (TSCP vs Floundroid)
-Finished game 37 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 8 - 21 - 6  [0.314] 35
+Finished game 33 (Floundroid vs TSCP): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 22 - 8 - 5  [0.700] 35
 Started game 39 of 100 (Floundroid vs TSCP)
-Finished game 34 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 8 - 21 - 7  [0.319] 36
+Finished game 36 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 22 - 8 - 6  [0.694] 36
 Started game 40 of 100 (TSCP vs Floundroid)
-Finished game 39 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 9 - 21 - 7  [0.338] 37
+Finished game 37 (Floundroid vs TSCP): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs TSCP: 22 - 8 - 7  [0.689] 37
 Started game 41 of 100 (Floundroid vs TSCP)
 Finished game 38 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 10 - 21 - 7  [0.355] 38
+Score of Floundroid vs TSCP: 23 - 8 - 7  [0.697] 38
 Started game 42 of 100 (TSCP vs Floundroid)
-Finished game 41 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 11 - 21 - 7  [0.372] 39
-Started game 43 of 100 (Floundroid vs TSCP)
 Finished game 40 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 12 - 21 - 7  [0.388] 40
+Score of Floundroid vs TSCP: 24 - 8 - 7  [0.705] 39
+Started game 43 of 100 (Floundroid vs TSCP)
+Finished game 39 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 25 - 8 - 7  [0.713] 40
 Started game 44 of 100 (TSCP vs Floundroid)
-Finished game 36 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 12 - 21 - 8  [0.390] 41
+Finished game 42 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 26 - 8 - 7  [0.720] 41
 Started game 45 of 100 (Floundroid vs TSCP)
-Finished game 42 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 12 - 22 - 8  [0.381] 42
+Finished game 43 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 26 - 9 - 7  [0.702] 42
 Started game 46 of 100 (TSCP vs Floundroid)
-Finished game 43 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 13 - 22 - 8  [0.395] 43
+Finished game 44 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 27 - 9 - 7  [0.709] 43
 Started game 47 of 100 (Floundroid vs TSCP)
-Finished game 45 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 13 - 23 - 8  [0.386] 44
+Finished game 45 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 28 - 9 - 7  [0.716] 44
 Started game 48 of 100 (TSCP vs Floundroid)
 Finished game 46 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 13 - 24 - 8  [0.378] 45
+Score of Floundroid vs TSCP: 28 - 10 - 7  [0.700] 45
 Started game 49 of 100 (Floundroid vs TSCP)
-Finished game 47 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 14 - 24 - 8  [0.391] 46
+Finished game 48 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 29 - 10 - 7  [0.707] 46
 Started game 50 of 100 (TSCP vs Floundroid)
-Finished game 48 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 14 - 25 - 8  [0.383] 47
+Finished game 47 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 29 - 11 - 7  [0.691] 47
 Started game 51 of 100 (Floundroid vs TSCP)
-Finished game 44 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 14 - 25 - 9  [0.385] 48
+Finished game 50 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 30 - 11 - 7  [0.698] 48
 Started game 52 of 100 (TSCP vs Floundroid)
-Finished game 50 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 14 - 26 - 9  [0.378] 49
+Finished game 49 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 31 - 11 - 7  [0.704] 49
 Started game 53 of 100 (Floundroid vs TSCP)
-Finished game 49 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 14 - 27 - 9  [0.370] 50
+Finished game 41 (Floundroid vs TSCP): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 31 - 11 - 8  [0.700] 50
 Started game 54 of 100 (TSCP vs Floundroid)
 Finished game 51 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 15 - 27 - 9  [0.382] 51
+Score of Floundroid vs TSCP: 32 - 11 - 8  [0.706] 51
 Started game 55 of 100 (Floundroid vs TSCP)
-Finished game 54 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 15 - 28 - 9  [0.375] 52
-Started game 56 of 100 (TSCP vs Floundroid)
-Finished game 53 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 15 - 29 - 9  [0.368] 53
-Started game 57 of 100 (Floundroid vs TSCP)
 Finished game 52 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 16 - 29 - 9  [0.380] 54
+Score of Floundroid vs TSCP: 33 - 11 - 8  [0.712] 52
+Started game 56 of 100 (TSCP vs Floundroid)
+Finished game 53 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 34 - 11 - 8  [0.717] 53
+Started game 57 of 100 (Floundroid vs TSCP)
+Finished game 54 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 35 - 11 - 8  [0.722] 54
 Started game 58 of 100 (TSCP vs Floundroid)
-Finished game 55 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 16 - 30 - 9  [0.373] 55
+Finished game 55 (Floundroid vs TSCP): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs TSCP: 35 - 11 - 9  [0.718] 55
 Started game 59 of 100 (Floundroid vs TSCP)
-Finished game 57 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 17 - 30 - 9  [0.384] 56
+Finished game 56 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 36 - 11 - 9  [0.723] 56
 Started game 60 of 100 (TSCP vs Floundroid)
-Finished game 56 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 17 - 31 - 9  [0.377] 57
-Started game 61 of 100 (Floundroid vs TSCP)
-Finished game 59 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 17 - 32 - 9  [0.371] 58
-Started game 62 of 100 (TSCP vs Floundroid)
-Finished game 61 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 17 - 33 - 9  [0.364] 59
-Started game 63 of 100 (Floundroid vs TSCP)
-Finished game 62 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 18 - 33 - 9  [0.375] 60
-Started game 64 of 100 (TSCP vs Floundroid)
-Finished game 63 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 19 - 33 - 9  [0.385] 61
-Started game 65 of 100 (Floundroid vs TSCP)
 Finished game 58 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 20 - 33 - 9  [0.395] 62
+Score of Floundroid vs TSCP: 37 - 11 - 9  [0.728] 57
+Started game 61 of 100 (Floundroid vs TSCP)
+Finished game 60 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 38 - 11 - 9  [0.733] 58
+Started game 62 of 100 (TSCP vs Floundroid)
+Finished game 57 (Floundroid vs TSCP): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 38 - 11 - 10  [0.729] 59
+Started game 63 of 100 (Floundroid vs TSCP)
+Finished game 59 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 39 - 11 - 10  [0.733] 60
+Started game 64 of 100 (TSCP vs Floundroid)
+Finished game 62 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 40 - 11 - 10  [0.738] 61
+Started game 65 of 100 (Floundroid vs TSCP)
+Finished game 61 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 41 - 11 - 10  [0.742] 62
 Started game 66 of 100 (TSCP vs Floundroid)
-Finished game 60 (TSCP vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs TSCP: 20 - 33 - 10  [0.397] 63
+Finished game 64 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 41 - 11 - 11  [0.738] 63
 Started game 67 of 100 (Floundroid vs TSCP)
-Finished game 67 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 20 - 34 - 10  [0.391] 64
+Finished game 63 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 41 - 12 - 11  [0.727] 64
 Started game 68 of 100 (TSCP vs Floundroid)
 Finished game 65 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 20 - 35 - 10  [0.385] 65
+Score of Floundroid vs TSCP: 41 - 13 - 11  [0.715] 65
 Started game 69 of 100 (Floundroid vs TSCP)
-Finished game 66 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 21 - 35 - 10  [0.394] 66
+Finished game 66 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 41 - 13 - 12  [0.712] 66
 Started game 70 of 100 (TSCP vs Floundroid)
-Finished game 69 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 21 - 36 - 10  [0.388] 67
-Started game 71 of 100 (Floundroid vs TSCP)
 Finished game 68 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 22 - 36 - 10  [0.397] 68
+Score of Floundroid vs TSCP: 42 - 13 - 12  [0.716] 67
+Started game 71 of 100 (Floundroid vs TSCP)
+Finished game 67 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 42 - 14 - 12  [0.706] 68
 Started game 72 of 100 (TSCP vs Floundroid)
-Finished game 64 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 22 - 36 - 11  [0.399] 69
-Started game 73 of 100 (Floundroid vs TSCP)
 Finished game 71 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 22 - 37 - 11  [0.393] 70
+Score of Floundroid vs TSCP: 42 - 15 - 12  [0.696] 69
+Started game 73 of 100 (Floundroid vs TSCP)
+Finished game 69 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 43 - 15 - 12  [0.700] 70
 Started game 74 of 100 (TSCP vs Floundroid)
-Finished game 72 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 22 - 38 - 11  [0.387] 71
+Finished game 70 (TSCP vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs TSCP: 43 - 16 - 12  [0.690] 71
 Started game 75 of 100 (Floundroid vs TSCP)
-Finished game 73 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 22 - 39 - 11  [0.382] 72
+Finished game 72 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 43 - 16 - 13  [0.688] 72
 Started game 76 of 100 (TSCP vs Floundroid)
-Finished game 75 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 23 - 39 - 11  [0.390] 73
+Finished game 73 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 44 - 16 - 13  [0.692] 73
 Started game 77 of 100 (Floundroid vs TSCP)
-Finished game 70 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 23 - 39 - 12  [0.392] 74
+Finished game 74 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 45 - 16 - 13  [0.696] 74
 Started game 78 of 100 (TSCP vs Floundroid)
-Finished game 74 (TSCP vs Floundroid): 0-1 {Black wins by adjudication: Invalid result claim}
-Score of Floundroid vs TSCP: 24 - 39 - 12  [0.400] 75
+Finished game 75 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 45 - 17 - 13  [0.687] 75
 Started game 79 of 100 (Floundroid vs TSCP)
-Finished game 77 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 24 - 40 - 12  [0.395] 76
+Finished game 77 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 46 - 17 - 13  [0.691] 76
 Started game 80 of 100 (TSCP vs Floundroid)
-Finished game 79 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 24 - 41 - 12  [0.390] 77
+Finished game 78 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 47 - 17 - 13  [0.695] 77
 Started game 81 of 100 (Floundroid vs TSCP)
 Finished game 76 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 24 - 42 - 12  [0.385] 78
+Score of Floundroid vs TSCP: 47 - 18 - 13  [0.686] 78
 Started game 82 of 100 (TSCP vs Floundroid)
-Finished game 80 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 24 - 43 - 12  [0.380] 79
+Finished game 79 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 48 - 18 - 13  [0.690] 79
 Started game 83 of 100 (Floundroid vs TSCP)
-Finished game 81 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 24 - 44 - 12  [0.375] 80
+Finished game 80 (TSCP vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs TSCP: 48 - 19 - 13  [0.681] 80
 Started game 84 of 100 (TSCP vs Floundroid)
-Finished game 78 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 24 - 44 - 13  [0.377] 81
+Finished game 81 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 48 - 20 - 13  [0.673] 81
 Started game 85 of 100 (Floundroid vs TSCP)
-Finished game 82 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 24 - 45 - 13  [0.372] 82
+Finished game 82 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 49 - 20 - 13  [0.677] 82
 Started game 86 of 100 (TSCP vs Floundroid)
-Finished game 84 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 25 - 45 - 13  [0.380] 83
+Finished game 85 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 50 - 20 - 13  [0.681] 83
 Started game 87 of 100 (Floundroid vs TSCP)
-Finished game 83 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 25 - 46 - 13  [0.375] 84
+Finished game 84 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 51 - 20 - 13  [0.685] 84
 Started game 88 of 100 (TSCP vs Floundroid)
-Finished game 86 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 26 - 46 - 13  [0.382] 85
+Finished game 86 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs TSCP: 51 - 20 - 14  [0.682] 85
 Started game 89 of 100 (Floundroid vs TSCP)
-Finished game 85 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 26 - 47 - 13  [0.378] 86
+Finished game 83 (Floundroid vs TSCP): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 51 - 21 - 14  [0.674] 86
 Started game 90 of 100 (TSCP vs Floundroid)
-Finished game 87 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 26 - 48 - 13  [0.374] 87
-Started game 91 of 100 (Floundroid vs TSCP)
-Finished game 90 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 26 - 49 - 13  [0.369] 88
-Started game 92 of 100 (TSCP vs Floundroid)
-Finished game 91 (Floundroid vs TSCP): 1-0 {White mates}
-Score of Floundroid vs TSCP: 27 - 49 - 13  [0.376] 89
-Started game 93 of 100 (Floundroid vs TSCP)
 Finished game 89 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 27 - 50 - 13  [0.372] 90
-Started game 94 of 100 (TSCP vs Floundroid)
+Score of Floundroid vs TSCP: 51 - 22 - 14  [0.667] 87
+Started game 91 of 100 (Floundroid vs TSCP)
 Finished game 88 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 28 - 50 - 13  [0.379] 91
+Score of Floundroid vs TSCP: 52 - 22 - 14  [0.670] 88
+Started game 92 of 100 (TSCP vs Floundroid)
+Finished game 90 (TSCP vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs TSCP: 52 - 23 - 14  [0.663] 89
+Started game 93 of 100 (Floundroid vs TSCP)
+Finished game 91 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 53 - 23 - 14  [0.667] 90
+Started game 94 of 100 (TSCP vs Floundroid)
+Finished game 92 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 54 - 23 - 14  [0.670] 91
 Started game 95 of 100 (Floundroid vs TSCP)
-Finished game 95 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 28 - 51 - 13  [0.375] 92
+Finished game 87 (Floundroid vs TSCP): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 54 - 23 - 15  [0.668] 92
 Started game 96 of 100 (TSCP vs Floundroid)
-Finished game 93 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 28 - 52 - 13  [0.371] 93
-Started game 97 of 100 (Floundroid vs TSCP)
 Finished game 94 (TSCP vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 29 - 52 - 13  [0.378] 94
+Score of Floundroid vs TSCP: 55 - 23 - 15  [0.672] 93
+Started game 97 of 100 (Floundroid vs TSCP)
+Finished game 96 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 56 - 23 - 15  [0.676] 94
 Started game 98 of 100 (TSCP vs Floundroid)
-Finished game 92 (TSCP vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs TSCP: 29 - 53 - 13  [0.374] 95
+Finished game 97 (Floundroid vs TSCP): 1-0 {White mates}
+Score of Floundroid vs TSCP: 57 - 23 - 15  [0.679] 95
 Started game 99 of 100 (Floundroid vs TSCP)
-Finished game 98 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 29 - 53 - 14  [0.375] 96
+Finished game 93 (Floundroid vs TSCP): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 57 - 23 - 16  [0.677] 96
 Started game 100 of 100 (TSCP vs Floundroid)
-Finished game 97 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 29 - 54 - 14  [0.371] 97
+Finished game 95 (Floundroid vs TSCP): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 57 - 23 - 17  [0.675] 97
 Finished game 99 (Floundroid vs TSCP): 0-1 {Black mates}
-Score of Floundroid vs TSCP: 29 - 55 - 14  [0.367] 98
-Finished game 96 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs TSCP: 29 - 55 - 15  [0.369] 99
-Finished game 100 (TSCP vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs TSCP: 29 - 55 - 16  [0.370] 100
-...      Floundroid playing White: 10 - 40 - 0  [0.200] 50
-...      Floundroid playing Black: 19 - 15 - 16  [0.540] 50
-...      White vs Black: 25 - 59 - 16  [0.330] 100
-Elo difference: -92.5 +/- 65.0, LOS: 0.2 %, DrawRatio: 16.0 %
+Score of Floundroid vs TSCP: 57 - 24 - 17  [0.668] 98
+Finished game 100 (TSCP vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs TSCP: 58 - 24 - 17  [0.672] 99
+Finished game 98 (TSCP vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs TSCP: 58 - 24 - 18  [0.670] 100
+...      Floundroid playing White: 24 - 17 - 9  [0.570] 50
+...      Floundroid playing Black: 34 - 7 - 9  [0.770] 50
+...      White vs Black: 31 - 51 - 18  [0.400] 100
+Elo difference: 123.0 +/- 65.6, LOS: 100.0 %, DrawRatio: 18.0 %
 SPRT: llr 0 (0.0%), lbound -inf, ubound inf
 
 Player: Floundroid
-   "Draw by 3-fold repetition": 1
-   "Draw by fifty moves rule": 9
-   "Draw by insufficient mating material": 6
-   "Loss: Black mates": 40
-   "Loss: White mates": 15
-   "Win: Black mates": 18
-   "Win: Black wins by adjudication: Invalid result claim": 1
-   "Win: White mates": 10
+   "Draw by 3-fold repetition": 4
+   "Draw by fifty moves rule": 7
+   "Draw by insufficient mating material": 7
+   "Loss: Black mates": 17
+   "Loss: White mates": 7
+   "Win: Black mates": 34
+   "Win: White mates": 24
 Player: TSCP
-   "Draw by 3-fold repetition": 1
-   "Draw by fifty moves rule": 9
-   "Draw by insufficient mating material": 6
-   "Loss: Black mates": 18
-   "Loss: Black wins by adjudication: Invalid result claim": 1
-   "Loss: White mates": 10
-   "Win: Black mates": 40
-   "Win: White mates": 15
+   "Draw by 3-fold repetition": 4
+   "Draw by fifty moves rule": 7
+   "Draw by insufficient mating material": 7
+   "Loss: Black mates": 34
+   "Loss: White mates": 24
+   "Win: Black mates": 17
+   "Win: White mates": 7
 Finished match

@@ -72,7 +72,7 @@ A detailed, structured task list aligned with the project roadmap.
 # Stage 4 — Strength Phase
 
 ## 4.1 Evaluation Overhaul
-- [ ] Pawn structure evaluation
+- [x] Pawn structure evaluation
 - [ ] King safety
 - [ ] Mobility
 - [ ] Passed pawns
