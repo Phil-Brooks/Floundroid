@@ -15,14 +15,15 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.4.0 (The "Null-Move Pruning" Update)
-This release initiates the **Strength Phase (Stage 4)** by introducing Null-Move Pruning (NMP), allowing the engine to search deeper and more efficiently.
+## 🚀 Latest Stable Release: v0.4.0a (Time Increment Bug Fix)
+This maintenance release keeps the v0.4.0 Null-Move Pruning strength gains and fixes UCI time management so `winc` and `binc` increments are included when allocating search time.
 
-### **Key Features in v0.4.0**
+### **Key Features in v0.4.0a**
 - **Null-Move Pruning (NMP)**: The engine now skips searching moves when the evaluation is so favorable that passing the turn still results in a beta cutoff.
 - **Adaptive Depth Reduction**: Dynamically reduces search depth (\(R = 3\) for depth > 6, \(R = 2\) otherwise) to maximize search speed while minimizing tactical blind spots.
 - **Safety Heuristics**: Restricts NMP when in check or when the side-to-move has no non-pawn material (avoiding zugzwang pitfalls).
-- 👉 [**Download Floundroid.exe v0.4.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+- **UCI Increment Handling**: The `go` command now accounts for `winc` and `binc`, improving play under increment time controls such as `60/1+1`.
+- 👉 [**Download Floundroid.exe v0.4.0a**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
@@ -49,6 +50,7 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 ### **UCI Support**
 - Full UCI protocol compliance.
 - **Async search loop**: Remains responsive to GUI commands (`stop`, `quit`) even during deep calculations.
+- **Increment-aware time management**: Supports `wtime`, `btime`, `winc`, and `binc` during `go` commands.
 
 ---
 
@@ -56,13 +58,15 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 
 Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 
-### **v0.4.0 Performance Baseline**
-*   **Final Rating:** `~1359 Elo` (-191 relative to TSCP) — a massive **+117 Elo increase** over v0.3.7!
-*   **Record vs TSCP**: 19 Wins, 12 Draws, 69 Losses (100 games played)
+### **v0.4.0a Performance Baseline**
+*   **Final Rating:** `~1458 Elo` (-92.5 relative to TSCP, +/- 65.0) — about **+99 Elo** over the v0.4.0 baseline.
+*   **Record vs TSCP**: 29 Wins, 16 Draws, 55 Losses (100 games played)
+*   **Score vs TSCP**: 37.0% overall, up from 25.0% in v0.4.0.
 *   **Technical Performance:** 
-    *   **Null-Move Pruning Impact**: Enabled deeper searches and higher tactical accuracy, leading to a much higher win rate (19% vs 7%).
-    *   **Asymmetric Performance**: Achieved a 41.0% score as Black (17 wins, 7 draws, 26 losses), significantly outperforming White at 9.0% (2 wins, 5 draws, 43 losses), indicating strong defensive counter-attacking play.
-*   **Status**: Stage 4 (Strength Phase) is in progress. Null-Move Pruning is fully implemented and verified.
+    *   **Time Increment Fix**: Under the `60/1+1` benchmark control, Floundroid now budgets from the side-to-move increment instead of ignoring it.
+    *   **Improved Colour Split**: Scored 20.0% as White (10 wins, 0 draws, 40 losses) and 54.0% as Black (19 wins, 16 draws, 15 losses), improving both sides compared with v0.4.0.
+    *   **Null-Move Pruning Impact**: Continues to provide deeper, more efficient searches as the main v0.4.x strength feature.
+*   **Status**: Stage 4 (Strength Phase) is in progress. Null-Move Pruning and increment-aware time management are implemented and verified.
 
 ---
 

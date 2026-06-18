@@ -105,7 +105,13 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] SIMD intrinsics for bitboard ops
 - [ ] Vectorised attack generation
 
-## 5.3 Neural Evaluation (Optional)
+## 5.3 Hot-Path GC & CPU Optimisations
+- [ ] BMI2 PEXT Intrinsics: Replace manual loops in `Magic.getIndex` with `.NET` `Bmi2.X64.ParallelBitExtract` hardware intrinsics.
+- [ ] Direct Bitboard Scanning in MoveGen: Refactor `getPseudoLegalMoves`/`getCaptureMoves` to scan piece-type bitboards directly, eliminating `BitboardSet.allPieces` sequence/tuple allocations and `getPieceAt` lookups.
+- [ ] Direct Bitboard Iteration in Evaluation: Refactor `Evaluation.evaluate` to scan individual piece bitboards directly rather than calling `getPieceAt` for every occupied square.
+- [ ] Struct Options in Transposition Table: Refactor `TranspositionTable.probe` to return `ValueOption` instead of standard heap-allocated F# `option` objects.
+
+## 5.4 Neural Evaluation (Optional)
 - [ ] NNUE‑style network
 - [ ] ONNX/TorchSharp integration
 

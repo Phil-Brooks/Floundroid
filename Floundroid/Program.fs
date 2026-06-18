@@ -2459,6 +2459,31 @@ module UciLoop =
     let mutable searchCts = new CancellationTokenSource()
     let mutable currentSearchId = 0
 
+    let tryGetIntArg (key: string) (args: string list) =
+        args
+        |> List.tryFindIndex ((=) key)
+        |> Option.bind (fun i ->
+            if i < args.Length - 1 then
+                match Int32.TryParse(args.[i + 1]) with
+                | true, value -> Some value
+                | _ -> None
+            else
+                None)
+
+    let calculateTargetTime (sideToMove: Colour) (args: string list) =
+        let wtime = tryGetIntArg "wtime" args |> Option.defaultValue 100000
+        let btime = tryGetIntArg "btime" args |> Option.defaultValue 100000
+        let winc = tryGetIntArg "winc" args |> Option.defaultValue 0
+        let binc = tryGetIntArg "binc" args |> Option.defaultValue 0
+
+        let myTime, myIncrement =
+            if sideToMove = White then
+                wtime, winc
+            else
+                btime, binc
+
+        Math.Max(1, (myTime / 20) + (myIncrement / 2))
+
     let rec run () =
         let line = Console.ReadLine()
 
@@ -2514,13 +2539,8 @@ module UciLoop =
                 TranspositionTable.advanceAge()
             
             | "go" :: rest ->
-                // 1. Calculate time
-                let wtime = rest |> List.tryFindIndex (fun s -> s = "wtime") |> Option.map (fun i -> int rest.[i + 1]) |> Option.defaultValue 100000
-                let btime = rest |> List.tryFindIndex (fun s -> s = "btime") |> Option.map (fun i -> int rest.[i + 1]) |> Option.defaultValue 100000
-                let myTime = if board.SideToMove = White then wtime else btime
-                
-                // 2. Set target time (1/20th of remaining time)
-                let targetTime = myTime / 20
+                // 1. Calculate time from remaining clock plus side-to-move increment.
+                let targetTime = calculateTargetTime board.SideToMove rest
 
                 // 3. Prepare Cancellation
                 searchCts.Cancel()

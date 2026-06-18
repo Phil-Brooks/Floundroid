@@ -1163,6 +1163,22 @@ module UciParsingTests =
 
 
 
+    [<Fact>]
+    let ``Go time target includes white increment when white is to move`` () =
+        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
+
+        let targetTime = UciLoop.calculateTargetTime White args
+
+        Assert.Equal(4000, targetTime)
+
+    [<Fact>]
+    let ``Go time target includes black increment when black is to move`` () =
+        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
+
+        let targetTime = UciLoop.calculateTargetTime Black args
+
+        Assert.Equal(2250, targetTime)
+
 module RepetitionTests =
     [<Fact>]
     let ``Negamax returns 0 immediately if current position is a repetition`` () =
