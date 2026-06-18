@@ -1,4 +1,4 @@
-﻿namespace TestFloundroid
+namespace TestFloundroid
 
 open Xunit
 open Floundroid
@@ -698,6 +698,31 @@ module SearchTests =
         
         let legalMoves = MoveGen.getLegalMoves b
         Assert.Contains(bestMoveOpt.Value, legalMoves)
+
+    [<Fact>]
+    let ``Board applyNullMove toggles side to move and clears en passant`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+        let nextB = Board.applyNullMove b
+        Assert.Equal(White, nextB.SideToMove)
+        Assert.True(nextB.EnPassantSquare.IsNone)
+        Assert.Equal(b.HalfmoveClock + 1, nextB.HalfmoveClock)
+        Assert.NotEqual(b.Hash, nextB.Hash)
+
+    [<Fact>]
+    let ``Null Move Pruning reduces nodes searched at depth 4`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        
+        // Search with NMP disabled (allowNull = false)
+        Search.nodes <- 0uL
+        let _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None
+        let nodesWithoutNMP = Search.nodes
+        
+        // Search with NMP enabled (allowNull = true)
+        Search.nodes <- 0uL
+        let _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None
+        let nodesWithNMP = Search.nodes
+        
+        Assert.True(nodesWithNMP < nodesWithoutNMP, $"NMP should reduce nodes searched. With: {nodesWithNMP}, Without: {nodesWithoutNMP}")
 
 module BitboardTests =
 

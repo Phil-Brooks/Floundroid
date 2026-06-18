@@ -15,14 +15,14 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.3.7 (The "Draw Detection" Update)
-This release focuses on **Search Correctness** and rules compliance, ensuring the engine recognizes draws precisely as defined in FIDE rules.
+## 🚀 Latest Stable Release: v0.4.0 (The "Null-Move Pruning" Update)
+This release initiates the **Strength Phase (Stage 4)** by introducing Null-Move Pruning (NMP), allowing the engine to search deeper and more efficiently.
 
-### **Key Features in v0.3.7**
-- **50-Move Rule**: The engine now correctly identifies draws when the half-move clock reaches 100, preventing infinite loops in quiet endgames.
-- **Insufficient Material Detection**: Implemented logic to recognize dead-draw positions (K vs K, KN vs K, KB vs K, and same-colored bishop endgames), saving search time in non-winnable scenarios.
-- **Improved Tenacity**: The engine's defensive profile is significantly enhanced by its ability to actively seek draws in losing positions using the new rules.
-- 👉 [**Download Floundroid.exe v0.3.7**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Features in v0.4.0**
+- **Null-Move Pruning (NMP)**: The engine now skips searching moves when the evaluation is so favorable that passing the turn still results in a beta cutoff.
+- **Adaptive Depth Reduction**: Dynamically reduces search depth (\(R = 3\) for depth > 6, \(R = 2\) otherwise) to maximize search speed while minimizing tactical blind spots.
+- **Safety Heuristics**: Restricts NMP when in check or when the side-to-move has no non-pawn material (avoiding zugzwang pitfalls).
+- 👉 [**Download Floundroid.exe v0.4.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
@@ -40,6 +40,7 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 
 ### **Search & Performance**
 - **Alpha-beta search** with Iterative Deepening and Quiescence search.
+- **Null-Move Pruning (NMP)** with adaptive depth reduction.
 - **Bitboard representation** using **Magic Bitboards** for sliding pieces.
 - **Transposition Table** with Zobrist hashing and aging logic.
 - **Heuristics**: MVV-LVA, Killers, and History moves.
@@ -55,13 +56,13 @@ Floundroid reflects the hybrid nature of the project: a traditional handcrafted 
 
 Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 
-### **v0.3.7 Performance Baseline**
-*   **Final Rating:** `~1242 Elo` (-308 relative to TSCP)
-*   **Record vs TSCP**: 7 Wins, 15 Draws, 78 Losses (100 games played)
+### **v0.4.0 Performance Baseline**
+*   **Final Rating:** `~1359 Elo` (-191 relative to TSCP) — a massive **+117 Elo increase** over v0.3.7!
+*   **Record vs TSCP**: 19 Wins, 12 Draws, 69 Losses (100 games played)
 *   **Technical Performance:** 
-    *   **Draw Detection in Action**: Of the 15 draws achieved, **7 were via the 50-move rule** and **5 were via insufficient material**, directly validating the new implementation.
-    *   **Asymmetric Performance**: Achieved a 25.0% score as Black, significantly outperforming White (4.0%), likely due to more robust defensive responses to aggressive opening play.
-*   **Status**: Stage 3 (Performance & Correctness) is officially closed. The engine is mechanically "complete"; future gains will come from evaluation tuning (Stage 4).
+    *   **Null-Move Pruning Impact**: Enabled deeper searches and higher tactical accuracy, leading to a much higher win rate (19% vs 7%).
+    *   **Asymmetric Performance**: Achieved a 41.0% score as Black (17 wins, 7 draws, 26 losses), significantly outperforming White at 9.0% (2 wins, 5 draws, 43 losses), indicating strong defensive counter-attacking play.
+*   **Status**: Stage 4 (Strength Phase) is in progress. Null-Move Pruning is fully implemented and verified.
 
 ---
 
@@ -84,7 +85,7 @@ Floundroid is regularly benchmarked against **TSCP 1.81** (est. 1550 Elo).
 ### **Stage 4 — Strength Phase** 🔵
 **Status: In Progress**
 - [ ] **Evaluation Overhaul**: Mobility, King Safety, and Pawn Structure.
-- [ ] **Search Pruning**: Null-move pruning, LMR, and Aspiration Windows.
+- [ ] **Search Pruning**: Null-move pruning [x], LMR [ ], Aspiration Windows [ ].
 - [ ] **Tapered Eval**: Smooth transitions between Middle-game and End-game.
 
 ### **Stage 5 — Innovation** 🟣

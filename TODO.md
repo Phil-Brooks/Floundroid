@@ -80,7 +80,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Tapered eval (MG/EG)
 
 ## 4.2 Search Enhancements
-- [ ] Null‑move pruning
+- [x] Null‑move pruning
 - [ ] Late Move Reductions (LMR)
 - [ ] Aspiration windows
 - [ ] Singular extensions
