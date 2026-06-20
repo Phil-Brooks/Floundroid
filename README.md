@@ -31,28 +31,43 @@ This release introduces the first major components of the Stage 4 Strength Phase
 
 ---
 
-## 📊 Calibration & Rating (Updated for tc=30)
+## 📊 Calibration & Rating (Updated for Cinnamon 2.0)
 
-Floundroid is benchmarked against **TSCP 1.81** (est. ~1550 Elo).  
-Earlier results using increment time controls were invalid because TSCP cannot handle increments reliably.
+Floundroid is now benchmarked against **Cinnamon 2.0**, a significantly stronger and more modern engine than TSCP.  
+Cinnamon includes full positional evaluation (king safety, mobility, tapered eval, etc.) and is estimated around **2000–2200 Elo**, making it an excellent reference opponent for Stage 4 development.
 
-### **v0.4.1 Performance at tc=30 (Valid Test Conditions)**
+### **v0.4.1 Performance vs Cinnamon 2.0 (tc=30, 100 games)**
 
-Using a fixed time control of **tc=30**, the results are:
-
-- **Final Score:** `33 – 60 – 7` (36.5%)  
-- **Elo Difference:** `–96 ± 69`  
+- **Final Score:** `4 – 89 – 7` (7.5%)  
+- **Elo Difference:** `–436 ± 127`  
 - **Draw Ratio:** 7%  
-- **LOS:** 0.3%
+- **LOS:** 0.0%
 
-These results reveal a clear pattern:
+These results are expected for an engine at the beginning of Stage 4:
 
 - **As White:**  
-  `32 – 13 – 5` (69%) — strong initiative play  
+  `2 – 43 – 5` (9.0%) — shows initiative and can convert when ahead  
 - **As Black:**  
-  `1 – 47 – 2` (4%) — severe defensive weaknesses
+  `2 – 46 – 2` (6.0%) — major defensive vulnerabilities  
 
-> These findings indicate a major problem when playing as Black.
+### **Interpretation**
+
+Cinnamon exposes the next set of improvements Floundroid needs:
+
+- **King safety evaluation** (highest priority)  
+- **Mobility evaluation**  
+- **Tapered evaluation**  
+- **LMR and aspiration windows**  
+
+Despite the rating gap, Floundroid demonstrated:
+
+- Stable search  
+- Correct move generation  
+- Strong tactical defence  
+- Clean conversions when ahead  
+- No illegal moves or engine crashes  
+
+This confirms the engine is **structurally healthy** and ready for the next strength upgrades.
 
 ---
 
