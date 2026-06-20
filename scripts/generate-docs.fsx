@@ -1,7 +1,6 @@
 open System
 open System.IO
 
-let sourceFile = @"D:\Github\Floundroid\Floundroid\Program.fs" // Ensure this matches your filename
 let outputFile = @"D:\Github\Floundroid\CODE_STRUCTURE.md"
 
 let cleanXml (line: string) =
@@ -16,9 +15,10 @@ let cleanXml (line: string) =
         .Replace("</returns>", "")
         .Trim()
 
-let generateDocs () =
+let generateDocs (sourceFile: string) =
     if not (File.Exists(sourceFile)) then
         printfn "Source file not found!"
+        []
     else
         let lines = File.ReadAllLines(sourceFile)
         let mutable toc = [ "## 📑 Table of Contents" ]
@@ -92,15 +92,24 @@ let generateDocs () =
             elif String.IsNullOrWhiteSpace trimmed then
                 lastComments <- []
 
-        let finalMarkdown =
-            [ "# Floundroid Technical Reference"
-              "Generated on: " + DateTime.Now.ToString()
-              "" ]
-            @ toc
+        let md =
+            toc
             @ [ "" ]
             @ content
+        md
 
-        File.WriteAllLines(outputFile, finalMarkdown)
-        printfn "Complete! Documentation updated."
-
-generateDocs ()
+let src1 = @"D:\Github\Floundroid\Floundroid\Types.fs" 
+let md1 = ["# Code File: Types.fs"] @ generateDocs (src1)
+let src2 = @"D:\Github\Floundroid\Floundroid\Program.fs" 
+let md2 = ["# Code File: Program.fs"] @ generateDocs (src2)
+let testFile = @"D:\Github\Floundroid\TestFloundroid\Tests.fs" 
+let tmd = ["# Tests File: Tests.fs"] @ generateDocs (testFile)
+let finalMarkdown =
+    [ "# Floundroid Technical Reference"
+      "Generated on: " + DateTime.Now.ToString()
+      "" ]
+    @ md1
+    @ md2
+    @ tmd
+File.WriteAllLines(outputFile, finalMarkdown)
+printfn "Complete! Documentation updated."

@@ -70,7 +70,7 @@ A detailed, structured task list aligned with the project roadmap.
 # Stage 4 — Strength Phase
 
 ## 4.1 Evaluation Overhaul
-### King Safety (Phase 1 — Basic) 🟡 *in progress*
+### King Safety (Phase 1 — Basic) 🟡 *in progress but only structure - no effect yet*
 - [x] Pawn shield
 - [x] Open-file danger
 - [x] Enemy piece proximity
@@ -89,7 +89,11 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Rook on open/half-open files
 - [ ] Bishop pair bonus
 
-### Evaluation Refactor (Pre‑Step 4) 🟡 *next*
+### Overall and Evaluation Refactor (Pre‑Step 4) 🟡 *next*
+- [ ] Refactor types into separate file and optimise e.g with enums and structs (in progress)
+- [ ] Refactor bitboards into a separate file and optimise e.g with enums and structs
+- [ ] Other refactors to improve performance and readability
+- [ ] Refactor `evaluate` into sub‑evaluators for each term
 - [ ] Extract king safety into `KingSafety` module
 - [ ] Extract PST evaluation into standalone function
 - [ ] Extract pawn structure into standalone function

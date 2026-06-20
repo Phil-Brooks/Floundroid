@@ -1,83 +1,85 @@
 # Floundroid Technical Reference
-Generated on: 20/06/2026 19:10:41
+Generated on: 20/06/2026 22:56:41
 
+# Code File: Types.fs
 ## 📑 Table of Contents
-- [Floundroid](#-module-floundroid)
+- [Types](#-module-types)
 - [Colour](#-module-colour)
 - [File](#-module-file)
 - [Rank](#-module-rank)
 - [Square](#-module-square)
-- [Bitboard](#-module-bitboard)
 - [PieceType](#-module-piecetype)
+- [Bitboard](#-module-bitboard)
 - [Piece](#-module-piece)
 - [CastlingRights](#-module-castlingrights)
 - [Move](#-module-move)
 - [BitboardSet](#-module-bitboardset)
-- [SlidingAttackGen](#-module-slidingattackgen)
-- [Magic](#-module-magic)
-- [BitboardGen](#-module-bitboardgen)
-- [Attack](#-module-attack)
-- [Zobrist](#-module-zobrist)
-- [TranspositionTable](#-module-transpositiontable)
-- [Board](#-module-board)
-- [MoveGen](#-module-movegen)
-- [San](#-module-san)
-- [Evaluation](#-module-evaluation)
-- [Search](#-module-search)
-- [Perft](#-module-perft)
-- [Debug](#-module-debug)
-- [UciLoop](#-module-uciloop)
 
 
 
-## 📦 module Floundroid
+## 📦 module Types
 ---
 
 #### 🧩 `type Colour =`
-> Colours are represented as a discriminated union with two cases: White and Black.
 
 ## 📦 module Colour
 ---
-- **fn** `toChar`
-    - *Converts a Colour to its character representation ('w' for White, 'b' for Black).*
-- **fn** `fromChar`
-    - *Converts a character to a Colour ('w' for White, 'b' for Black).*
-- **fn** `opposite`
-    - *Returns the opposite colour.*
+- **fn** `inline`
+- **fn** `inline`
+- **fn** `inline`
 
 #### 🧩 `type File =`
-> Files are represented as integers from 0 to 7, where 0 = file a and 7 = file h.
 
 ## 📦 module File
 ---
-- **fn** `toInt`
-    - *Converts a File to its integer representation (0-7).*
-- **fn** `fromInt`
-    - *Converts an integer to a File (0-7).*
-- **fn** `fromChar`
-    - *Converts a character to a File ('a'-'h').*
+- **fn** `inline`
+    - *Converts a File to its integer representation (0–7).*
+- **fn** `inline`
+    - *Converts an integer (0–7) to a File.*
+- **fn** `inline`
+    - *Converts a File to its character representation ('a'–'h').*
+- **fn** `inline`
+    - *Converts a character ('a'–'h') to a File.*
 
 #### 🧩 `type Rank =`
-> Ranks are represented as integers from 0 to 7, where 0 = rank 1 and 7 = rank 8.
 
 ## 📦 module Rank
 ---
-- **fn** `toInt`
-    - *Converts a Rank to its integer representation (0-7).*
-- **fn** `fromInt`
-    - *Converts an integer to a Rank (0-7).*
-- **fn** `fromChar`
-    - *Converts a character to a Rank ('1'-'8').*
+- **fn** `inline`
+    - *Converts a Rank to its integer representation (0–7).*
+- **fn** `inline`
+    - *Converts an integer (0–7) to a Rank.*
+- **fn** `inline`
+    - *Converts a Rank to its character representation ('1'–'8').*
+- **fn** `inline`
+    - *Converts a character ('1'–'8') to a Rank.*
 
 #### 🧩 `type Square = int`
-> Squares are represented as integers from 0 to 63, where 0 = a1, 1 = b1, ..., 63 = h8.
+> Squares are represented as integers 0–63, where 0 = a1 and 63 = h8.
 
 ## 📦 module Square
 ---
-- **fn** `toString`
-    - *Converts a Square to its string representation.*
-- **fn** `fromString`
-    - *Converts a string representation of a square (e.g., "d4") to a Square.*
+- **fn** `inline`
+    - *Converts a File and Rank to a Square.*
+- **fn** `inline`
+    - *Gets the File of a Square.*
+- **fn** `inline`
+    - *Gets the Rank of a Square.*
+- **fn** `inline`
+    - *Converts a Square to algebraic notation (e.g. "e4").*
+- **fn** `inline`
+    - *Converts algebraic notation (e.g. "d4") to a Square.*
+- **fn** `inline`
+    - *Checks if a file/rank pair is on the board.*
+
+#### 🧩 `type PieceType =`
+
+## 📦 module PieceType
+---
+- **fn** `toChar`
+    - *Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').*
+- **fn** `fromChar`
+    - *Converts a character to a PieceType.*
 
 #### 🧩 `type Bitboard = uint64`
 > Bitboards are 64-bit unsigned integers where each bit represents a square.
@@ -92,15 +94,6 @@ Generated on: 20/06/2026 19:10:41
     - *This is a high-performance way to iterate through pieces.*
 - **fn** `toString`
     - *Visualizes the bitboard as an 8x8 grid for debugging.*
-
-#### 🧩 `type PieceType =`
-
-## 📦 module PieceType
----
-- **fn** `toChar`
-    - *Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').*
-- **fn** `fromChar`
-    - *Converts a character to a PieceType.*
 
 #### 🧩 `type Piece = { Colour: Colour; Kind: PieceType }`
 > A Piece consists of a Colour and a PieceType.
@@ -150,6 +143,28 @@ Generated on: 20/06/2026 19:10:41
     - *A helper to flip a piece on/off. Essential for incremental updates.*
 - **fn** `allPieces`
     - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
+# Code File: Program.fs
+## 📑 Table of Contents
+- [Floundroid](#-module-floundroid)
+- [SlidingAttackGen](#-module-slidingattackgen)
+- [Magic](#-module-magic)
+- [BitboardGen](#-module-bitboardgen)
+- [Attack](#-module-attack)
+- [Zobrist](#-module-zobrist)
+- [TranspositionTable](#-module-transpositiontable)
+- [Board](#-module-board)
+- [MoveGen](#-module-movegen)
+- [San](#-module-san)
+- [Evaluation](#-module-evaluation)
+- [Search](#-module-search)
+- [Perft](#-module-perft)
+- [Debug](#-module-debug)
+- [UciLoop](#-module-uciloop)
+
+
+
+## 📦 module Floundroid
+---
 
 ## 📦 module SlidingAttackGen
 ---
@@ -337,3 +352,245 @@ Generated on: 20/06/2026 19:10:41
 - **fn** `calculateTargetTime`
 - **fn** `run`
 - **fn** `main`
+# Tests File: Tests.fs
+## 📑 Table of Contents
+- [TestFloundroid](#-module-testfloundroid)
+- [ColourTests](#-module-colourtests)
+- [FileTests](#-module-filetests)
+- [RankTests](#-module-ranktests)
+- [SquareTests](#-module-squaretests)
+- [PieceTypeTests](#-module-piecetypetests)
+- [PieceTests](#-module-piecetests)
+- [MoveTests](#-module-movetests)
+- [BoardTests](#-module-boardtests)
+- [FenTests](#-module-fentests)
+- [MoveGenTests](#-module-movegentests)
+- [PromotionTests](#-module-promotiontests)
+- [AttackTests](#-module-attacktests)
+- [CheckDetectionTests](#-module-checkdetectiontests)
+- [LegalMoveFilteringTests](#-module-legalmovefilteringtests)
+- [SanTests](#-module-santests)
+- [PerftTests](#-module-perfttests)
+- [EvaluationTests](#-module-evaluationtests)
+- [SearchTests](#-module-searchtests)
+- [BitboardTests](#-module-bitboardtests)
+- [SlidingAttackTests](#-module-slidingattacktests)
+- [ZobristTests](#-module-zobristtests)
+- [HashTests](#-module-hashtests)
+- [TTTests](#-module-tttests)
+- [MoveOrderingTests](#-module-moveorderingtests)
+- [InsufficientMaterialTests](#-module-insufficientmaterialtests)
+- [UciParsingTests](#-module-uciparsingtests)
+- [RepetitionTests](#-module-repetitiontests)
+- [FiftyMoveRuleTests](#-module-fiftymoveruletests)
+
+
+
+## 📦 module TestFloundroid
+---
+
+## 📦 module ColourTests
+---
+- **fn** ```Colour`
+- **fn** ```Colour`
+
+## 📦 module FileTests
+---
+- **fn** ```File`
+- **fn** ```File`
+
+## 📦 module RankTests
+---
+- **fn** ```Rank`
+- **fn** ```Rank`
+
+## 📦 module SquareTests
+---
+- **fn** ```Square`
+- **fn** ```Square`
+
+## 📦 module PieceTypeTests
+---
+- **fn** ```PieceType`
+
+## 📦 module PieceTests
+---
+- **fn** ```Piece`
+
+## 📦 module MoveTests
+---
+- **fn** ```UCI`
+
+## 📦 module BoardTests
+---
+- **fn** ```Empty`
+- **fn** ```Set`
+- **fn** ```applyMove`
+- **fn** ```applyMove`
+- **fn** ```Kingside`
+- **fn** ```En`
+- **fn** ```Promotion`
+- **fn** ```Moving`
+- **fn** ```Moving`
+- **fn** ```Capturing`
+- **fn** ```Pawn`
+- **fn** ```Capture`
+- **fn** ```Quiet`
+
+## 📦 module FenTests
+---
+- **fn** ```FEN`
+
+## 📦 module MoveGenTests
+---
+- **fn** ```Starting`
+- **fn** ```Knight`
+- **fn** ```Pawn`
+- **fn** ```Pawn`
+- **fn** ```Slider`
+- **fn** ```Starting`
+- **fn** ```Black`
+- **fn** ```Black`
+- **fn** ```getCaptureMoves`
+- **fn** ```Pawn`
+- **fn** ```UCI`
+
+## 📦 module PromotionTests
+---
+- **fn** ```White`
+- **fn** ```White`
+- **fn** ```Black`
+- **fn** ```Black`
+
+## 📦 module AttackTests
+---
+- **fn** ```Square`
+- **fn** ```Square`
+- **fn** ```Square`
+- **fn** ```Square`
+- **fn** ```White`
+- **fn** ```Black`
+
+## 📦 module CheckDetectionTests
+---
+- **fn** ```White`
+- **fn** ```White`
+- **fn** ```Black`
+
+## 📦 module LegalMoveFilteringTests
+---
+- **fn** ```Pinned`
+- **fn** ```King`
+- **fn** ```Illegal`
+- **fn** ```Cannot`
+
+## 📦 module SanTests
+---
+- **fn** `getSan`
+- **fn** ```SAN`
+- **fn** ```SAN`
+- **fn** ```SAN`
+- **fn** ```SAN`
+
+## 📦 module PerftTests
+---
+- **fn** ```Initial`
+- **fn** ```Initial`
+- **fn** ```Kiwipete`
+- **fn** ```Perft`
+
+## 📦 module EvaluationTests
+---
+- **fn** ```Starting`
+- **fn** ```Material`
+- **fn** ```Knight`
+- **fn** ```Black`
+- **fn** ```Evaluating`
+- **fn** ```Starting`
+- **fn** ```Doubled`
+- **fn** ```Isolated`
+- **fn** ```Passed`
+- **fn** ```Black`
+- **fn** ```White`
+- **fn** ```open`
+- **fn** ```half-open`
+- **fn** ```no`
+- **fn** ```enemy`
+- **fn** ```enemy`
+
+## 📦 module SearchTests
+---
+- **fn** ```Search`
+- **fn** ```Search`
+- **fn** ```Search`
+- **fn** ```Search`
+- **fn** ```Board`
+- **fn** ```Null`
+
+## 📦 module BitboardTests
+---
+- **fn** ```Bitboard`
+- **fn** ```Bitboard`
+- **fn** ```Bitboard`
+- **fn** ```Knight`
+- **fn** ```Knight`
+- **fn** ```King`
+- **fn** ```White`
+- **fn** ```Black`
+- **fn** ```Pawn`
+
+## 📦 module SlidingAttackTests
+---
+- **fn** ```Rook`
+- **fn** ```Bishop`
+- **fn** ```Rook`
+- **fn** ```Bishop`
+- **fn** ```Table`
+- **fn** ```Bishop`
+
+## 📦 module ZobristTests
+---
+- **fn** ```Zobrist`
+- **fn** ```Keys`
+- **fn** ```Castling`
+
+## 📦 module HashTests
+---
+- **fn** ```Incremental`
+- **fn** ```Hash`
+- **fn** ```Hash`
+- **fn** ```Hash`
+
+## 📦 module TTTests
+---
+- **fn** ```TT`
+- **fn** ```Mate`
+- **fn** ```TT`
+- **fn** ```TT`
+- **fn** ```Search`
+- **fn** ```TT`
+
+## 📦 module MoveOrderingTests
+---
+- **fn** ```MVV-LVA`
+
+## 📦 module InsufficientMaterialTests
+---
+- **fn** ```Search`
+- **fn** ```KB`
+
+## 📦 module UciParsingTests
+---
+- **fn** ```Position`
+- **fn** ```Go`
+- **fn** ```Go`
+
+## 📦 module RepetitionTests
+---
+- **fn** ```Negamax`
+- **fn** ```isRepetition`
+
+## 📦 module FiftyMoveRuleTests
+---
+- **fn** ```Negamax`
+- **fn** ```Negamax`
