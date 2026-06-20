@@ -1594,7 +1594,6 @@ module Evaluation =
                -10; 5; 0; 0; 0; 0; 5; -10
                -20; -10; -10; -10; -10; -10; -10; -20 |]
 
-
     /// The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
     let rookPst =
         Array.rev
@@ -1689,16 +1688,120 @@ module Evaluation =
 
         score
 
+    /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
         let bbs = b.Bitboards
         let whiteScore = evaluatePawnSide White bbs.WhitePawns bbs.BlackPawns
         let blackScore = evaluatePawnSide Black bbs.BlackPawns bbs.WhitePawns
         whiteScore - blackScore
+    
+    /// Very small king-safety heuristic: penalise missing pawn shield for short-castled kings.
+    let kingSafety (b: Board) (side: Colour) =
+        let kingSq = Board.findKing side b
+        if kingSq = -1 then
+            0 // No king found, probably an illegal position
+        else
+        
+            let file = Square.file kingSq
+            let rank = Square.rank kingSq
 
+            // Only handle short castling (king on f/g1 or f/g8)
+            let isShortCastled =
+                match side, file, rank with
+                | White, F, R1
+                | White, G, R1
+                | Black, F, R8
+                | Black, G, R8 -> true
+                | _ -> false
+
+            if not isShortCastled then
+                0
+            else
+                // f, g, h files
+                let files = [ F; G; H ]
+                let homeRank = if side = White then R2 else R7
+
+                let mutable penalty = 0
+
+                for f in files do
+                    let sq = Square.ofFileRank f homeRank
+                    match Board.tryGetPiece b sq with
+                    | Some p when p.Kind = Pawn && p.Colour = side -> ()
+                    | _ -> penalty <- penalty + 10
+
+                // --- Step 2: open / half-open file danger near king ---
+                let openFilePenalty =
+                    let mutable p = 0
+
+                    // Files adjacent to king: g and h
+                    let dangerFiles =
+                        match file with
+                        | F -> [ G; H ]   // king on f-file
+                        | G -> [ G; H ]   // king on g-file
+                        | _ -> []         // shouldn't happen for short castling
+
+                    for df in dangerFiles do
+                        let mutable whitePawn = false
+                        let mutable blackPawn = false
+
+                        // Scan the whole file for pawns
+                        for r in [ R1; R2; R3; R4; R5; R6; R7; R8 ] do
+                            let sq = Square.ofFileRank df r
+                            match Board.tryGetPiece b sq with
+                            | Some p when p.Kind = Pawn && p.Colour = White -> whitePawn <- true
+                            | Some p when p.Kind = Pawn && p.Colour = Black -> blackPawn <- true
+                            | _ -> ()
+
+                        match whitePawn, blackPawn with
+                        | false, false -> p <- p + 20   // fully open file
+                        | true, false when side = Black -> p <- p + 10  // half-open against Black
+                        | false, true when side = White -> p <- p + 10  // half-open against White
+                        | _ -> ()
+
+                    p
+                
+                // --- Step 3: enemy piece proximity ---
+                let proximityPenalty =
+                    let mutable p = 0
+
+                    // squares within Chebyshev distance <= 2
+                    let kingFile = file
+                    let kingRank = rank
+
+                    for df in [ -2 .. 2 ] do
+                        for dr in [ -2 .. 2 ] do
+                            if not (df = 0 && dr = 0) then
+                                let fInt = File.toInt kingFile + df
+                                let rInt = Rank.toInt kingRank + dr
+
+                                if Square.isOnBoard fInt rInt then
+                                    let f = File.fromInt fInt
+                                    let r = Rank.fromInt rInt
+                                    let sq = Square.ofFileRank f r
+
+                                    match Board.tryGetPiece b sq with
+                                    | Some pc when pc.Colour = Colour.opposite side ->
+                                        match pc.Kind with
+                                        | Knight -> p <- p + 5
+                                        | Bishop -> p <- p + 5
+                                        | Rook   -> p <- p + 8
+                                        | Queen  -> p <- p + 12
+                                        | _ -> ()
+                                    | _ -> ()
+
+                    p
+                
+                let totalPenalty = penalty + openFilePenalty + proximityPenalty
+                if side = White then -totalPenalty else totalPenalty
+                
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
         let mutable score = pawnStructureScore b
         let mutable occ = b.Bitboards.Occupancy
+        
+        // NEW: tiny king-safety term
+        score <- score + kingSafety b White
+        score <- score - kingSafety b Black
         
         while occ <> 0uL do
             let sq = Bitboard.popLsb &occ

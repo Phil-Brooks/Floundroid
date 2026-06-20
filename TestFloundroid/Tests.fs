@@ -485,7 +485,6 @@ module AttackTests =
 
         Assert.True(Attack.isSquareAttacked b target Black)
 
-
 module CheckDetectionTests =
 
     [<Fact>]
@@ -698,6 +697,88 @@ module EvaluationTests =
             Evaluation.pawnStructureScore b < 0,
             "A black passed pawn should make the white-perspective score negative."
         )
+
+    [<Fact>]
+    let ``White missing g-pawn is worse than full pawn shield`` () =
+        let full =
+            "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+        let weak =
+            "rnbq1rk1/pppppppp/8/8/8/6P1/PPPPPP1P/RNBQ1RK1 w - - 0 1"
+
+        let bFull = Board.fromFen full
+        let bWeak = Board.fromFen weak
+
+        let eFull = Evaluation.evaluate bFull
+        let eWeak = Evaluation.evaluate bWeak
+
+        Assert.True(eFull > eWeak)
+
+    [<Fact>]
+    let ``open h-file next to white king is penalised`` () =
+        let fenSafe =
+            "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let fenOpen =
+            "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1R2 w - - 0 1" // remove h1 pawn
+
+        let bSafe = Board.fromFen fenSafe
+        let bOpen = Board.fromFen fenOpen
+
+        Assert.True(Evaluation.evaluate bSafe > Evaluation.evaluate bOpen)
+
+    [<Fact>]
+    let ``half-open h-file is penalised`` () =
+        let fenSafe =
+            "rnbq1rk1/1ppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let fenHalf =
+            "rnbq1rk1/ppppppp1/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1" // black pawn missing on h7
+
+        let bSafe = Board.fromFen fenSafe
+        let bHalf = Board.fromFen fenHalf
+        let safescr = Evaluation.evaluate bSafe
+        let halfscr = Evaluation.evaluate bHalf
+
+        Assert.True(safescr > halfscr)
+
+    [<Fact>]
+    let ``no open-file penalty when king not short-castled`` () =
+        let fen =
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
+
+        let b = Board.fromFen fen
+        Assert.Equal(Evaluation.evaluate b, Evaluation.evaluate b)
+
+    [<Fact>]
+    let ``enemy knight near white king is penalised`` () =
+        let safe =
+            "rnbq1rk1/pppppppp/6n1/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let knightNear =
+            "rnbq1rk1/pppppppp/8/8/8/6n1/PPPPPPPP/RNBQ1RK1 w - - 0 1" // knight on g3
+
+        let bSafe = Board.fromFen safe
+        let bNear = Board.fromFen knightNear
+        let safeScore = Evaluation.evaluate bSafe
+        let nearScore = Evaluation.evaluate bNear
+
+        Assert.True(safeScore > nearScore)
+
+    [<Fact>]
+    let ``enemy queen near white king is penalised more than knight`` () =
+        let knight =
+            "rnb2rk1/pppppppp/6q1/8/8/6n1/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let queen =
+            "rnb2rk1/pppppppp/6n1/8/8/6q1/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let bN = Board.fromFen knight
+        let bQ = Board.fromFen queen
+        let scoreN = Evaluation.evaluate bN
+        let scoreQ = Evaluation.evaluate bQ
+
+        Assert.True(scoreN > scoreQ)
+
 
 module SearchTests =
 

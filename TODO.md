@@ -1,6 +1,4 @@
-# ✅ **TODO.md (Detailed Project Task List)**
-
-# Floundroid — TODO List 
+# Floundroid — TODO List
 
 A detailed, structured task list aligned with the project roadmap.
 
@@ -40,44 +38,65 @@ A detailed, structured task list aligned with the project roadmap.
 ## 3.3 Transposition Table
 - [x] Define TT entry structure
 - [x] Implement TT Probing and Storing logic in Search
-- [x] Implement TT Ageing (to prevent opening transpositions from clogging the endgame)
+- [x] Implement TT Ageing
 
 ## 3.4 Move Ordering
 - [x] TT move
-- [x] Optimize QS MoveGen (Stop generating full legal moves; generate only captures)
+- [x] QS MoveGen optimisation
 - [x] Killer moves
 - [x] History heuristic
-- [x] MVV‑LVA for captures
+- [x] MVV‑LVA
 
 ## 3.5 Quiescence Search
-- [x] Add Promotions to Quiescence Search
+- [x] Add Promotions to QS
 - [x] Stand‑pat evaluation
 - [x] Capture search
-- [ ] Check extensions (optional - we'll leave this for Stage 4)
+- [ ] Check extensions (optional)
 
 ## 3.6 Time Management
 - [x] Soft time limit
-- [x] Update Time Management to support winc / binc parameters
+- [x] winc / binc support
 - [x] Hard time limit
 - [x] Node counting
 
-## 3.7 Draw Detection & Correctness (Target: v0.3.7)
-- [x] Implement **3-fold repetition** detection using a history hash table
-- [x] Implement **50-move rule** (using `HalfmoveClock` logic from unit tests)
-- [x] Implement **Insufficient Material** draw detection (K vs K, KN vs K, KB vs K)
-- [x] Add explicit draw-score (0) to `negamax` when draws are detected
+## 3.7 Draw Detection & Correctness (v0.3.7)
+- [x] 3-fold repetition
+- [x] 50-move rule
+- [x] Insufficient material
+- [x] Draw scoring in search
 
 ---
 
 # Stage 4 — Strength Phase
 
 ## 4.1 Evaluation Overhaul
-- [x] Pawn structure evaluation
-- [ ] King safety
+### King Safety (Phase 1 — Basic) 🟡 *in progress*
+- [x] Pawn shield
+- [x] Open-file danger
+- [x] Enemy piece proximity
+- [ ] Attack maps (basic)
+- [ ] Tapered eval integration (MG/EG scaling)
+- [ ] Queenside castling support
+- [ ] Danger scaling (queen > rook > minor)
+- [ ] King tropism
+
+### Other Eval Terms
 - [ ] Mobility
 - [ ] Passed pawns
 - [ ] Space
-- [ ] Tapered eval (MG/EG)
+- [ ] Threats
+- [ ] Piece activity
+- [ ] Rook on open/half-open files
+- [ ] Bishop pair bonus
+
+### Evaluation Refactor (Pre‑Step 4) 🟡 *next*
+- [ ] Extract king safety into `KingSafety` module
+- [ ] Extract PST evaluation into standalone function
+- [ ] Extract pawn structure into standalone function
+- [ ] Introduce `Weights` module
+- [ ] Replace magic numbers with weight constants
+- [ ] Add unit tests for each eval component
+- [ ] Clean, pure `evaluate` composed of sub‑evaluators
 
 ## 4.2 Search Enhancements
 - [x] Null‑move pruning
@@ -106,10 +125,10 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Vectorised attack generation
 
 ## 5.3 Hot-Path GC & CPU Optimisations
-- [ ] BMI2 PEXT Intrinsics: Replace manual loops in `Magic.getIndex` with `.NET` `Bmi2.X64.ParallelBitExtract` hardware intrinsics.
-- [ ] Direct Bitboard Scanning in MoveGen: Refactor `getPseudoLegalMoves`/`getCaptureMoves` to scan piece-type bitboards directly, eliminating `BitboardSet.allPieces` sequence/tuple allocations and `getPieceAt` lookups.
-- [ ] Direct Bitboard Iteration in Evaluation: Refactor `Evaluation.evaluate` to scan individual piece bitboards directly rather than calling `getPieceAt` for every occupied square.
-- [ ] Struct Options in Transposition Table: Refactor `TranspositionTable.probe` to return `ValueOption` instead of standard heap-allocated F# `option` objects.
+- [ ] BMI2 PEXT Intrinsics for magic indexing
+- [ ] Direct bitboard scanning in MoveGen
+- [ ] Direct bitboard iteration in Evaluation
+- [ ] Struct Options in TT
 
 ## 5.4 Neural Evaluation (Optional)
 - [ ] NNUE‑style network
@@ -118,7 +137,7 @@ A detailed, structured task list aligned with the project roadmap.
 ---
 
 # Meta
-- [ ] Add CI pipeline
-- [ ] Add benchmarks
-- [ ] Add documentation site
-- [ ] Add logo + branding polish
+- [ ] CI pipeline
+- [ ] Benchmarks
+- [ ] Documentation site
+- [ ] Logo + branding polish

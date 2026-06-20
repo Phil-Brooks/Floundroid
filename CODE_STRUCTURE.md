@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 17/06/2026 15:35:06
+Generated on: 20/06/2026 19:10:41
 
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
@@ -249,6 +249,8 @@ Generated on: 17/06/2026 15:35:06
     - ***Returns**: A new Board record reflecting the post-move state.*
     - *Executes a move, updating both Bitboards and the Piece Map.*
     - *This is the final step before the Map is removed entirely.*
+- **fn** `applyNullMove`
+    - *Executes a null move, updating side to move, en passant, halfmove clock, fullmove number, and hash.*
 - **fn** `hasInsufficientMaterial`
     - *Checks if the board has insufficient material for checkmate.*
 - **fn** `prettyPrint`
@@ -283,6 +285,14 @@ Generated on: 17/06/2026 15:35:06
     - *The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
 - **fn** `kingPst`
     - *The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
+- **fn** `private`
+- **fn** `private`
+- **fn** `private`
+- **fn** `private`
+- **fn** `pawnStructureScore`
+    - *Evaluates the pawn structure of the board, returning a score from White's perspective.*
+- **fn** `kingSafety`
+    - *Very small king-safety heuristic: penalise missing pawn shield for short-castled kings.*
 - **fn** `evaluate`
     - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
 
@@ -293,6 +303,8 @@ Generated on: 17/06/2026 15:35:06
 - **fn** `isRepetition`
 - **fn** `quiesce`
     - *Quiescence search: plays out tactical moves until the position is stable.*
+- **fn** `negamaxInternal`
+    - *Internal negamax implementation with Null-Move Pruning (allowNull).*
 - **fn** `negamax`
     - *Negamax search with alpha-beta pruning and Transposition Table integration.*
 - **fn** `findBestMove`
@@ -321,5 +333,7 @@ Generated on: 17/06/2026 15:35:06
 
 ## 📦 module UciLoop
 ---
+- **fn** `tryGetIntArg`
+- **fn** `calculateTargetTime`
 - **fn** `run`
 - **fn** `main`
