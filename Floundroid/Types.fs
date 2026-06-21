@@ -128,41 +128,35 @@ module Square =
     let inline isOnBoard (f: int) (r: int) =
         uint f <= 7u && uint r <= 7u
 
+[<RequireQualifiedAccess>]
 type PieceType =
-    | Pawn
-    | Knight
-    | Bishop
-    | Rook
-    | Queen
-    | King
+    | Pawn   = 0
+    | Knight = 1
+    | Bishop = 2
+    | Rook   = 3
+    | Queen  = 4
+    | King   = 5
 
+[<RequireQualifiedAccess>]
 module PieceType =
-    /// Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').
-    let toChar =
-        function
-        | Pawn -> 'p'
-        | Knight -> 'n'
-        | Bishop -> 'b'
-        | Rook -> 'r'
-        | Queen -> 'q'
-        | King -> 'k'
+
+    // Precomputed char table for speed
+    let chars = [| 'p'; 'n'; 'b'; 'r'; 'q'; 'k' |]
+
+    /// Converts a PieceType to its character representation ('p'..'k').
+    let inline toChar (pt: PieceType) : char =
+        chars[int pt]
 
     /// Converts a character to a PieceType.
-    let fromChar =
-        function
-        | 'p'
-        | 'P' -> Pawn
-        | 'n'
-        | 'N' -> Knight
-        | 'b'
-        | 'B' -> Bishop
-        | 'r'
-        | 'R' -> Rook
-        | 'q'
-        | 'Q' -> Queen
-        | 'k'
-        | 'K' -> King
-        | c -> invalidArg "c" $"{c}"
+    let inline fromChar (c: char) : PieceType =
+        match c with
+        | 'p' | 'P' -> PieceType.Pawn
+        | 'n' | 'N' -> PieceType.Knight
+        | 'b' | 'B' -> PieceType.Bishop
+        | 'r' | 'R' -> PieceType.Rook
+        | 'q' | 'Q' -> PieceType.Queen
+        | 'k' | 'K' -> PieceType.King
+        | _ -> invalidArg "c" $"Invalid piece type char: {c}"
 
 /// Bitboards are 64-bit unsigned integers where each bit represents a square.
 /// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
@@ -350,51 +344,51 @@ module BitboardSet =
             let bit = 1uL <<< sq
 
             match p.Colour, p.Kind with
-            | Colour.White, Pawn ->
+            | Colour.White, PieceType.Pawn ->
                 bbs <-
                     { bbs with
                         WhitePawns = bbs.WhitePawns ||| bit }
-            | Colour.White, Knight ->
+            | Colour.White, PieceType.Knight ->
                 bbs <-
                     { bbs with
                         WhiteKnights = bbs.WhiteKnights ||| bit }
-            | Colour.White, Bishop ->
+            | Colour.White, PieceType.Bishop ->
                 bbs <-
                     { bbs with
                         WhiteBishops = bbs.WhiteBishops ||| bit }
-            | Colour.White, Rook ->
+            | Colour.White, PieceType.Rook ->
                 bbs <-
                     { bbs with
                         WhiteRooks = bbs.WhiteRooks ||| bit }
-            | Colour.White, Queen ->
+            | Colour.White, PieceType.Queen ->
                 bbs <-
                     { bbs with
                         WhiteQueens = bbs.WhiteQueens ||| bit }
-            | Colour.White, King ->
+            | Colour.White, PieceType.King ->
                 bbs <-
                     { bbs with
                         WhiteKings = bbs.WhiteKings ||| bit }
-            | Colour.Black, Pawn ->
+            | Colour.Black, PieceType.Pawn ->
                 bbs <-
                     { bbs with
                         BlackPawns = bbs.BlackPawns ||| bit }
-            | Colour.Black, Knight ->
+            | Colour.Black, PieceType.Knight ->
                 bbs <-
                     { bbs with
                         BlackKnights = bbs.BlackKnights ||| bit }
-            | Colour.Black, Bishop ->
+            | Colour.Black, PieceType.Bishop ->
                 bbs <-
                     { bbs with
                         BlackBishops = bbs.BlackBishops ||| bit }
-            | Colour.Black, Rook ->
+            | Colour.Black, PieceType.Rook ->
                 bbs <-
                     { bbs with
                         BlackRooks = bbs.BlackRooks ||| bit }
-            | Colour.Black, Queen ->
+            | Colour.Black, PieceType.Queen ->
                 bbs <-
                     { bbs with
                         BlackQueens = bbs.BlackQueens ||| bit }
-            | Colour.Black, King ->
+            | Colour.Black, PieceType.King ->
                 bbs <-
                     { bbs with
                         BlackKings = bbs.BlackKings ||| bit }
@@ -432,17 +426,17 @@ module BitboardSet =
 
             let kind =
                 if (bbs.WhitePawns ||| bbs.BlackPawns) &&& bit <> 0uL then
-                    Pawn
+                    PieceType.Pawn
                 elif (bbs.WhiteKnights ||| bbs.BlackKnights) &&& bit <> 0uL then
-                    Knight
+                    PieceType.Knight
                 elif (bbs.WhiteBishops ||| bbs.BlackBishops) &&& bit <> 0uL then
-                    Bishop
+                    PieceType.Bishop
                 elif (bbs.WhiteRooks ||| bbs.BlackRooks) &&& bit <> 0uL then
-                    Rook
+                    PieceType.Rook
                 elif (bbs.WhiteQueens ||| bbs.BlackQueens) &&& bit <> 0uL then
-                    Queen
+                    PieceType.Queen
                 else
-                    King
+                    PieceType.King
 
             Some { Colour = color; Kind = kind }
 
@@ -452,40 +446,40 @@ module BitboardSet =
 
         let newBbs =
             match p.Colour, p.Kind with
-            | Colour.White, Pawn ->
+            | Colour.White, PieceType.Pawn ->
                 { bbs with
                     WhitePawns = bbs.WhitePawns ^^^ bit }
-            | Colour.White, Knight ->
+            | Colour.White, PieceType.Knight ->
                 { bbs with
                     WhiteKnights = bbs.WhiteKnights ^^^ bit }
-            | Colour.White, Bishop ->
+            | Colour.White, PieceType.Bishop ->
                 { bbs with
                     WhiteBishops = bbs.WhiteBishops ^^^ bit }
-            | Colour.White, Rook ->
+            | Colour.White, PieceType.Rook ->
                 { bbs with
                     WhiteRooks = bbs.WhiteRooks ^^^ bit }
-            | Colour.White, Queen ->
+            | Colour.White, PieceType.Queen ->
                 { bbs with
                     WhiteQueens = bbs.WhiteQueens ^^^ bit }
-            | Colour.White, King ->
+            | Colour.White, PieceType.King ->
                 { bbs with
                     WhiteKings = bbs.WhiteKings ^^^ bit }
-            | Colour.Black, Pawn ->
+            | Colour.Black, PieceType.Pawn ->
                 { bbs with
                     BlackPawns = bbs.BlackPawns ^^^ bit }
-            | Colour.Black, Knight ->
+            | Colour.Black, PieceType.Knight ->
                 { bbs with
                     BlackKnights = bbs.BlackKnights ^^^ bit }
-            | Colour.Black, Bishop ->
+            | Colour.Black, PieceType.Bishop ->
                 { bbs with
                     BlackBishops = bbs.BlackBishops ^^^ bit }
-            | Colour.Black, Rook ->
+            | Colour.Black, PieceType.Rook ->
                 { bbs with
                     BlackRooks = bbs.BlackRooks ^^^ bit }
-            | Colour.Black, Queen ->
+            | Colour.Black, PieceType.Queen ->
                 { bbs with
                     BlackQueens = bbs.BlackQueens ^^^ bit }
-            | Colour.Black, King ->
+            | Colour.Black, PieceType.King ->
                 { bbs with
                     BlackKings = bbs.BlackKings ^^^ bit }
             | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"

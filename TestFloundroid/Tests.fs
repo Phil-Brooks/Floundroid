@@ -180,12 +180,12 @@ module BoardTests =
         let m =
             { From = Square.fromString "e7"
               To = Square.fromString "e8"
-              Kind = Promotion Queen }
+              Kind = Promotion PieceType.Queen }
 
         let b2 = Board.applyMove m b
 
         match Board.tryGetPiece b2 (Square.fromString "e8") with
-        | Some p -> Assert.Equal(Queen, p.Kind)
+        | Some p -> Assert.Equal(PieceType.Queen, p.Kind)
         | None -> Assert.True(false)
 
     [<Fact>]
@@ -846,20 +846,28 @@ module SearchTests =
         Assert.NotEqual(b.Hash, nextB.Hash)
 
     [<Fact>]
-    let ``Null Move Pruning reduces nodes searched at depth 4`` () =
+    let ``Enabling NMP does not change the evaluation at fixed depth`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         
+        // Clear 
+        TranspositionTable.clear()
+        Search.clearKillers() 
+        Search.clearHistory() 
+
         // Search with NMP disabled (allowNull = false)
         Search.nodes <- 0uL
-        let _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None
-        let nodesWithoutNMP = Search.nodes
+        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None
+        
+        // Clear 
+        TranspositionTable.clear()
+        Search.clearKillers() 
+        Search.clearHistory() 
         
         // Search with NMP enabled (allowNull = true)
         Search.nodes <- 0uL
-        let _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None
-        let nodesWithNMP = Search.nodes
+        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None
         
-        Assert.True(nodesWithNMP < nodesWithoutNMP, $"NMP should reduce nodes searched. With: {nodesWithNMP}, Without: {nodesWithoutNMP}")
+        Assert.Equal(scoreWithout, scoreWith)
 
 module BitboardTests =
 

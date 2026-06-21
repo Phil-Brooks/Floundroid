@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
     <OutputType>Library</OutputType>
     <Platforms>AnyCPU;x64</Platforms>
+    <ParallelizeTestCollections>false</ParallelizeTestCollections>
   </PropertyGroup>
 
   <ItemGroup>
