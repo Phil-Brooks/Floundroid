@@ -158,61 +158,31 @@ module PieceType =
         | 'k' | 'K' -> PieceType.King
         | _ -> invalidArg "c" $"Invalid piece type char: {c}"
 
-/// Bitboards are 64-bit unsigned integers where each bit represents a square.
-/// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
-type Bitboard = uint64
+[<Struct>]
+type Piece =
+    val data: byte
+    new (colour: Colour, kind: PieceType) =
+        { data = byte ((int colour <<< 3) ||| int kind) }
 
-module Bitboard =
-    let empty: Bitboard = 0uL
-    let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
-
-    /// Sets the bit at the given square.
-    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
-
-    /// Clears the bit at the given square.
-    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
-
-    /// Checks if a square is set.
-    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
-
-    /// Returns the number of set bits (population count).
-    let inline count (bb: Bitboard) : int =
-        System.Numerics.BitOperations.PopCount(bb)
-
-    /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
-    /// This is a high-performance way to iterate through pieces.
-    let inline popLsb (bb: byref<Bitboard>) : Square =
-        let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
-        bb <- bb &&& (bb - 1uL)
-        lsb
-
-    /// Visualizes the bitboard as an 8x8 grid for debugging.
-    let toString (bb: Bitboard) =
-        let sb = StringBuilder()
-
-        for r in 7..-1..0 do
-            sb.Append(sprintf "%d " (r + 1)) |> ignore
-
-            for f in 0..7 do
-                let sq = r * 8 + f
-                sb.Append(if contains sq bb then "1 " else ". ") |> ignore
-
-            sb.Append("\n") |> ignore
-
-        sb.Append("  a b c d e f g h").ToString()
-
-/// A Piece consists of a Colour and a PieceType.
-type Piece = { Colour: Colour; Kind: PieceType }
-
+[<RequireQualifiedAccess>]
 module Piece =
-    /// Converts a Piece to its character representation (uppercase for White, lowercase for Black).
-    let toChar (p: Piece) =
-        let c = PieceType.toChar p.Kind in if p.Colour = Colour.White then Char.ToUpper c else c
 
-    /// Converts a character to a Piece, determining colour from case (uppercase = White, lowercase = Black).
-    let fromChar c =
-        { Colour = (if Char.IsUpper c then Colour.White else Colour.Black)
-          Kind = PieceType.fromChar c }
+    let inline colour (p: Piece) : Colour =
+        enum<Colour> (int p.data >>> 3)
+
+    let inline kind (p: Piece) : PieceType =
+        enum<PieceType> (int p.data &&& 0b111)
+
+    let inline toChar (p: Piece) : char =
+        let c = PieceType.toChar (kind p)
+        if colour p = Colour.White then Char.ToUpper c else c
+
+    let inline fromChar (c: char) : Piece =
+        let col = if Char.IsUpper c then Colour.White else Colour.Black
+        let kind = PieceType.fromChar c
+        Piece(col, kind)
+
+
 
 /// Castling rights are represented as a record with four boolean fields.
 type CastlingRights =
@@ -255,6 +225,50 @@ module CastlingRights =
             sb.Append("q") |> ignore
 
         if sb.Length = 0 then "-" else sb.ToString()
+
+
+/// Bitboards are 64-bit unsigned integers where each bit represents a square.
+/// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
+type Bitboard = uint64
+
+module Bitboard =
+    let empty: Bitboard = 0uL
+    let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
+
+    /// Sets the bit at the given square.
+    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
+
+    /// Clears the bit at the given square.
+    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
+
+    /// Checks if a square is set.
+    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
+
+    /// Returns the number of set bits (population count).
+    let inline count (bb: Bitboard) : int =
+        System.Numerics.BitOperations.PopCount(bb)
+
+    /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
+    /// This is a high-performance way to iterate through pieces.
+    let inline popLsb (bb: byref<Bitboard>) : Square =
+        let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
+        bb <- bb &&& (bb - 1uL)
+        lsb
+
+    /// Visualizes the bitboard as an 8x8 grid for debugging.
+    let toString (bb: Bitboard) =
+        let sb = StringBuilder()
+
+        for r in 7..-1..0 do
+            sb.Append(sprintf "%d " (r + 1)) |> ignore
+
+            for f in 0..7 do
+                let sq = r * 8 + f
+                sb.Append(if contains sq bb then "1 " else ". ") |> ignore
+
+            sb.Append("\n") |> ignore
+
+        sb.Append("  a b c d e f g h").ToString()
 
 /// Move kinds represent the different types of moves in chess, including quiet moves, captures, promotions, en passant, and castling.
 type MoveKind =
@@ -343,7 +357,7 @@ module BitboardSet =
         for (KeyValue(sq, p)) in pieces do
             let bit = 1uL <<< sq
 
-            match p.Colour, p.Kind with
+            match Piece.colour p, Piece.kind p with
             | Colour.White, PieceType.Pawn ->
                 bbs <-
                     { bbs with
@@ -438,14 +452,14 @@ module BitboardSet =
                 else
                     PieceType.King
 
-            Some { Colour = color; Kind = kind }
+            Some (Piece(color, kind))
 
     /// A helper to flip a piece on/off. Essential for incremental updates.
     let togglePiece (p: Piece) (sq: Square) (bbs: BitboardSet) =
         let bit = 1uL <<< sq
 
         let newBbs =
-            match p.Colour, p.Kind with
+            match Piece.colour p, Piece.kind p with
             | Colour.White, PieceType.Pawn ->
                 { bbs with
                     WhitePawns = bbs.WhitePawns ^^^ bit }

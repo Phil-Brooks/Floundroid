@@ -185,7 +185,7 @@ module BoardTests =
         let b2 = Board.applyMove m b
 
         match Board.tryGetPiece b2 (Square.fromString "e8") with
-        | Some p -> Assert.Equal(PieceType.Queen, p.Kind)
+        | Some p -> Assert.Equal(PieceType.Queen, Piece.kind p)
         | None -> Assert.True(false)
 
     [<Fact>]
@@ -1063,7 +1063,7 @@ module ZobristTests =
 
     [<Fact>]
     let ``Keys are unique for different pieces and squares`` () =
-        let p1 = { Colour = Colour.White; Kind = PieceType.Pawn }
+        let p1 = Piece(Colour.White, PieceType.Pawn)
         let k1 = Zobrist.getPieceKey p1 0 // a1
         let k2 = Zobrist.getPieceKey p1 1 // b1
         Assert.NotEqual(k1, k2)
@@ -1244,8 +1244,8 @@ module MoveOrderingTests =
         let getScore (m: Move) =
             match m.Kind with
             | Capture -> 
-                let v = Board.tryGetPiece b m.To |> Option.map (fun p -> Evaluation.pieceValue p.Kind) |> Option.defaultValue 100
-                let a = Board.tryGetPiece b m.From |> Option.map (fun p -> Evaluation.pieceValue p.Kind) |> Option.defaultValue 0
+                let v = Board.tryGetPiece b m.To |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 100
+                let a = Board.tryGetPiece b m.From |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 0
                 10000 + (v * 10) - a
             | _ -> 0
 

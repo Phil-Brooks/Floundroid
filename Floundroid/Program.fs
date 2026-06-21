@@ -296,7 +296,7 @@ module Zobrist =
 
     /// Gets the key for a specific piece on a square.
     let getPieceKey (pc: Piece) (sq: Square) =
-        Table.Pieces.[colourIdx pc.Colour, pieceIdx pc.Kind, sq]
+        Table.Pieces.[colourIdx (Piece.colour pc), pieceIdx (Piece.kind pc), sq]
 
     /// Gets the key for a specific set of castling rights.
     let getCastlingKey (cr: CastlingRights) =
@@ -530,7 +530,7 @@ module Board =
         let mutable newBitboards = b.Bitboards
         let mutable newHash = b.Hash
         let movingPiece = BitboardSet.getPieceAt m.From b.Bitboards |> Option.get
-        let isPawn = movingPiece.Kind = PieceType.Pawn
+        let isPawn = Piece.kind movingPiece = PieceType.Pawn
         let opponent = Colour.opposite b.SideToMove
 
         // 2. XOR out old state from Hash (Side, Castling, EP)
@@ -549,7 +549,7 @@ module Board =
         match m.Kind with
         | EnPassant ->
             let epPawnSq = if b.SideToMove = Colour.White then m.To - 8 else m.To + 8
-            let victimPawn = { Colour = opponent; Kind = PieceType.Pawn }
+            let victimPawn = Piece(opponent, PieceType.Pawn)
             newBitboards <- BitboardSet.togglePiece victimPawn epPawnSq newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
         | _ ->
@@ -563,7 +563,7 @@ module Board =
         // 5. Place the piece at the destination
         match m.Kind with
         | Promotion pType ->
-            let promotedPiece = { Colour = b.SideToMove; Kind = pType }
+            let promotedPiece = Piece(b.SideToMove, pType)
             newBitboards <- BitboardSet.togglePiece promotedPiece m.To newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey promotedPiece m.To)
         | _ ->
@@ -574,13 +574,13 @@ module Board =
         match m.Kind with
         | CastleKingSide ->
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (7, 5) else (63, 61)
-            let rook = { Colour = b.SideToMove; Kind = PieceType.Rook }
+            let rook = Piece(b.SideToMove, PieceType.Rook)
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
         | CastleQueenSide ->
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (0, 3) else (56, 59)
-            let rook = { Colour = b.SideToMove; Kind = PieceType.Rook }
+            let rook = Piece(b.SideToMove, PieceType.Rook)
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
@@ -589,7 +589,7 @@ module Board =
         // 7. Update Castling Rights
         // Rights are lost if King moves, or if Rooks move/are captured
         let mutable newCR = b.CastlingRights
-        if movingPiece.Kind = PieceType.King then
+        if Piece.kind movingPiece = PieceType.King then
             if b.SideToMove = Colour.White then
                 newCR <- { newCR with WhiteKingSide = false; WhiteQueenSide = false }
             else
@@ -711,10 +711,10 @@ module MoveGen =
 
         // Use the bitboard iterator to find all our pieces
         for (sq, p) in BitboardSet.allPieces b.Bitboards do
-            if p.Colour = us then
+            if Piece.colour p = us then
                 let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
 
-                match p.Kind with
+                match Piece.kind p with
                 | PieceType.Pawn ->
                     let d = if us = Colour.White then 1 else -1
 
@@ -743,7 +743,7 @@ module MoveGen =
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
                             match Board.tryGetPiece b cap with
-                            | Some victim when victim.Colour = them ->
+                            | Some victim when Piece.colour victim = them ->
                                 if nr = (if us = Colour.White then 7 else 0) then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
                                         moves.Add({ From = sq; To = cap; Kind = Promotion pt })
@@ -765,7 +765,7 @@ module MoveGen =
                         let t = Bitboard.popLsb &attacks
                         match Board.tryGetPiece b t with
                         | Some target ->
-                            if target.Colour = them then
+                            if Piece.colour target = them then
                                 moves.Add({ From = sq; To = t; Kind = Capture })
                         | None -> moves.Add({ From = sq; To = t; Kind = Quiet })
 
@@ -776,7 +776,7 @@ module MoveGen =
                         let t = Bitboard.popLsb &attacks
                         match Board.tryGetPiece b t with
                         | Some target ->
-                            if target.Colour = them then
+                            if Piece.colour target = them then
                                 moves.Add({ From = sq; To = t; Kind = Capture })
                         | None -> moves.Add({ From = sq; To = t; Kind = Quiet })
 
@@ -814,7 +814,7 @@ module MoveGen =
                         if Board.isOccupied b t then moves.Add({ From = sq; To = t; Kind = Capture })
                         else moves.Add({ From = sq; To = t; Kind = Quiet })
 
-                | _ -> invalidArg "p.Kind" $"Invalid PieceType: %A{p.Kind}"
+                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
         moves.ToArray()    
 
@@ -853,10 +853,10 @@ module MoveGen =
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
 
         for (sq, p) in BitboardSet.allPieces b.Bitboards do
-            if p.Colour = us then
+            if Piece.colour p = us then
                 let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
 
-                match p.Kind with
+                match Piece.kind p with
                 | PieceType.Pawn ->
                     let d = if us = Colour.White then 1 else -1
                     let targetRank = if us = Colour.White then 7 else 0
@@ -867,7 +867,7 @@ module MoveGen =
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
                             match Board.tryGetPiece b cap with
-                            | Some victim when victim.Colour = them ->
+                            | Some victim when Piece.colour victim = them ->
                                 if nr = targetRank then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
                                         moves.Add({ From = sq; To = cap; Kind = Promotion pt })
@@ -919,7 +919,7 @@ module MoveGen =
                         let t = Bitboard.popLsb &targets
                         moves.Add({ From = sq; To = t; Kind = Capture })
 
-                | _ -> invalidArg "p.Kind" $"Invalid PieceType: %A{p.Kind}"
+                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
         moves.ToArray()
 
@@ -945,7 +945,7 @@ module San =
             let isMate = isCheck && (MoveGen.getLegalMoves nextBoard).Length = 0
 
             let moveStr =
-                if piece.Kind = PieceType.Pawn then
+                if Piece.kind piece = PieceType.Pawn then
                     let prefix =
                         if isCapture then
                             sprintf "%cx" (File.toChar (Square.file m.From))
@@ -959,7 +959,7 @@ module San =
 
                     sprintf "%s%s%s" prefix (Square.toString m.To) prom
                 else
-                    let pChar = Char.ToUpper(PieceType.toChar piece.Kind)
+                    let pChar = Char.ToUpper(PieceType.toChar (Piece.kind piece))
 
                     let others =
                         MoveGen.getLegalMoves b
@@ -967,7 +967,7 @@ module San =
                             // Use Board.tryGetPiece to identify the piece on the alternative square
                             match Board.tryGetPiece b alt.From with
                             | Some altPiece ->
-                                alt.From <> m.From && alt.To = m.To && altPiece.Kind = piece.Kind
+                                alt.From <> m.From && alt.To = m.To && Piece.kind altPiece = Piece.kind piece
                             | None -> false)
 
                     let disambiguator =
@@ -1181,7 +1181,7 @@ module Evaluation =
                 for f in files do
                     let sq = Square.ofFileRank f homeRank
                     match Board.tryGetPiece b sq with
-                    | Some p when p.Kind = PieceType.Pawn && p.Colour = side -> ()
+                    | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = side -> ()
                     | _ -> penalty <- penalty + 10
 
                 // --- Step 2: open / half-open file danger near king ---
@@ -1203,8 +1203,8 @@ module Evaluation =
                         for r in [ Rank.R1; Rank.R2; Rank.R3; Rank.R4; Rank.R5; Rank.R6; Rank.R7; Rank.R8 ] do
                             let sq = Square.ofFileRank df r
                             match Board.tryGetPiece b sq with
-                            | Some p when p.Kind = PieceType.Pawn && p.Colour = Colour.White -> whitePawn <- true
-                            | Some p when p.Kind = PieceType.Pawn && p.Colour = Colour.Black -> blackPawn <- true
+                            | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = Colour.White -> whitePawn <- true
+                            | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = Colour.Black -> blackPawn <- true
                             | _ -> ()
 
                         match whitePawn, blackPawn with
@@ -1235,8 +1235,8 @@ module Evaluation =
                                     let sq = Square.ofFileRank f r
 
                                     match Board.tryGetPiece b sq with
-                                    | Some pc when pc.Colour = Colour.opposite side ->
-                                        match pc.Kind with
+                                    | Some pc when Piece.colour pc = Colour.opposite side ->
+                                        match Piece.kind pc with
                                         | PieceType.Knight -> p <- p + 5
                                         | PieceType.Bishop -> p <- p + 5
                                         | PieceType.Rook   -> p <- p + 8
@@ -1263,19 +1263,19 @@ module Evaluation =
             // We know a piece exists here, so we call getPieceAt
             let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
             
-            let baseVal = pieceValue p.Kind
-            let pstIndex = if p.Colour = Colour.White then sq else sq ^^^ 56
+            let baseVal = pieceValue (Piece.kind p)
+            let pstIndex = if Piece.colour p = Colour.White then sq else sq ^^^ 56
             let pstBonus = 
-                match p.Kind with
+                match Piece.kind p with
                 | PieceType.Pawn -> pawnPst.[pstIndex]
                 | PieceType.Knight -> knightPst.[pstIndex]
                 | PieceType.Bishop -> bishopPst.[pstIndex]
                 | PieceType.Rook -> rookPst.[pstIndex]
                 | PieceType.Queen -> queenPst.[pstIndex]
                 | PieceType.King -> kingPst.[pstIndex]
-                | _ -> invalidArg "p.Kind" $"Invalid PieceType: %A{p.Kind}"
+                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
-            if p.Colour = Colour.White then score <- score + baseVal + pstBonus
+            if Piece.colour p = Colour.White then score <- score + baseVal + pstBonus
             else score <- score - (baseVal + pstBonus)
         score    
 
@@ -1326,11 +1326,11 @@ module Search =
                     let m = moves.[i]
                     let victimVal = 
                         match Board.tryGetPiece b m.To with 
-                        | Some p -> Evaluation.pieceValue p.Kind 
+                        | Some p -> Evaluation.pieceValue (Piece.kind p) 
                         | None -> 100 // En Passant
                     let attackerVal = 
                         match Board.tryGetPiece b m.From with 
-                        | Some p -> Evaluation.pieceValue p.Kind 
+                        | Some p -> Evaluation.pieceValue (Piece.kind p) 
                         | None -> 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
@@ -1438,10 +1438,10 @@ module Search =
                                 | Capture | EnPassant ->
                                     let victimVal = 
                                         if Board.isOccupied b m.To then 
-                                            (match Board.tryGetPiece b m.To with Some p -> Evaluation.pieceValue p.Kind | None -> 0) 
+                                            (match Board.tryGetPiece b m.To with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0) 
                                         else 100 // En Passant
                                     let attackerVal = 
-                                        match Board.tryGetPiece b m.From with Some p -> Evaluation.pieceValue p.Kind | None -> 0
+                                        match Board.tryGetPiece b m.From with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0
                                     10000 + (victimVal * 10) - attackerVal
                                 | Promotion pt -> 9000 + Evaluation.pieceValue pt
                                 | _ -> 
@@ -1684,12 +1684,12 @@ module Debug =
         // 1. Check Kings
         let whiteKings =
             pieces
-            |> List.filter (fun p -> p.Colour = Colour.White && p.Kind = PieceType.King)
+            |> List.filter (fun p -> Piece.colour p = Colour.White && Piece.kind p = PieceType.King)
             |> List.length
 
         let blackKings =
             pieces
-            |> List.filter (fun p -> p.Colour = Colour.Black && p.Kind = PieceType.King)
+            |> List.filter (fun p -> Piece.colour p = Colour.Black && Piece.kind p = PieceType.King)
             |> List.length
 
         if whiteKings <> 1 then
@@ -1701,7 +1701,7 @@ module Debug =
         // 2. Check Pawns
         // Replaced b.Pieces loop with the allPiecesList
         for (sq, p) in allPiecesList do
-            if p.Kind = PieceType.Pawn then
+            if Piece.kind p = PieceType.Pawn then
                 let r = Square.rank sq |> Rank.toInt
 
                 if r = 0 || r = 7 then
@@ -1818,7 +1818,7 @@ module UciLoop =
                     | Some m -> 
                         board <- Board.applyMove m board
                         // Reset history on capture or pawn move
-                        if m.Kind = Capture || m.Kind = EnPassant || (Board.tryGetPiece board m.To |> Option.map (fun p -> p.Kind = PieceType.Pawn) |> Option.defaultValue false) then
+                        if m.Kind = Capture || m.Kind = EnPassant || (Board.tryGetPiece board m.To |> Option.map (fun p -> Piece.kind p = PieceType.Pawn) |> Option.defaultValue false) then
                             positionHistory <- [ board.Hash ]
                         else
                             positionHistory <- board.Hash :: positionHistory
