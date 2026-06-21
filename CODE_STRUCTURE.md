@@ -1,5 +1,5 @@
 # Floundroid Technical Reference
-Generated on: 20/06/2026 22:56:41
+Generated on: 21/06/2026 21:36:08
 
 # Code File: Types.fs
 ## 📑 Table of Contents
@@ -9,11 +9,9 @@ Generated on: 20/06/2026 22:56:41
 - [Rank](#-module-rank)
 - [Square](#-module-square)
 - [PieceType](#-module-piecetype)
-- [Bitboard](#-module-bitboard)
 - [Piece](#-module-piece)
 - [CastlingRights](#-module-castlingrights)
 - [Move](#-module-move)
-- [BitboardSet](#-module-bitboardset)
 
 
 
@@ -76,76 +74,41 @@ Generated on: 20/06/2026 22:56:41
 
 ## 📦 module PieceType
 ---
-- **fn** `toChar`
-    - *Converts a PieceType to its character representation ('p', 'n', 'b', 'r', 'q', 'k').*
-- **fn** `fromChar`
+- **fn** `inline`
+    - *Converts a PieceType to its character representation ('p'..'k').*
+- **fn** `inline`
     - *Converts a character to a PieceType.*
 
-#### 🧩 `type Bitboard = uint64`
-> Bitboards are 64-bit unsigned integers where each bit represents a square.
-> Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
-
-## 📦 module Bitboard
----
-- **fn** `inline`
-    - *Returns the number of set bits (population count).*
-- **fn** `inline`
-    - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
-    - *This is a high-performance way to iterate through pieces.*
-- **fn** `toString`
-    - *Visualizes the bitboard as an 8x8 grid for debugging.*
-
-#### 🧩 `type Piece = { Colour: Colour; Kind: PieceType }`
-> A Piece consists of a Colour and a PieceType.
+#### 🧩 `type Piece =`
 
 ## 📦 module Piece
 ---
-- **fn** `toChar`
-    - *Converts a Piece to its character representation (uppercase for White, lowercase for Black).*
-- **fn** `fromChar`
-    - *Converts a character to a Piece, determining colour from case (uppercase = White, lowercase = Black).*
+- **fn** `inline`
+- **fn** `inline`
+- **fn** `inline`
+- **fn** `inline`
 
 #### 🧩 `type CastlingRights =`
-> Castling rights are represented as a record with four boolean fields.
 
 ## 📦 module CastlingRights
 ---
-- **fn** `none`
-- **fn** `fromString`
-    - *Converts a string representation of castling rights to a CastlingRights value.*
-- **fn** `toString`
-    - *Converts a CastlingRights value to its string representation.*
-
-#### 🧩 `type MoveKind =`
-> Move kinds represent the different types of moves in chess, including quiet moves, captures, promotions, en passant, and castling.
+- **fn** `inline`
+- **fn** `inline`
 
 #### 🧩 `type Move =`
-> A Move consists of a source square, a destination square, and a MoveKind indicating the type of move.
 
 ## 📦 module Move
 ---
+- **fn** `inline`
+- **fn** `inline`
+- **fn** `inline`
+- **fn** `inline`
 - **fn** `toUci`
-    - *Converts a Move to its UCI string representation.*
-- **fn** `fromUci`
-    - *Converts a UCI string representation of a move to a Move value.*
-
-#### 🧩 `type BitboardSet =`
-> A collection of bitboards representing all pieces on the board.
-
-## 📦 module BitboardSet
----
-- **fn** `empty`
-- **fn** `fromMap`
-    - *Converts a Piece Map into a BitboardSet.*
-- **fn** `getPieceAt`
-    - *Identifies the piece (if any) at a specific square using bitboards.*
-- **fn** `togglePiece`
-    - *A helper to flip a piece on/off. Essential for incremental updates.*
-- **fn** `allPieces`
-    - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
 # Code File: Program.fs
 ## 📑 Table of Contents
 - [Floundroid](#-module-floundroid)
+- [Bitboard](#-module-bitboard)
+- [BitboardSet](#-module-bitboardset)
 - [SlidingAttackGen](#-module-slidingattackgen)
 - [Magic](#-module-magic)
 - [BitboardGen](#-module-bitboardgen)
@@ -165,6 +128,35 @@ Generated on: 20/06/2026 22:56:41
 
 ## 📦 module Floundroid
 ---
+
+#### 🧩 `type Bitboard = uint64`
+> Bitboards are 64-bit unsigned integers where each bit represents a square.
+> Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
+
+## 📦 module Bitboard
+---
+- **fn** `inline`
+    - *Returns the number of set bits (population count).*
+- **fn** `inline`
+    - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
+    - *This is a high-performance way to iterate through pieces.*
+- **fn** `toString`
+    - *Visualizes the bitboard as an 8x8 grid for debugging.*
+
+#### 🧩 `type BitboardSet =`
+> A collection of bitboards representing all pieces on the board.
+
+## 📦 module BitboardSet
+---
+- **fn** `empty`
+- **fn** `fromMap`
+    - *Converts a Piece Map into a BitboardSet.*
+- **fn** `getPieceAt`
+    - *Identifies the piece (if any) at a specific square using bitboards.*
+- **fn** `togglePiece`
+    - *A helper to flip a piece on/off. Essential for incremental updates.*
+- **fn** `allPieces`
+    - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
 
 ## 📦 module SlidingAttackGen
 ---
@@ -238,6 +230,7 @@ Generated on: 20/06/2026 22:56:41
 
 ## 📦 module Board
 ---
+- **fn** `fromUci`
 - **fn** `empty`
 - **fn** `isOccupied`
     - *Checks if a square is occupied (Source of truth: Bitboards).*
@@ -352,41 +345,17 @@ Generated on: 20/06/2026 22:56:41
 - **fn** `calculateTargetTime`
 - **fn** `run`
 - **fn** `main`
-# Tests File: Tests.fs
+# TypeTests File: TypesTests.fs
 ## 📑 Table of Contents
-- [TestFloundroid](#-module-testfloundroid)
+- [TypesTests](#-module-typestests)
 - [ColourTests](#-module-colourtests)
 - [FileTests](#-module-filetests)
 - [RankTests](#-module-ranktests)
 - [SquareTests](#-module-squaretests)
-- [PieceTypeTests](#-module-piecetypetests)
-- [PieceTests](#-module-piecetests)
-- [MoveTests](#-module-movetests)
-- [BoardTests](#-module-boardtests)
-- [FenTests](#-module-fentests)
-- [MoveGenTests](#-module-movegentests)
-- [PromotionTests](#-module-promotiontests)
-- [AttackTests](#-module-attacktests)
-- [CheckDetectionTests](#-module-checkdetectiontests)
-- [LegalMoveFilteringTests](#-module-legalmovefilteringtests)
-- [SanTests](#-module-santests)
-- [PerftTests](#-module-perfttests)
-- [EvaluationTests](#-module-evaluationtests)
-- [SearchTests](#-module-searchtests)
-- [BitboardTests](#-module-bitboardtests)
-- [SlidingAttackTests](#-module-slidingattacktests)
-- [ZobristTests](#-module-zobristtests)
-- [HashTests](#-module-hashtests)
-- [TTTests](#-module-tttests)
-- [MoveOrderingTests](#-module-moveorderingtests)
-- [InsufficientMaterialTests](#-module-insufficientmaterialtests)
-- [UciParsingTests](#-module-uciparsingtests)
-- [RepetitionTests](#-module-repetitiontests)
-- [FiftyMoveRuleTests](#-module-fiftymoveruletests)
 
 
 
-## 📦 module TestFloundroid
+## 📦 module TypesTests
 ---
 
 ## 📦 module ColourTests
@@ -408,6 +377,36 @@ Generated on: 20/06/2026 22:56:41
 ---
 - **fn** ```Square`
 - **fn** ```Square`
+# Tests File: Tests.fs
+## 📑 Table of Contents
+- [TestFloundroid](#-module-testfloundroid)
+- [PieceTypeTests](#-module-piecetypetests)
+- [PieceTests](#-module-piecetests)
+- [BoardTests](#-module-boardtests)
+- [FenTests](#-module-fentests)
+- [MoveGenTests](#-module-movegentests)
+- [PromotionTests](#-module-promotiontests)
+- [AttackTests](#-module-attacktests)
+- [CheckDetectionTests](#-module-checkdetectiontests)
+- [LegalMoveFilteringTests](#-module-legalmovefilteringtests)
+- [PerftTests](#-module-perfttests)
+- [EvaluationTests](#-module-evaluationtests)
+- [SearchTests](#-module-searchtests)
+- [BitboardTests](#-module-bitboardtests)
+- [SlidingAttackTests](#-module-slidingattacktests)
+- [ZobristTests](#-module-zobristtests)
+- [HashTests](#-module-hashtests)
+- [TTTests](#-module-tttests)
+- [MoveOrderingTests](#-module-moveorderingtests)
+- [InsufficientMaterialTests](#-module-insufficientmaterialtests)
+- [UciParsingTests](#-module-uciparsingtests)
+- [RepetitionTests](#-module-repetitiontests)
+- [FiftyMoveRuleTests](#-module-fiftymoveruletests)
+
+
+
+## 📦 module TestFloundroid
+---
 
 ## 📦 module PieceTypeTests
 ---
@@ -416,10 +415,6 @@ Generated on: 20/06/2026 22:56:41
 ## 📦 module PieceTests
 ---
 - **fn** ```Piece`
-
-## 📦 module MoveTests
----
-- **fn** ```UCI`
 
 ## 📦 module BoardTests
 ---
@@ -484,14 +479,6 @@ Generated on: 20/06/2026 22:56:41
 - **fn** ```Illegal`
 - **fn** ```Cannot`
 
-## 📦 module SanTests
----
-- **fn** `getSan`
-- **fn** ```SAN`
-- **fn** ```SAN`
-- **fn** ```SAN`
-- **fn** ```SAN`
-
 ## 📦 module PerftTests
 ---
 - **fn** ```Initial`
@@ -513,9 +500,7 @@ Generated on: 20/06/2026 22:56:41
 - **fn** ```Black`
 - **fn** ```White`
 - **fn** ```open`
-- **fn** ```half-open`
 - **fn** ```no`
-- **fn** ```enemy`
 - **fn** ```enemy`
 
 ## 📦 module SearchTests
@@ -525,7 +510,7 @@ Generated on: 20/06/2026 22:56:41
 - **fn** ```Search`
 - **fn** ```Search`
 - **fn** ```Board`
-- **fn** ```Null`
+- **fn** ```Enabling`
 
 ## 📦 module BitboardTests
 ---

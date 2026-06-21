@@ -5,6 +5,265 @@ open System.Text
 open System.Threading
 open Types
 
+/// Bitboards are 64-bit unsigned integers where each bit represents a square.
+/// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
+type Bitboard = uint64
+
+module Bitboard =
+    let empty: Bitboard = 0uL
+    let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
+
+    /// Sets the bit at the given square.
+    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
+
+    /// Clears the bit at the given square.
+    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
+
+    /// Checks if a square is set.
+    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
+
+    /// Returns the number of set bits (population count).
+    let inline count (bb: Bitboard) : int =
+        System.Numerics.BitOperations.PopCount(bb)
+
+    /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
+    /// This is a high-performance way to iterate through pieces.
+    let inline popLsb (bb: byref<Bitboard>) : Square =
+        let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
+        bb <- bb &&& (bb - 1uL)
+        lsb
+
+    /// Visualizes the bitboard as an 8x8 grid for debugging.
+    let toString (bb: Bitboard) =
+        let sb = StringBuilder()
+
+        for r in 7..-1..0 do
+            sb.Append(sprintf "%d " (r + 1)) |> ignore
+
+            for f in 0..7 do
+                let sq = r * 8 + f
+                sb.Append(if contains sq bb then "1 " else ". ") |> ignore
+
+            sb.Append("\n") |> ignore
+
+        sb.Append("  a b c d e f g h").ToString()
+          
+/// A collection of bitboards representing all pieces on the board.
+type BitboardSet =
+    { WhitePawns: Bitboard
+      WhiteKnights: Bitboard
+      WhiteBishops: Bitboard
+      WhiteRooks: Bitboard
+      WhiteQueens: Bitboard
+      WhiteKings: Bitboard
+      BlackPawns: Bitboard
+      BlackKnights: Bitboard
+      BlackBishops: Bitboard
+      BlackRooks: Bitboard
+      BlackQueens: Bitboard
+      BlackKings: Bitboard
+      // Combined layers
+      WhiteTotal: Bitboard
+      BlackTotal: Bitboard
+      Occupancy: Bitboard }
+
+module BitboardSet =
+    let empty =
+        { WhitePawns = 0uL
+          WhiteKnights = 0uL
+          WhiteBishops = 0uL
+          WhiteRooks = 0uL
+          WhiteQueens = 0uL
+          WhiteKings = 0uL
+          BlackPawns = 0uL
+          BlackKnights = 0uL
+          BlackBishops = 0uL
+          BlackRooks = 0uL
+          BlackQueens = 0uL
+          BlackKings = 0uL
+          WhiteTotal = 0uL
+          BlackTotal = 0uL
+          Occupancy = 0uL }
+
+    /// Converts a Piece Map into a BitboardSet.
+    let fromMap (pieces: Map<Square, Piece>) =
+        let mutable bbs = empty
+
+        for (KeyValue(sq, p)) in pieces do
+            let bit = 1uL <<< sq
+
+            match Piece.colour p, Piece.kind p with
+            | Colour.White, PieceType.Pawn ->
+                bbs <-
+                    { bbs with
+                        WhitePawns = bbs.WhitePawns ||| bit }
+            | Colour.White, PieceType.Knight ->
+                bbs <-
+                    { bbs with
+                        WhiteKnights = bbs.WhiteKnights ||| bit }
+            | Colour.White, PieceType.Bishop ->
+                bbs <-
+                    { bbs with
+                        WhiteBishops = bbs.WhiteBishops ||| bit }
+            | Colour.White, PieceType.Rook ->
+                bbs <-
+                    { bbs with
+                        WhiteRooks = bbs.WhiteRooks ||| bit }
+            | Colour.White, PieceType.Queen ->
+                bbs <-
+                    { bbs with
+                        WhiteQueens = bbs.WhiteQueens ||| bit }
+            | Colour.White, PieceType.King ->
+                bbs <-
+                    { bbs with
+                        WhiteKings = bbs.WhiteKings ||| bit }
+            | Colour.Black, PieceType.Pawn ->
+                bbs <-
+                    { bbs with
+                        BlackPawns = bbs.BlackPawns ||| bit }
+            | Colour.Black, PieceType.Knight ->
+                bbs <-
+                    { bbs with
+                        BlackKnights = bbs.BlackKnights ||| bit }
+            | Colour.Black, PieceType.Bishop ->
+                bbs <-
+                    { bbs with
+                        BlackBishops = bbs.BlackBishops ||| bit }
+            | Colour.Black, PieceType.Rook ->
+                bbs <-
+                    { bbs with
+                        BlackRooks = bbs.BlackRooks ||| bit }
+            | Colour.Black, PieceType.Queen ->
+                bbs <-
+                    { bbs with
+                        BlackQueens = bbs.BlackQueens ||| bit }
+            | Colour.Black, PieceType.King ->
+                bbs <-
+                    { bbs with
+                        BlackKings = bbs.BlackKings ||| bit }
+            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
+ 
+        let whiteTotal =
+            bbs.WhitePawns
+            ||| bbs.WhiteKnights
+            ||| bbs.WhiteBishops
+            ||| bbs.WhiteRooks
+            ||| bbs.WhiteQueens
+            ||| bbs.WhiteKings
+
+        let blackTotal =
+            bbs.BlackPawns
+            ||| bbs.BlackKnights
+            ||| bbs.BlackBishops
+            ||| bbs.BlackRooks
+            ||| bbs.BlackQueens
+            ||| bbs.BlackKings
+
+        { bbs with
+            WhiteTotal = whiteTotal
+            BlackTotal = blackTotal
+            Occupancy = whiteTotal ||| blackTotal }
+
+    /// Identifies the piece (if any) at a specific square using bitboards.
+    let getPieceAt (sq: Square) (bbs: BitboardSet) : Piece option =
+        let bit = 1uL <<< sq
+
+        if (bbs.Occupancy &&& bit) = 0uL then
+            None
+        else
+            let color = if (bbs.WhiteTotal &&& bit) <> 0uL then Colour.White else Colour.Black
+
+            let kind =
+                if (bbs.WhitePawns ||| bbs.BlackPawns) &&& bit <> 0uL then
+                    PieceType.Pawn
+                elif (bbs.WhiteKnights ||| bbs.BlackKnights) &&& bit <> 0uL then
+                    PieceType.Knight
+                elif (bbs.WhiteBishops ||| bbs.BlackBishops) &&& bit <> 0uL then
+                    PieceType.Bishop
+                elif (bbs.WhiteRooks ||| bbs.BlackRooks) &&& bit <> 0uL then
+                    PieceType.Rook
+                elif (bbs.WhiteQueens ||| bbs.BlackQueens) &&& bit <> 0uL then
+                    PieceType.Queen
+                else
+                    PieceType.King
+
+            Some (Piece(color, kind))
+
+    /// A helper to flip a piece on/off. Essential for incremental updates.
+    let togglePiece (p: Piece) (sq: Square) (bbs: BitboardSet) =
+        let bit = 1uL <<< sq
+
+        let newBbs =
+            match Piece.colour p, Piece.kind p with
+            | Colour.White, PieceType.Pawn ->
+                { bbs with
+                    WhitePawns = bbs.WhitePawns ^^^ bit }
+            | Colour.White, PieceType.Knight ->
+                { bbs with
+                    WhiteKnights = bbs.WhiteKnights ^^^ bit }
+            | Colour.White, PieceType.Bishop ->
+                { bbs with
+                    WhiteBishops = bbs.WhiteBishops ^^^ bit }
+            | Colour.White, PieceType.Rook ->
+                { bbs with
+                    WhiteRooks = bbs.WhiteRooks ^^^ bit }
+            | Colour.White, PieceType.Queen ->
+                { bbs with
+                    WhiteQueens = bbs.WhiteQueens ^^^ bit }
+            | Colour.White, PieceType.King ->
+                { bbs with
+                    WhiteKings = bbs.WhiteKings ^^^ bit }
+            | Colour.Black, PieceType.Pawn ->
+                { bbs with
+                    BlackPawns = bbs.BlackPawns ^^^ bit }
+            | Colour.Black, PieceType.Knight ->
+                { bbs with
+                    BlackKnights = bbs.BlackKnights ^^^ bit }
+            | Colour.Black, PieceType.Bishop ->
+                { bbs with
+                    BlackBishops = bbs.BlackBishops ^^^ bit }
+            | Colour.Black, PieceType.Rook ->
+                { bbs with
+                    BlackRooks = bbs.BlackRooks ^^^ bit }
+            | Colour.Black, PieceType.Queen ->
+                { bbs with
+                    BlackQueens = bbs.BlackQueens ^^^ bit }
+            | Colour.Black, PieceType.King ->
+                { bbs with
+                    BlackKings = bbs.BlackKings ^^^ bit }
+            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
+
+        let whiteTotal =
+            newBbs.WhitePawns
+            ||| newBbs.WhiteKnights
+            ||| newBbs.WhiteBishops
+            ||| newBbs.WhiteRooks
+            ||| newBbs.WhiteQueens
+            ||| newBbs.WhiteKings
+
+        let blackTotal =
+            newBbs.BlackPawns
+            ||| newBbs.BlackKnights
+            ||| newBbs.BlackBishops
+            ||| newBbs.BlackRooks
+            ||| newBbs.BlackQueens
+            ||| newBbs.BlackKings
+
+        { newBbs with
+            WhiteTotal = whiteTotal
+            BlackTotal = blackTotal
+            Occupancy = whiteTotal ||| blackTotal }
+
+    /// Returns a sequence of all (Square, Piece) pairs currently on the board.
+    let allPieces (bbs: BitboardSet) =
+        seq {
+            let mutable occ = bbs.Occupancy
+
+            while occ <> 0uL do
+                let sq = Bitboard.popLsb &occ
+                yield (sq, getPieceAt sq bbs |> Option.get)
+        }
+
 module SlidingAttackGen =
     /// Generates a bitboard of all squares a Bishop attacks from a given square, 
     /// accounting for blockers. This is the "slow" version used for table init.
@@ -386,6 +645,49 @@ module TranspositionTable =
         if entry.Hash = hash then Some entry else None
 
 module Board =
+
+    let fromUci (b: Board) (s: string) : Move =
+        if s.Length < 4 then
+            invalidArg "s" "UCI move string too short"
+
+        let fromSq = Square.fromString (s.Substring(0, 2))
+        let toSq   = Square.fromString (s.Substring(2, 2))
+
+        let movingPiece =
+            BitboardSet.getPieceAt fromSq b.Bitboards
+            |> Option.get
+
+        let isPawn = Piece.kind movingPiece = PieceType.Pawn
+
+        // --- 1. Promotion ---
+        if s.Length = 5 then
+            let promo = int (PieceType.fromChar s.[4])
+            Move(fromSq, toSq, 5, promo)
+
+        // --- 2. Castling ---
+        elif Piece.kind movingPiece = PieceType.King then
+            match (fromSq, toSq) with
+            | (4, 6)   -> Move(fromSq, toSq, 3, 0)   // White O-O
+            | (4, 2)   -> Move(fromSq, toSq, 4, 0)   // White O-O-O
+            | (60, 62) -> Move(fromSq, toSq, 3, 0)   // Black O-O
+            | (60, 58) -> Move(fromSq, toSq, 4, 0)   // Black O-O-O
+            | _ -> Move(fromSq, toSq, 0, 0)
+
+        // --- 3. En passant ---
+        elif isPawn &&
+             b.EnPassantSquare.IsSome &&
+             toSq = b.EnPassantSquare.Value &&
+             Square.file fromSq <> Square.file toSq then
+            Move(fromSq, toSq, 2, 0)
+
+        // --- 4. Capture ---
+        elif BitboardSet.getPieceAt toSq b.Bitboards |> Option.isSome then
+            Move(fromSq, toSq, 1, 0)
+
+        // --- 5. Quiet ---
+        else
+            Move(fromSq, toSq, 0, 0)
+   
     let empty =
         { Bitboards = BitboardSet.empty // Placeholder
           SideToMove = Colour.White
@@ -529,7 +831,7 @@ module Board =
         // 1. Initialize variables for the new state
         let mutable newBitboards = b.Bitboards
         let mutable newHash = b.Hash
-        let movingPiece = BitboardSet.getPieceAt m.From b.Bitboards |> Option.get
+        let movingPiece = BitboardSet.getPieceAt (Move.fromSq m) b.Bitboards |> Option.get
         let isPawn = Piece.kind movingPiece = PieceType.Pawn
         let opponent = Colour.opposite b.SideToMove
 
@@ -540,15 +842,15 @@ module Board =
 
         // 3. Remove the moving piece from the source
         // TogglePiece XORs the bitboard and we XOR the hash
-        newBitboards <- BitboardSet.togglePiece movingPiece m.From newBitboards
-        newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece m.From)
+        newBitboards <- BitboardSet.togglePiece movingPiece (Move.fromSq m) newBitboards
+        newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece (Move.fromSq m))
 
         // 4. Handle Captures (including En Passant)
-        let capturedPieceAtTo = BitboardSet.getPieceAt m.To b.Bitboards
+        let capturedPieceAtTo = BitboardSet.getPieceAt (Move.toSq m) b.Bitboards
     
-        match m.Kind with
-        | EnPassant ->
-            let epPawnSq = if b.SideToMove = Colour.White then m.To - 8 else m.To + 8
+        match Move.kind m with
+        | 2 ->   // EnPassant
+            let epPawnSq = if b.SideToMove = Colour.White then (Move.toSq m) - 8 else (Move.toSq m) + 8
             let victimPawn = Piece(opponent, PieceType.Pawn)
             newBitboards <- BitboardSet.togglePiece victimPawn epPawnSq newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
@@ -556,29 +858,34 @@ module Board =
             // Normal captures (Quiet, Promotion, or Castling can't capture, but we check 'To' occupancy)
             match capturedPieceAtTo with
             | Some victim ->
-                newBitboards <- BitboardSet.togglePiece victim m.To newBitboards
-                newHash <- newHash ^^^ (Zobrist.getPieceKey victim m.To)
+                newBitboards <- BitboardSet.togglePiece victim (Move.toSq m) newBitboards
+                newHash <- newHash ^^^ (Zobrist.getPieceKey victim (Move.toSq m))
             | None -> ()
 
         // 5. Place the piece at the destination
-        match m.Kind with
-        | Promotion pType ->
-            let promotedPiece = Piece(b.SideToMove, pType)
-            newBitboards <- BitboardSet.togglePiece promotedPiece m.To newBitboards
-            newHash <- newHash ^^^ (Zobrist.getPieceKey promotedPiece m.To)
+        match Move.kind m with
+        | 5 ->   // Promotion
+            let promoType = Move.promo m |> enum<PieceType>
+            let promotedPiece = Piece(b.SideToMove, promoType)
+
+            let toSq = Move.toSq m
+            newBitboards <- BitboardSet.togglePiece promotedPiece toSq newBitboards
+            newHash <- newHash ^^^ Zobrist.getPieceKey promotedPiece toSq
+
         | _ ->
-            newBitboards <- BitboardSet.togglePiece movingPiece m.To newBitboards
-            newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece m.To)
+            let toSq = Move.toSq m
+            newBitboards <- BitboardSet.togglePiece movingPiece toSq newBitboards
+            newHash <- newHash ^^^ Zobrist.getPieceKey movingPiece toSq
 
         // 6. Handle Special Rook Moves (Castling)
-        match m.Kind with
-        | CastleKingSide ->
+        match Move.kind m with
+        | 3 ->   // CastleKingSide        
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (7, 5) else (63, 61)
             let rook = Piece(b.SideToMove, PieceType.Rook)
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
-        | CastleQueenSide ->
+        | 4 ->   // CastleQueenSide ->
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (0, 3) else (56, 59)
             let rook = Piece(b.SideToMove, PieceType.Rook)
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
@@ -596,22 +903,22 @@ module Board =
                 newCR <- newCR &&& ~~~(CastlingRights.BK ||| CastlingRights.BQ)
 
         // If a rook moves from its starting square
-        if m.From = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
-        if m.From = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
-        if m.From = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
-        if m.From = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
+        if (Move.fromSq m) = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if (Move.fromSq m) = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if (Move.fromSq m) = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if (Move.fromSq m) = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
 
         // If a rook is captured on its starting square
-        if m.To = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
-        if m.To = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
-        if m.To = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
-        if m.To = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
+        if (Move.toSq m) = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if (Move.toSq m) = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if (Move.toSq m) = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if (Move.toSq m) = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
 
         // 8. Update En Passant Square
         // Only set if a pawn moves two squares
         let newEPSquare =
-            if isPawn && abs (m.To - m.From) = 16 then
-                Some ((m.From + m.To) / 2)
+            if isPawn && abs ((Move.toSq m) - (Move.fromSq m)) = 16 then
+                Some (((Move.fromSq m) + (Move.toSq m)) / 2)
             else None
 
         // 9. Update Clocks
@@ -726,16 +1033,16 @@ module MoveGen =
                             // Promotion push
                             if nr1 = (if us = Colour.White then 7 else 0) then
                                 for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                    moves.Add({ From = sq; To = p1; Kind = Promotion pt })
+                                    moves.Add(Move(sq, p1, 5, int pt))
                             else
-                                moves.Add({ From = sq; To = p1; Kind = Quiet })
+                                moves.Add(Move(sq, p1, 0, 0))
 
                             // 2. Double push from starting rank
                             if r = (if us = Colour.White then 1 else 6) then
                                 let nr2 = r + 2 * d
                                 let p2 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr2)
                                 if not (Board.isOccupied b p2) then
-                                    moves.Add({ From = sq; To = p2; Kind = Quiet })
+                                    moves.Add(Move(sq, p2, 0, 0))
 
                     // 3. Captures
                     for df in [ -1; 1 ] do
@@ -746,16 +1053,16 @@ module MoveGen =
                             | Some victim when Piece.colour victim = them ->
                                 if nr = (if us = Colour.White then 7 else 0) then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add({ From = sq; To = cap; Kind = Promotion pt })
+                                        moves.Add(Move(sq, cap, 5, int pt))
                                 else
-                                    moves.Add({ From = sq; To = cap; Kind = Capture })
+                                    moves.Add(Move(sq, cap, 1, 0))
                             | _ -> ()
 
                     // 4. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
                         if abs (File.toInt (Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
-                            moves.Add({ From = sq; To = ep; Kind = EnPassant })
+                            moves.Add(Move(sq, ep, 2, 0))
                     | None -> ()
 
                 | PieceType.Knight ->
@@ -766,8 +1073,8 @@ module MoveGen =
                         match Board.tryGetPiece b t with
                         | Some target ->
                             if Piece.colour target = them then
-                                moves.Add({ From = sq; To = t; Kind = Capture })
-                        | None -> moves.Add({ From = sq; To = t; Kind = Quiet })
+                                moves.Add(Move(sq, t, 1, 0))
+                        | None -> moves.Add(Move(sq, t, 0, 0))
 
                 | PieceType.King ->
                     // Use high-speed Bitboard lookup
@@ -777,22 +1084,22 @@ module MoveGen =
                         match Board.tryGetPiece b t with
                         | Some target ->
                             if Piece.colour target = them then
-                                moves.Add({ From = sq; To = t; Kind = Capture })
-                        | None -> moves.Add({ From = sq; To = t; Kind = Quiet })
+                                moves.Add(Move(sq, t, 1, 0))
+                        | None -> moves.Add(Move(sq, t, 0, 0))  
 
                     // Castling
                     let rnk, cr = (if us = Colour.White then 0 else 7), b.CastlingRights
                     if (us = Colour.White && (int cr &&& int CastlingRights.WK) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BK) <> 0) then
                         let f1, g1 = Square.ofFileRank File.F (Rank.fromInt rnk), Square.ofFileRank File.G (Rank.fromInt rnk)
                         if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
-                            moves.Add({ From = sq; To = g1; Kind = CastleKingSide })
+                            moves.Add(Move(sq, g1, 3, 0))
 
                     if (us = Colour.White && (int cr &&& int CastlingRights.WQ) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BQ) <> 0) then
                         let d1, c1, b1 = Square.ofFileRank File.D (Rank.fromInt rnk), 
                                          Square.ofFileRank File.C (Rank.fromInt rnk),
                                          Square.ofFileRank File.B (Rank.fromInt rnk)
                         if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
-                            moves.Add({ From = sq; To = c1; Kind = CastleQueenSide })
+                            moves.Add(Move(sq, c1, 4, 0))
 
                 | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
                     let occ = b.Bitboards.Occupancy
@@ -811,8 +1118,8 @@ module MoveGen =
     
                     while targets <> 0uL do
                         let t = Bitboard.popLsb &targets
-                        if Board.isOccupied b t then moves.Add({ From = sq; To = t; Kind = Capture })
-                        else moves.Add({ From = sq; To = t; Kind = Quiet })
+                        if Board.isOccupied b t then moves.Add(Move(sq, t, 1, 0))
+                        else moves.Add(Move(sq, t, 0, 0))
 
                 | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
@@ -825,17 +1132,17 @@ module MoveGen =
         getPseudoLegalMoves b
         |> Array.filter (fun m ->
             let castlingCheck =
-                match m.Kind with
-                | CastleKingSide
-                | CastleQueenSide ->
+                match Move.kind m with
+                | 3
+                | 4 ->
                     if Board.isInCheckFor us b then
                         false
                     else
                         let rnk = if us = Colour.White then Rank.R1 else Rank.R8
 
-                        let midFile = if m.Kind = CastleKingSide then File.F else File.D
+                        let midFile = if Move.kind m = 3 then File.F else File.D
 
-                        let destFile = if m.Kind = CastleKingSide then File.G else File.C
+                        let destFile = if Move.kind m = 3 then File.G else File.C
 
                         let midSquare = Square.ofFileRank midFile rnk
 
@@ -870,16 +1177,16 @@ module MoveGen =
                             | Some victim when Piece.colour victim = them ->
                                 if nr = targetRank then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add({ From = sq; To = cap; Kind = Promotion pt })
+                                        moves.Add(Move(sq, cap, 5, int pt))
                                 else
-                                    moves.Add({ From = sq; To = cap; Kind = Capture })
+                                    moves.Add(Move(sq, cap, 1, 0))
                             | _ -> ()
 
                     // 2. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
                         if abs (File.toInt (Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
-                            moves.Add({ From = sq; To = ep; Kind = EnPassant })
+                            moves.Add(Move(sq, ep, 2, 0))
                     | None -> ()
                     
                     // 3. Quiet Promotions (important for QS)
@@ -888,19 +1195,19 @@ module MoveGen =
                         let p1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr1)
                         if not (Board.isOccupied b p1) then
                             for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                moves.Add({ From = sq; To = p1; Kind = Promotion pt })
+                                moves.Add(Move(sq, p1, 5, int pt))
 
                 | PieceType.Knight ->
                     let mutable attacks = BitboardGen.knightAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        moves.Add({ From = sq; To = t; Kind = Capture })
+                        moves.Add(Move(sq, t, 1, 0))
 
                 | PieceType.King ->
                     let mutable attacks = BitboardGen.kingAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        moves.Add({ From = sq; To = t; Kind = Capture })
+                        moves.Add(Move(sq, t, 1, 0))
 
                 | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
                     let occ = b.Bitboards.Occupancy
@@ -917,7 +1224,7 @@ module MoveGen =
     
                     while targets <> 0uL do
                         let t = Bitboard.popLsb &targets
-                        moves.Add({ From = sq; To = t; Kind = Capture })
+                        moves.Add(Move(sq, t, 1, 0))
 
                 | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
@@ -926,19 +1233,19 @@ module MoveGen =
 module San =
     /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
     let toSan (b: Board) (m: Move) =
-        match m.Kind with
-        | CastleKingSide -> "O-O"
-        | CastleQueenSide -> "O-O-O"
+        match Move.kind m with
+        | 3 -> "O-O"
+        | 4 -> "O-O-O"
         | _ ->
             // Use Board.tryGetPiece instead of b.Pieces.Value
-            let piece = (Board.tryGetPiece b m.From).Value
+            let piece = (Board.tryGetPiece b (Move.fromSq m)).Value
 
             let isCapture =
-                match m.Kind with
-                | Capture
-                | EnPassant -> true
+                match Move.kind m with
+                | 1
+                | 2 -> true
                 // Use Board.isOccupied instead of b.Pieces.ContainsKey
-                | _ -> Board.isOccupied b m.To
+                | _ -> Board.isOccupied b (Move.toSq m)
 
             let nextBoard = Board.applyMove m b
             let isCheck = Board.isInCheck nextBoard
@@ -948,16 +1255,16 @@ module San =
                 if Piece.kind piece = PieceType.Pawn then
                     let prefix =
                         if isCapture then
-                            sprintf "%cx" (File.toChar (Square.file m.From))
+                            sprintf "%cx" (File.toChar (Square.file (Move.fromSq m)))
                         else
                             ""
 
                     let prom =
-                        match m.Kind with
-                        | Promotion pt -> sprintf "=%c" (Char.ToUpper(PieceType.toChar pt))
+                        match Move.kind m with
+                        | 5 -> sprintf "=%c" (Char.ToUpper(PieceType.toChar (enum<PieceType>(Move.promo m))))
                         | _ -> ""
 
-                    sprintf "%s%s%s" prefix (Square.toString m.To) prom
+                    sprintf "%s%s%s" prefix (Square.toString (Move.toSq m)) prom
                 else
                     let pChar = Char.ToUpper(PieceType.toChar (Piece.kind piece))
 
@@ -965,9 +1272,9 @@ module San =
                         MoveGen.getLegalMoves b
                         |> Array.filter (fun alt ->
                             // Use Board.tryGetPiece to identify the piece on the alternative square
-                            match Board.tryGetPiece b alt.From with
+                            match Board.tryGetPiece b (Move.fromSq alt) with
                             | Some altPiece ->
-                                alt.From <> m.From && alt.To = m.To && Piece.kind altPiece = Piece.kind piece
+                                (Move.fromSq alt) <> (Move.fromSq m) && (Move.toSq alt) = (Move.toSq m) && Piece.kind altPiece = Piece.kind piece
                             | None -> false)
 
                     let disambiguator =
@@ -975,20 +1282,20 @@ module San =
                             ""
                         else
                             let sameFile =
-                                others |> Array.exists (fun alt -> Square.file alt.From = Square.file m.From)
+                                others |> Array.exists (fun alt -> Square.file (Move.fromSq alt) = Square.file (Move.fromSq m))
 
                             let sameRank =
-                                others |> Array.exists (fun alt -> Square.rank alt.From = Square.rank m.From)
+                                others |> Array.exists (fun alt -> Square.rank (Move.fromSq alt) = Square.rank (Move.fromSq m))
 
                             if not sameFile then
-                                sprintf "%c" (File.toChar (Square.file m.From))
+                                sprintf "%c" (File.toChar (Square.file (Move.fromSq m)))
                             elif not sameRank then
-                                sprintf "%c" (Rank.toChar (Square.rank m.From))
+                                sprintf "%c" (Rank.toChar (Square.rank (Move.fromSq m)))
                             else
-                                Square.toString m.From
+                                Square.toString (Move.fromSq m)
 
                     let cap = if isCapture then "x" else ""
-                    sprintf "%c%s%s%s" pChar disambiguator cap (Square.toString m.To)
+                    sprintf "%c%s%s%s" pChar disambiguator cap (Square.toString (Move.toSq m))
 
             let suffix =
                 if isMate then "#"
@@ -1325,11 +1632,11 @@ module Search =
                 for i in 0 .. moves.Length - 1 do
                     let m = moves.[i]
                     let victimVal = 
-                        match Board.tryGetPiece b m.To with 
+                        match Board.tryGetPiece b (Move.toSq m) with 
                         | Some p -> Evaluation.pieceValue (Piece.kind p) 
                         | None -> 100 // En Passant
                     let attackerVal = 
-                        match Board.tryGetPiece b m.From with 
+                        match Board.tryGetPiece b (Move.fromSq m) with 
                         | Some p -> Evaluation.pieceValue (Piece.kind p) 
                         | None -> 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
@@ -1434,22 +1741,22 @@ module Search =
                         let score = 
                             if Some m = ttMove then 1000000 
                             else
-                                match m.Kind with
-                                | Capture | EnPassant ->
+                                match Move.kind m with
+                                | 1 | 2 ->
                                     let victimVal = 
-                                        if Board.isOccupied b m.To then 
-                                            (match Board.tryGetPiece b m.To with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0) 
+                                        if Board.isOccupied b (Move.toSq m) then 
+                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0) 
                                         else 100 // En Passant
                                     let attackerVal = 
-                                        match Board.tryGetPiece b m.From with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0
+                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0
                                     10000 + (victimVal * 10) - attackerVal
-                                | Promotion pt -> 9000 + Evaluation.pieceValue pt
+                                | 5 -> 9000 + Evaluation.pieceValue (enum<PieceType>(Move.promo m))
                                 | _ -> 
                                     if Some m = killerMoves.[0, ply] then 8000
                                     elif Some m = killerMoves.[1, ply] then 7000
                                     else 
                                         // FIXED: Use the pre-calculated sideIdx here
-                                        Math.Min(historyTable.[sideIdx, m.From, m.To], 6000)
+                                        Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], 6000)
                         scores.[i] <- -score 
 
                     System.Array.Sort(scores, moves)
@@ -1462,8 +1769,8 @@ module Search =
         
                         // --- FIX: Add specific validation for Castling ---
                         let isIllegalCastle = 
-                            match m.Kind with
-                            | CastleKingSide | CastleQueenSide ->
+                            match Move.kind m with
+                            | 3 | 4 ->
                                 let us = b.SideToMove
                                 let them = Colour.opposite us
                                 let rnk = if us = Colour.White then Rank.R1 else Rank.R8
@@ -1472,7 +1779,7 @@ module Search =
                                 if Board.isInCheck b then true
                                 else
                                     // 2. Cannot castle THROUGH check
-                                    let midFile = if m.Kind = CastleKingSide then File.F else File.D
+                                    let midFile = if Move.kind m = 3 then File.F else File.D
                                     let midSquare = Square.ofFileRank midFile rnk
                                     Attack.isSquareAttacked b midSquare them
                             | _ -> false
@@ -1499,13 +1806,13 @@ module Search =
 
                                 if currentAlpha >= beta then
                                     // Beta Cutoff: Store Killers and History
-                                    match m.Kind with
-                                    | Quiet | CastleKingSide | CastleQueenSide ->
+                                    match Move.kind m with
+                                    | 0 | 3 | 4 ->
                                         if killerMoves.[0, ply] <> Some m then
                                             killerMoves.[1, ply] <- killerMoves.[0, ply]
                                             killerMoves.[0, ply] <- Some m
                                         // Use pre-calculated sideIdx
-                                        historyTable.[sideIdx, m.From, m.To] <- historyTable.[sideIdx, m.From, m.To] + (depth * depth)
+                                        historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + (depth * depth)
                                     | _ -> ()
                                     exitLoop <- true
                                 else
@@ -1812,17 +2119,10 @@ module UciLoop =
                 positionHistory <- [ board.Hash ]
 
                 for mStr in moveParts do
-                    // Faster: Only generate pseudo-legal moves to find the kind
-                    let moves = MoveGen.getPseudoLegalMoves board 
-                    match moves |> Array.tryFind (fun m -> Move.toUci m = mStr) with
-                    | Some m -> 
-                        board <- Board.applyMove m board
-                        // Reset history on capture or pawn move
-                        if m.Kind = Capture || m.Kind = EnPassant || (Board.tryGetPiece board m.To |> Option.map (fun p -> Piece.kind p = PieceType.Pawn) |> Option.defaultValue false) then
-                            positionHistory <- [ board.Hash ]
-                        else
-                            positionHistory <- board.Hash :: positionHistory
-                    | None -> ()
+                    let m = Board.fromUci board mStr
+                    board <- Board.applyMove m board
+                    positionHistory <- board.Hash :: positionHistory
+
                 TranspositionTable.advanceAge()
             
             | "go" :: rest ->

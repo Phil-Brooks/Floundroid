@@ -211,305 +211,42 @@ module CastlingRights =
 
         if sb.Length = 0 then "-" else sb.ToString()
 
-
-/// Bitboards are 64-bit unsigned integers where each bit represents a square.
-/// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
-type Bitboard = uint64
-
-module Bitboard =
-    let empty: Bitboard = 0uL
-    let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
-
-    /// Sets the bit at the given square.
-    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
-
-    /// Clears the bit at the given square.
-    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
-
-    /// Checks if a square is set.
-    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
-
-    /// Returns the number of set bits (population count).
-    let inline count (bb: Bitboard) : int =
-        System.Numerics.BitOperations.PopCount(bb)
-
-    /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
-    /// This is a high-performance way to iterate through pieces.
-    let inline popLsb (bb: byref<Bitboard>) : Square =
-        let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
-        bb <- bb &&& (bb - 1uL)
-        lsb
-
-    /// Visualizes the bitboard as an 8x8 grid for debugging.
-    let toString (bb: Bitboard) =
-        let sb = StringBuilder()
-
-        for r in 7..-1..0 do
-            sb.Append(sprintf "%d " (r + 1)) |> ignore
-
-            for f in 0..7 do
-                let sq = r * 8 + f
-                sb.Append(if contains sq bb then "1 " else ". ") |> ignore
-
-            sb.Append("\n") |> ignore
-
-        sb.Append("  a b c d e f g h").ToString()
-
-/// Move kinds represent the different types of moves in chess, including quiet moves, captures, promotions, en passant, and castling.
-type MoveKind =
-    | Quiet
-    | Capture
-    | Promotion of PieceType
-    | EnPassant
-    | CastleKingSide
-    | CastleQueenSide
-
-/// A Move consists of a source square, a destination square, and a MoveKind indicating the type of move.
+[<Struct>]
 type Move =
-    { From: Square
-      To: Square
-      Kind: MoveKind }
+    val data: uint32
 
+    new (fromSq: Square, toSq: Square, kind: int, promo: int) =
+        { data =
+            uint32 fromSq
+            ||| (uint32 toSq <<< 6)
+            ||| (uint32 kind <<< 12)
+            ||| (uint32 promo <<< 16) }
+
+[<RequireQualifiedAccess>]
 module Move =
-    /// Converts a Move to its UCI string representation.
+
+    let inline fromSq (m: Move) =
+        int (m.data &&& 0b111111u)
+
+    let inline toSq (m: Move) =
+        int ((m.data >>> 6) &&& 0b111111u)
+
+    let inline kind (m: Move) =
+        int ((m.data >>> 12) &&& 0b1111u)
+
+    let inline promo (m: Move) =
+        int ((m.data >>> 16) &&& 0b1111u)
+
     let toUci (m: Move) =
-        let baseStr = Square.toString m.From + Square.toString m.To
+        let baseStr =
+            Square.toString (fromSq m) +
+            Square.toString (toSq m)
 
-        match m.Kind with
-        | Promotion pt -> baseStr + (PieceType.toChar pt |> string)
-        | _ -> baseStr
+        match kind m with
+        | 5 ->   // promotion
+            let pt = enum<PieceType> (promo m)
+            baseStr + (PieceType.toChar pt |> Char.ToUpper |> string)
+        | _ ->
+            baseStr
 
-    /// Converts a UCI string representation of a move to a Move value.
-    let fromUci (s: string) =
-        if s.Length < 4 then
-            invalidArg "s" "UCI move string too short"
 
-        let fromSq = Square.fromString (s.Substring(0, 2))
-        let toSq = Square.fromString (s.Substring(2, 2))
-
-        let kind =
-            if s.Length = 5 then
-                Promotion(PieceType.fromChar s.[4])
-            else
-                Quiet
-
-        { From = fromSq
-          To = toSq
-          Kind = kind }
-
-          
-/// A collection of bitboards representing all pieces on the board.
-type BitboardSet =
-    { WhitePawns: Bitboard
-      WhiteKnights: Bitboard
-      WhiteBishops: Bitboard
-      WhiteRooks: Bitboard
-      WhiteQueens: Bitboard
-      WhiteKings: Bitboard
-      BlackPawns: Bitboard
-      BlackKnights: Bitboard
-      BlackBishops: Bitboard
-      BlackRooks: Bitboard
-      BlackQueens: Bitboard
-      BlackKings: Bitboard
-      // Combined layers
-      WhiteTotal: Bitboard
-      BlackTotal: Bitboard
-      Occupancy: Bitboard }
-
-module BitboardSet =
-    let empty =
-        { WhitePawns = 0uL
-          WhiteKnights = 0uL
-          WhiteBishops = 0uL
-          WhiteRooks = 0uL
-          WhiteQueens = 0uL
-          WhiteKings = 0uL
-          BlackPawns = 0uL
-          BlackKnights = 0uL
-          BlackBishops = 0uL
-          BlackRooks = 0uL
-          BlackQueens = 0uL
-          BlackKings = 0uL
-          WhiteTotal = 0uL
-          BlackTotal = 0uL
-          Occupancy = 0uL }
-
-    /// Converts a Piece Map into a BitboardSet.
-    let fromMap (pieces: Map<Square, Piece>) =
-        let mutable bbs = empty
-
-        for (KeyValue(sq, p)) in pieces do
-            let bit = 1uL <<< sq
-
-            match Piece.colour p, Piece.kind p with
-            | Colour.White, PieceType.Pawn ->
-                bbs <-
-                    { bbs with
-                        WhitePawns = bbs.WhitePawns ||| bit }
-            | Colour.White, PieceType.Knight ->
-                bbs <-
-                    { bbs with
-                        WhiteKnights = bbs.WhiteKnights ||| bit }
-            | Colour.White, PieceType.Bishop ->
-                bbs <-
-                    { bbs with
-                        WhiteBishops = bbs.WhiteBishops ||| bit }
-            | Colour.White, PieceType.Rook ->
-                bbs <-
-                    { bbs with
-                        WhiteRooks = bbs.WhiteRooks ||| bit }
-            | Colour.White, PieceType.Queen ->
-                bbs <-
-                    { bbs with
-                        WhiteQueens = bbs.WhiteQueens ||| bit }
-            | Colour.White, PieceType.King ->
-                bbs <-
-                    { bbs with
-                        WhiteKings = bbs.WhiteKings ||| bit }
-            | Colour.Black, PieceType.Pawn ->
-                bbs <-
-                    { bbs with
-                        BlackPawns = bbs.BlackPawns ||| bit }
-            | Colour.Black, PieceType.Knight ->
-                bbs <-
-                    { bbs with
-                        BlackKnights = bbs.BlackKnights ||| bit }
-            | Colour.Black, PieceType.Bishop ->
-                bbs <-
-                    { bbs with
-                        BlackBishops = bbs.BlackBishops ||| bit }
-            | Colour.Black, PieceType.Rook ->
-                bbs <-
-                    { bbs with
-                        BlackRooks = bbs.BlackRooks ||| bit }
-            | Colour.Black, PieceType.Queen ->
-                bbs <-
-                    { bbs with
-                        BlackQueens = bbs.BlackQueens ||| bit }
-            | Colour.Black, PieceType.King ->
-                bbs <-
-                    { bbs with
-                        BlackKings = bbs.BlackKings ||| bit }
-            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
- 
-        let whiteTotal =
-            bbs.WhitePawns
-            ||| bbs.WhiteKnights
-            ||| bbs.WhiteBishops
-            ||| bbs.WhiteRooks
-            ||| bbs.WhiteQueens
-            ||| bbs.WhiteKings
-
-        let blackTotal =
-            bbs.BlackPawns
-            ||| bbs.BlackKnights
-            ||| bbs.BlackBishops
-            ||| bbs.BlackRooks
-            ||| bbs.BlackQueens
-            ||| bbs.BlackKings
-
-        { bbs with
-            WhiteTotal = whiteTotal
-            BlackTotal = blackTotal
-            Occupancy = whiteTotal ||| blackTotal }
-
-    /// Identifies the piece (if any) at a specific square using bitboards.
-    let getPieceAt (sq: Square) (bbs: BitboardSet) : Piece option =
-        let bit = 1uL <<< sq
-
-        if (bbs.Occupancy &&& bit) = 0uL then
-            None
-        else
-            let color = if (bbs.WhiteTotal &&& bit) <> 0uL then Colour.White else Colour.Black
-
-            let kind =
-                if (bbs.WhitePawns ||| bbs.BlackPawns) &&& bit <> 0uL then
-                    PieceType.Pawn
-                elif (bbs.WhiteKnights ||| bbs.BlackKnights) &&& bit <> 0uL then
-                    PieceType.Knight
-                elif (bbs.WhiteBishops ||| bbs.BlackBishops) &&& bit <> 0uL then
-                    PieceType.Bishop
-                elif (bbs.WhiteRooks ||| bbs.BlackRooks) &&& bit <> 0uL then
-                    PieceType.Rook
-                elif (bbs.WhiteQueens ||| bbs.BlackQueens) &&& bit <> 0uL then
-                    PieceType.Queen
-                else
-                    PieceType.King
-
-            Some (Piece(color, kind))
-
-    /// A helper to flip a piece on/off. Essential for incremental updates.
-    let togglePiece (p: Piece) (sq: Square) (bbs: BitboardSet) =
-        let bit = 1uL <<< sq
-
-        let newBbs =
-            match Piece.colour p, Piece.kind p with
-            | Colour.White, PieceType.Pawn ->
-                { bbs with
-                    WhitePawns = bbs.WhitePawns ^^^ bit }
-            | Colour.White, PieceType.Knight ->
-                { bbs with
-                    WhiteKnights = bbs.WhiteKnights ^^^ bit }
-            | Colour.White, PieceType.Bishop ->
-                { bbs with
-                    WhiteBishops = bbs.WhiteBishops ^^^ bit }
-            | Colour.White, PieceType.Rook ->
-                { bbs with
-                    WhiteRooks = bbs.WhiteRooks ^^^ bit }
-            | Colour.White, PieceType.Queen ->
-                { bbs with
-                    WhiteQueens = bbs.WhiteQueens ^^^ bit }
-            | Colour.White, PieceType.King ->
-                { bbs with
-                    WhiteKings = bbs.WhiteKings ^^^ bit }
-            | Colour.Black, PieceType.Pawn ->
-                { bbs with
-                    BlackPawns = bbs.BlackPawns ^^^ bit }
-            | Colour.Black, PieceType.Knight ->
-                { bbs with
-                    BlackKnights = bbs.BlackKnights ^^^ bit }
-            | Colour.Black, PieceType.Bishop ->
-                { bbs with
-                    BlackBishops = bbs.BlackBishops ^^^ bit }
-            | Colour.Black, PieceType.Rook ->
-                { bbs with
-                    BlackRooks = bbs.BlackRooks ^^^ bit }
-            | Colour.Black, PieceType.Queen ->
-                { bbs with
-                    BlackQueens = bbs.BlackQueens ^^^ bit }
-            | Colour.Black, PieceType.King ->
-                { bbs with
-                    BlackKings = bbs.BlackKings ^^^ bit }
-            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
-
-        let whiteTotal =
-            newBbs.WhitePawns
-            ||| newBbs.WhiteKnights
-            ||| newBbs.WhiteBishops
-            ||| newBbs.WhiteRooks
-            ||| newBbs.WhiteQueens
-            ||| newBbs.WhiteKings
-
-        let blackTotal =
-            newBbs.BlackPawns
-            ||| newBbs.BlackKnights
-            ||| newBbs.BlackBishops
-            ||| newBbs.BlackRooks
-            ||| newBbs.BlackQueens
-            ||| newBbs.BlackKings
-
-        { newBbs with
-            WhiteTotal = whiteTotal
-            BlackTotal = blackTotal
-            Occupancy = whiteTotal ||| blackTotal }
-
-    /// Returns a sequence of all (Square, Piece) pairs currently on the board.
-    let allPieces (bbs: BitboardSet) =
-        seq {
-            let mutable occ = bbs.Occupancy
-
-            while occ <> 0uL do
-                let sq = Bitboard.popLsb &occ
-                yield (sq, getPieceAt sq bbs |> Option.get)
-        }

@@ -102,14 +102,17 @@ let src1 = @"D:\Github\Floundroid\Floundroid\Types.fs"
 let md1 = ["# Code File: Types.fs"] @ generateDocs (src1)
 let src2 = @"D:\Github\Floundroid\Floundroid\Program.fs" 
 let md2 = ["# Code File: Program.fs"] @ generateDocs (src2)
-let testFile = @"D:\Github\Floundroid\TestFloundroid\Tests.fs" 
-let tmd = ["# Tests File: Tests.fs"] @ generateDocs (testFile)
+let test1 = @"D:\Github\Floundroid\TestFloundroid\TypesTests.fs" 
+let tmd1 = ["# TypeTests File: TypesTests.fs"] @ generateDocs (test1)
+let test2 = @"D:\Github\Floundroid\TestFloundroid\Tests.fs" 
+let tmd2 = ["# Tests File: Tests.fs"] @ generateDocs (test2)
 let finalMarkdown =
     [ "# Floundroid Technical Reference"
       "Generated on: " + DateTime.Now.ToString()
       "" ]
     @ md1
     @ md2
-    @ tmd
+    @ tmd1
+    @ tmd2
 File.WriteAllLines(outputFile, finalMarkdown)
 printfn "Complete! Documentation updated."

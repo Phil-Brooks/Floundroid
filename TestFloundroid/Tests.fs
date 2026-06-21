@@ -4,70 +4,6 @@ open Xunit
 open Types
 open Floundroid
 
-module ColourTests =
-
-    [<Fact>]
-    let ``Colour opposite works`` () =
-        Assert.Equal(Colour.Black, Colour.opposite Colour.White)
-        Assert.Equal(Colour.White, Colour.opposite Colour.Black)
-
-    [<Fact>]
-    let ``Colour char roundtrip`` () =
-        let chars = [ 'w'; 'b'; 'W'; 'B' ]
-
-        for c in chars do
-            let col = Colour.fromChar c
-            Assert.Equal(c.ToString().ToLower()[0], Colour.toChar col)
-
-module FileTests =
-
-    [<Fact>]
-    let ``File int roundtrip`` () =
-        for i in 0..7 do
-            let f = File.fromInt i
-            Assert.Equal(i, File.toInt f)
-
-    [<Fact>]
-    let ``File char roundtrip`` () =
-        for c in [ 'a' .. 'h' ] do
-            let f = File.fromChar c
-            Assert.Equal(c, File.toChar f)
-
-module RankTests =
-
-    [<Fact>]
-    let ``Rank int roundtrip`` () =
-        for i in 0..7 do
-            let r = Rank.fromInt i
-            Assert.Equal(i, Rank.toInt r)
-
-    [<Fact>]
-    let ``Rank char roundtrip`` () =
-        for c in [ '1' .. '8' ] do
-            let r = Rank.fromChar c
-            Assert.Equal(c, Rank.toChar r)
-
-module SquareTests =
-
-    [<Fact>]
-    let ``Square file/rank roundtrip`` () =
-        for f in 0..7 do
-            for r in 0..7 do
-                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
-                Assert.Equal(f, Square.file sq |> File.toInt)
-                Assert.Equal(r, Square.rank sq |> Rank.toInt)
-
-    [<Fact>]
-    let ``Square string roundtrip`` () =
-        let allSquares =
-            [ for f in [ 'a' .. 'h' ] do
-                  for r in [ '1' .. '8' ] do
-                      $"{f}{r}" ]
-
-        for s in allSquares do
-            let sq = Square.fromString s
-            Assert.Equal(s, Square.toString sq)
-
 module PieceTypeTests =
 
     [<Fact>]
@@ -87,20 +23,6 @@ module PieceTests =
         for c in chars do
             let p = Piece.fromChar c
             Assert.Equal(c, Piece.toChar p)
-
-module MoveTests =
-
-    [<Theory>]
-    [<InlineData("e2e4", "e2", "e4")>]
-    [<InlineData("g1f3", "g1", "f3")>]
-    [<InlineData("a7a8q", "a7", "a8")>]
-    let ``UCI move string roundtrip`` (uci: string) (fromS: string) (toS: string) =
-        let m = Move.fromUci uci
-        Assert.Equal(Square.fromString fromS, m.From)
-        Assert.Equal(Square.fromString toS, m.To)
-
-        if uci.Length = 4 then
-            Assert.Equal(Quiet, m.Kind)
 
 module BoardTests =
 
@@ -123,10 +45,7 @@ module BoardTests =
     let ``applyMove updates piece positions and side to move`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-        let m =
-            { From = Square.fromString "e2"
-              To = Square.fromString "e4"
-              Kind = Quiet }
+        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
 
         let nextB = Board.applyMove m b
         Assert.False(Board.isOccupied nextB (Square.fromString "e2"))
@@ -137,10 +56,7 @@ module BoardTests =
     let ``applyMove increments fullmove number after black moves`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1"
 
-        let m =
-            { From = Square.fromString "a7"
-              To = Square.fromString "a6"
-              Kind = Quiet }
+        let m = Move(Square.fromString "a7", Square.fromString "a6", 0, 0)
 
         let nextB = Board.applyMove m b
         Assert.Equal(2, nextB.FullmoveNumber)
@@ -149,10 +65,7 @@ module BoardTests =
     let ``Kingside castling moves rook`` () =
         let b = Board.fromFen "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1"
 
-        let m =
-            { From = Square.fromString "e1"
-              To = Square.fromString "g1"
-              Kind = CastleKingSide }
+        let m = Move(Square.fromString "e1", Square.fromString "g1", 3, 0)
 
         let b2 = Board.applyMove m b
 
@@ -163,10 +76,7 @@ module BoardTests =
     let ``En passant removes captured pawn`` () =
         let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
 
-        let m =
-            { From = Square.fromString "e5"
-              To = Square.fromString "d6"
-              Kind = EnPassant }
+        let m = Move(Square.fromString "e5", Square.fromString "d6", 2, 0)
 
         let b2 = Board.applyMove m b
 
@@ -177,10 +87,7 @@ module BoardTests =
     let ``Promotion creates promoted piece`` () =
         let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
 
-        let m =
-            { From = Square.fromString "e7"
-              To = Square.fromString "e8"
-              Kind = Promotion PieceType.Queen }
+        let m = Move(Square.fromString "e7", Square.fromString "e8", 5, int PieceType.Queen)
 
         let b2 = Board.applyMove m b
 
@@ -192,10 +99,7 @@ module BoardTests =
     let ``Moving rook removes kingside castling rights`` () =
         let b = Board.fromFen "4k3/8/8/8/8/8/8/4K2R w K - 0 1"
 
-        let m =
-            { From = Square.fromString "h1"
-              To = Square.fromString "h2"
-              Kind = Quiet }
+        let m = Move(Square.fromString "h1", Square.fromString "h2", 0, 0)
 
         let b2 = Board.applyMove m b
 
@@ -204,7 +108,7 @@ module BoardTests =
     [<Fact>]
     let ``Moving King removes all castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
-        let m = { From = Square.fromString "e1"; To = Square.fromString "e2"; Kind = Quiet }
+        let m = Move(Square.fromString "e1", Square.fromString "e2", 0, 0)
         let b2 = Board.applyMove m b
         Assert.False(b2.CastlingRights.HasFlag CastlingRights.WK)
         Assert.False(b2.CastlingRights.HasFlag CastlingRights.WQ)
@@ -215,7 +119,7 @@ module BoardTests =
     let ``Capturing opponent rook removes their castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
         // White Rook on a1 captures Black Rook on a8
-        let m = { From = Square.fromString "a1"; To = Square.fromString "a8"; Kind = Capture }
+        let m = Move(Square.fromString "a1", Square.fromString "a8", 1, 0)
         let b2 = Board.applyMove m b
         Assert.False(b2.CastlingRights.HasFlag CastlingRights.BQ)
         Assert.True(b2.CastlingRights.HasFlag CastlingRights.BK)
@@ -223,21 +127,21 @@ module BoardTests =
     [<Fact>]
     let ``Pawn move resets halfmove clock`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 10 1"
-        let m = { From = Square.fromString "e2"; To = Square.fromString "e4"; Kind = Quiet }
+        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(0, b2.HalfmoveClock)
 
     [<Fact>]
     let ``Capture resets halfmove clock`` () =
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR w KQkq - 5 1"
-        let m = { From = Square.fromString "d1"; To = Square.fromString "d5"; Kind = Capture }
+        let m = Move(Square.fromString "d1", Square.fromString "d5", 1, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(0, b2.HalfmoveClock)
 
     [<Fact>]
     let ``Quiet non-pawn move increments halfmove clock`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let m = { From = Square.fromString "g1"; To = Square.fromString "f3"; Kind = Quiet }
+        let m = Move(Square.fromString "g1", Square.fromString "f3", 0, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(1, b2.HalfmoveClock)
 
@@ -273,11 +177,14 @@ module MoveGenTests =
 
         let moves =
             MoveGen.getPseudoLegalMoves b
-            |> Array.filter (fun m -> m.From = Square.fromString "e4")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
 
         Assert.Equal(3, moves.Length)
 
-        let captures = moves |> Array.filter (fun m -> m.Kind = Capture)
+        let captures =
+            moves
+            |> Array.filter (fun m -> Move.kind m = 1)
+
 
         Assert.Equal(2, captures.Length)
 
@@ -287,9 +194,9 @@ module MoveGenTests =
 
         let moves =
             MoveGen.getPseudoLegalMoves b
-            |> Array.filter (fun m -> m.From = Square.fromString "e5")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e5")
 
-        Assert.Contains(moves, fun m -> m.Kind = EnPassant && Square.toString m.To = "d6")
+        Assert.Contains(moves, fun m -> Move.kind m = 2 && Square.toString (Move.toSq m) = "d6")
 
     [<Fact>]
     let ``Slider logic stops at edge and captures enemies`` () =
@@ -297,10 +204,10 @@ module MoveGenTests =
 
         let moves =
             MoveGen.getPseudoLegalMoves b
-            |> Array.filter (fun m -> m.From = Square.fromString "e4")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
 
         Assert.Equal(10, moves.Length)
-        Assert.Contains(moves, fun m -> Square.toString m.To = "e6" && m.Kind = Capture)
+        Assert.Contains(moves, fun m -> Square.toString (Move.toSq m) = "e6" && Move.kind m = 1)
 
     [<Fact>]
     let ``Starting position has 20 legal moves`` () =
@@ -324,7 +231,7 @@ module MoveGenTests =
         let moves = MoveGen.getLegalMoves b
         
         // Assert that e8g8 (CastleKingSide) is NOT in the legal move list
-        let hasCastling = moves |> Array.exists (fun m -> m.Kind = CastleKingSide)
+        let hasCastling = moves |> Array.exists (fun m -> Move.kind m = 3)
         
         Assert.False(hasCastling, "Castling (e8g8) should be illegal because the King is in check")
 
@@ -336,7 +243,7 @@ module MoveGenTests =
         let b = Board.fromFen fen
         
         let moves = MoveGen.getLegalMoves b
-        let canCastleKingside = moves |> Array.exists (fun m -> m.Kind = CastleKingSide)
+        let canCastleKingside = moves |> Array.exists (fun m -> Move.kind m = 3)
         
         Assert.False(canCastleKingside, "Black cannot castle through f8 because it is attacked by the White Rook")
 
@@ -348,9 +255,9 @@ module MoveGenTests =
         let captures = MoveGen.getCaptureMoves b
         
         // Should find e2xd3 but NOT e2e3 or e2e4
-        Assert.Contains(captures, fun m -> Square.toString m.To = "d3")
-        Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e3")
-        Assert.DoesNotContain(captures, fun m -> Square.toString m.To = "e4")
+        Assert.Contains(captures, fun m -> Square.toString (Move.toSq m) = "d3")
+        Assert.DoesNotContain(captures, fun m -> Square.toString (Move.toSq m) = "e3")
+        Assert.DoesNotContain(captures, fun m -> Square.toString (Move.toSq m) = "e4")
 
     [<Fact>]
     let ``Pawn cannot jump over a piece with double push`` () =
@@ -361,7 +268,7 @@ module MoveGenTests =
     
         // Check if the move e2-e4 (which jumps over e3) is generated
         let hasJump = moves |> Array.exists (fun m -> 
-            Square.toString m.From = "e2" && Square.toString m.To = "e4")
+            Square.toString (Move.fromSq m) = "e2" && Square.toString (Move.toSq m) = "e4")
     
         Assert.False(hasJump, "White pawn at e2 should be blocked from jumping to e4 by the piece on e3")
 
@@ -396,7 +303,7 @@ module MoveGenTests =
     
         // ASSERT 2: The selected move MUST be Castling.
         // This will likely FAIL in your current version and return 'Quiet'.
-        Assert.Equal(CastleKingSide, selectedMove.Kind)
+        Assert.Equal(3, Move.kind selectedMove)
 
 module PromotionTests =
 
@@ -407,7 +314,7 @@ module PromotionTests =
 
         let promos =
             moves
-            |> Array.filter (fun m -> m.From = Square.fromString "e7" && m.To = Square.fromString "e8")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e7" && Move.toSq m = Square.fromString "e8")
 
         Assert.Equal(4, promos.Length)
 
@@ -418,7 +325,7 @@ module PromotionTests =
 
         let promos =
             moves
-            |> Array.filter (fun m -> m.From = Square.fromString "e7" && m.To = Square.fromString "d8")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e7" && Move.toSq m = Square.fromString "d8")
 
         Assert.Equal(4, promos.Length)
 
@@ -429,7 +336,7 @@ module PromotionTests =
 
         let promos =
             moves
-            |> Array.filter (fun m -> m.From = Square.fromString "e2" && m.To = Square.fromString "e1")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e2" && Move.toSq m = Square.fromString "e1")
 
         Assert.Equal(4, promos.Length)
 
@@ -440,7 +347,7 @@ module PromotionTests =
 
         let promos =
             moves
-            |> Array.filter (fun m -> m.From = Square.fromString "e2" && m.To = Square.fromString "f1")
+            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e2" && Move.toSq m = Square.fromString "f1")
 
         Assert.Equal(4, promos.Length)
 
@@ -509,19 +416,19 @@ module LegalMoveFilteringTests =
     let ``Pinned knight has no legal moves`` () =
         let b = Board.fromFen "4r3/8/8/8/8/8/4N3/4K3 w - - 0 1"
         let moves = MoveGen.getLegalMoves b
-        Assert.DoesNotContain(moves, fun m -> m.From = Square.fromString "e2")
+        Assert.DoesNotContain(moves, fun m -> Move.fromSq m = Square.fromString "e2")
 
     [<Fact>]
     let ``King cannot move into check`` () =
         let b = Board.fromFen "4k3/8/8/4r3/8/8/8/4K3 w - - 0 1"
         let moves = MoveGen.getLegalMoves b
-        Assert.DoesNotContain(moves, fun m -> m.To = Square.fromString "e2")
+        Assert.DoesNotContain(moves, fun m -> Move.toSq m = Square.fromString "e2")
 
     [<Fact>]
     let ``Illegal en passant exposing king is filtered out`` () =
         let b = Board.fromFen "4k3/8/8/8/3pP3/8/8/4K3 w - d6 0 1"
         let moves = MoveGen.getLegalMoves b
-        Assert.DoesNotContain(moves, fun m -> m.Kind = EnPassant)
+        Assert.DoesNotContain(moves, fun m -> Move.kind m = 2)
 
     [<Fact>]
     let ``Cannot castle into attacked destination square`` () =
@@ -529,46 +436,7 @@ module LegalMoveFilteringTests =
 
         let moves = MoveGen.getLegalMoves b
 
-        Assert.DoesNotContain(moves, fun m -> m.Kind = CastleKingSide)
-
-module SanTests =
-
-    let getSan (fen: string) (uci: string) =
-        let b = Board.fromFen fen
-        let m = Move.fromUci uci
-        let moves = MoveGen.getLegalMoves b
-
-        match moves |> Array.tryFind (fun lm -> lm.From = m.From && lm.To = m.To) with
-        | Some actualMove -> San.toSan b actualMove
-        | None ->
-            let legalUcis = moves |> Array.map Move.toUci |> String.concat ", "
-            failwithf "Move %s is ILLEGAL in FEN: %s. Legal moves are: %s" uci fen legalUcis
-
-    [<Theory>]
-    [<InlineData("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e2e4", "e4")>]
-    [<InlineData("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "e4d5", "exd5")>]
-    [<InlineData("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", "h5f7", "Qxf7#")>]
-    [<InlineData("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1", "O-O")>]
-    [<InlineData("8/4P3/8/8/8/8/k6K/8 w - - 0 1", "e7e8q", "e8=Q")>]
-    let ``SAN basic notation works`` (fen: string) (uci: string) (expected: string) =
-        Assert.Equal(expected, getSan fen uci)
-
-    [<Fact>]
-    let ``SAN disambiguates by file`` () =
-        let fen = "7k/8/8/8/8/5N2/8/1N5K w - - 0 1"
-        Assert.Equal("Nbd2", getSan fen "b1d2")
-
-    [<Fact>]
-    let ``SAN disambiguates by rank`` () =
-        let fen = "7k/R7/8/8/8/8/R7/7K w - - 0 1"
-        Assert.Equal("R2a4", getSan fen "a2a4")
-
-    [<Fact>]
-    let ``SAN handles promotion with capture and check`` () =
-        // White pawn on e7, black rook on d8, Black King on h8
-        // After exd8=Q, the Queen on d8 checks the King on h8 (same rank)
-        let fen = "3r3k/4P3/8/8/8/8/8/7K w - - 0 1"
-        Assert.Equal("exd8=Q+", getSan fen "e7d8q")
+        Assert.DoesNotContain(moves, fun m -> Move.kind m = 3)
 
 module PerftTests =
 
@@ -1089,7 +957,7 @@ module HashTests =
         let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         
         // Nf3 (Quiet move from g1 to f3)
-        let m = { From = 6; To = 21; Kind = Quiet }
+        let m = Move(6, 21, 0, 0)
         let b2 = Board.applyMove m b1
         
         let scratchHash = Board.calculateHash b2
@@ -1099,7 +967,7 @@ module HashTests =
     let ``Hash handles piece captures correctly`` () =
         // e4, then Black plays d5, then White captures exd5
         let b1 = Board.fromFen "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
-        let capture = { From = 28; To = 35; Kind = Capture }
+        let capture = Move(28, 35, 1, 0)
         
         let b2 = Board.applyMove capture b1
         let scratchHash = Board.calculateHash b2
@@ -1109,7 +977,7 @@ module HashTests =
     let ``Hash handles promotion correctly`` () =
         // Pawn on a7 about to promote on a8
         let b1 = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
-        let prom = { From = 48; To = 56; Kind = Promotion PieceType.Queen }
+        let prom = Move(48, 56, 5, int PieceType.Queen)
         
         let b2 = Board.applyMove prom b1
         let scratchHash = Board.calculateHash b2
@@ -1120,12 +988,12 @@ module HashTests =
         let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         
         // Knight moves out and back
-        let m1 = { From = 1; To = 18; Kind = Quiet } // Nb1-c3
-        let m2 = { From = 18; To = 1; Kind = Quiet } // Nc3-b1
+        let m1 = Move(1, 18, 0, 0) // Nb1-c3
+        let m2 = Move(18, 1, 0, 0) // Nc3-b1
         
         // Black does the same to keep the turn cycle correct
-        let m3 = { From = 62; To = 45; Kind = Quiet } // Ng8-f6
-        let m4 = { From = 45; To = 62; Kind = Quiet } // Nf6-g8
+        let m3 = Move(62, 45, 0, 0) // Ng8-f6
+        let m4 = Move(45, 62, 0, 0) // Nf6-g8
         
         let bFinal = b1 
                      |> Board.applyMove m1 |> Board.applyMove m3 
@@ -1138,7 +1006,7 @@ module TTTests =
     [<Fact>]
     let ``TT can store and retrieve an entry`` () =
         let hash = 12345UL
-        let move = Some { From = 12; To = 28; Kind = Quiet }
+        let move = Some (Move(12, 28, 0, 0))
         
         TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
         let result = TranspositionTable.probe hash
@@ -1242,10 +1110,10 @@ module MoveOrderingTests =
         
         // Helper to mimic the internal search scoring (simplified for test)
         let getScore (m: Move) =
-            match m.Kind with
-            | Capture -> 
-                let v = Board.tryGetPiece b m.To |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 100
-                let a = Board.tryGetPiece b m.From |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 0
+            match Move.kind m with
+            | 1 -> 
+                let v = Board.tryGetPiece b (Move.toSq m) |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 100
+                let a = Board.tryGetPiece b (Move.fromSq m) |> Option.map (fun p -> Evaluation.pieceValue (Piece.kind p)) |> Option.defaultValue 0
                 10000 + (v * 10) - a
             | _ -> 0
 
@@ -1255,8 +1123,8 @@ module MoveOrderingTests =
         let secondBest = sorted.[1]
 
         // Best move should be e4xd5 (Pawn takes Queen)
-        Assert.Equal(Square.fromString "e4", bestMove.From)
-        Assert.Equal(Square.fromString "d5", bestMove.To)
+        Assert.Equal(Square.fromString "e4", Move.fromSq bestMove)
+        Assert.Equal(Square.fromString "d5", Move.toSq bestMove)
         
         // Second best should be d1xf3 (Queen takes Pawn) 
         // (Wait, d1xd5 is also Queen takes Queen, which is 10,000 + 9000 - 900 = 18100)
@@ -1352,7 +1220,7 @@ module FiftyMoveRuleTests =
         // 99 halfmoves, White to move. Any quiet non-pawn move will lead to 100.
         let b = Board.fromFen "4k3/8/8/8/8/8/8/4K2R w K - 99 1"
         // Try to move rook Rh1-h2
-        let m = { From = Square.fromString "h1"; To = Square.fromString "h2"; Kind = Quiet }
+        let m = Move(Square.fromString "h1", Square.fromString "h2", 0, 0)
         let nextB = Board.applyMove m b
         Assert.Equal(100, nextB.HalfmoveClock)
         

@@ -90,7 +90,7 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Bishop pair bonus
 
 ### Overall and Evaluation Refactor (Pre‑Step 4) 🟡 *next*
-- [ ] Refactor types into separate file and optimise e.g with enums and structs (in progress)
+- [x] Refactor types into separate file and optimise e.g with enums and structs (in progress)
 - [ ] Refactor bitboards into a separate file and optimise e.g with enums and structs
 - [ ] Other refactors to improve performance and readability
 - [ ] Refactor `evaluate` into sub‑evaluators for each term
