@@ -182,47 +182,32 @@ module Piece =
         let kind = PieceType.fromChar c
         Piece(col, kind)
 
-
-
-/// Castling rights are represented as a record with four boolean fields.
+[<System.Flags>]
 type CastlingRights =
-    { WhiteKingSide: bool
-      WhiteQueenSide: bool
-      BlackKingSide: bool
-      BlackQueenSide: bool }
+    | None = 0b0000
+    | WK   = 0b0001
+    | WQ   = 0b0010
+    | BK   = 0b0100
+    | BQ   = 0b1000
 
+[<RequireQualifiedAccess>]
 module CastlingRights =
-    let none =
-        { WhiteKingSide = false
-          WhiteQueenSide = false
-          BlackKingSide = false
-          BlackQueenSide = false }
 
-    /// Converts a string representation of castling rights to a CastlingRights value.
-    let fromString (s: string) =
-        if s = "-" then
-            none
+    let inline fromString (s: string) =
+        if s = "-" then CastlingRights.None
         else
-            { WhiteKingSide = s.Contains "K"
-              WhiteQueenSide = s.Contains "Q"
-              BlackKingSide = s.Contains "k"
-              BlackQueenSide = s.Contains "q" }
+            (if s.Contains "K" then CastlingRights.WK else CastlingRights.None)
+            ||| (if s.Contains "Q" then CastlingRights.WQ else CastlingRights.None)
+            ||| (if s.Contains "k" then CastlingRights.BK else CastlingRights.None)
+            ||| (if s.Contains "q" then CastlingRights.BQ else CastlingRights.None)
 
-    /// Converts a CastlingRights value to its string representation.
-    let toString cr =
-        let sb = StringBuilder()
+    let inline toString (cr: CastlingRights) =
+        let sb = System.Text.StringBuilder()
 
-        if cr.WhiteKingSide then
-            sb.Append("K") |> ignore
-
-        if cr.WhiteQueenSide then
-            sb.Append("Q") |> ignore
-
-        if cr.BlackKingSide then
-            sb.Append("k") |> ignore
-
-        if cr.BlackQueenSide then
-            sb.Append("q") |> ignore
+        if cr.HasFlag CastlingRights.WK then sb.Append('K') |> ignore
+        if cr.HasFlag CastlingRights.WQ then sb.Append('Q') |> ignore
+        if cr.HasFlag CastlingRights.BK then sb.Append('k') |> ignore
+        if cr.HasFlag CastlingRights.BQ then sb.Append('q') |> ignore
 
         if sb.Length = 0 then "-" else sb.ToString()
 

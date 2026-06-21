@@ -301,10 +301,10 @@ module Zobrist =
     /// Gets the key for a specific set of castling rights.
     let getCastlingKey (cr: CastlingRights) =
         let mutable index = 0
-        if cr.WhiteKingSide  then index <- index ||| 1
-        if cr.WhiteQueenSide then index <- index ||| 2
-        if cr.BlackKingSide  then index <- index ||| 4
-        if cr.BlackQueenSide then index <- index ||| 8
+        if (int cr &&& int CastlingRights.WK) <> 0  then index <- index ||| 1
+        if (int cr &&& int CastlingRights.WQ) <> 0 then index <- index ||| 2
+        if (int cr &&& int CastlingRights.BK) <> 0  then index <- index ||| 4
+        if (int cr &&& int CastlingRights.BQ) <> 0 then index <- index ||| 8
         Table.Castling.[index]
 
     /// Gets the key for an En Passant file (0-7).
@@ -389,7 +389,7 @@ module Board =
     let empty =
         { Bitboards = BitboardSet.empty // Placeholder
           SideToMove = Colour.White
-          CastlingRights = CastlingRights.none
+          CastlingRights = CastlingRights.None
           EnPassantSquare = None
           HalfmoveClock = 0
           FullmoveNumber = 1
@@ -591,21 +591,21 @@ module Board =
         let mutable newCR = b.CastlingRights
         if Piece.kind movingPiece = PieceType.King then
             if b.SideToMove = Colour.White then
-                newCR <- { newCR with WhiteKingSide = false; WhiteQueenSide = false }
+                newCR <- newCR &&& ~~~(CastlingRights.WK ||| CastlingRights.WQ)
             else
-                newCR <- { newCR with BlackKingSide = false; BlackQueenSide = false }
-            
+                newCR <- newCR &&& ~~~(CastlingRights.BK ||| CastlingRights.BQ)
+
         // If a rook moves from its starting square
-        if m.From = 0 then newCR <- { newCR with WhiteQueenSide = false }
-        if m.From = 7 then newCR <- { newCR with WhiteKingSide = false }
-        if m.From = 56 then newCR <- { newCR with BlackQueenSide = false }
-        if m.From = 63 then newCR <- { newCR with BlackKingSide = false }
-    
+        if m.From = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if m.From = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if m.From = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if m.From = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
+
         // If a rook is captured on its starting square
-        if m.To = 0 then newCR <- { newCR with WhiteQueenSide = false }
-        if m.To = 7 then newCR <- { newCR with WhiteKingSide = false }
-        if m.To = 56 then newCR <- { newCR with BlackQueenSide = false }
-        if m.To = 63 then newCR <- { newCR with BlackKingSide = false }
+        if m.To = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if m.To = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if m.To = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if m.To = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
 
         // 8. Update En Passant Square
         // Only set if a pawn moves two squares
@@ -782,12 +782,12 @@ module MoveGen =
 
                     // Castling
                     let rnk, cr = (if us = Colour.White then 0 else 7), b.CastlingRights
-                    if (us = Colour.White && cr.WhiteKingSide) || (us = Colour.Black && cr.BlackKingSide) then
+                    if (us = Colour.White && (int cr &&& int CastlingRights.WK) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BK) <> 0) then
                         let f1, g1 = Square.ofFileRank File.F (Rank.fromInt rnk), Square.ofFileRank File.G (Rank.fromInt rnk)
                         if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
                             moves.Add({ From = sq; To = g1; Kind = CastleKingSide })
 
-                    if (us = Colour.White && cr.WhiteQueenSide) || (us = Colour.Black && cr.BlackQueenSide) then
+                    if (us = Colour.White && (int cr &&& int CastlingRights.WQ) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BQ) <> 0) then
                         let d1, c1, b1 = Square.ofFileRank File.D (Rank.fromInt rnk), 
                                          Square.ofFileRank File.C (Rank.fromInt rnk),
                                          Square.ofFileRank File.B (Rank.fromInt rnk)

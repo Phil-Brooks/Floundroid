@@ -199,17 +199,17 @@ module BoardTests =
 
         let b2 = Board.applyMove m b
 
-        Assert.False(b2.CastlingRights.WhiteKingSide)
+        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WK)
 
     [<Fact>]
     let ``Moving King removes all castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
         let m = { From = Square.fromString "e1"; To = Square.fromString "e2"; Kind = Quiet }
         let b2 = Board.applyMove m b
-        Assert.False(b2.CastlingRights.WhiteKingSide)
-        Assert.False(b2.CastlingRights.WhiteQueenSide)
-        Assert.True(b2.CastlingRights.BlackKingSide)
-        Assert.True(b2.CastlingRights.BlackQueenSide)
+        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WK)
+        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WQ)
+        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BK)
+        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BQ)
 
     [<Fact>]
     let ``Capturing opponent rook removes their castling rights`` () =
@@ -217,8 +217,8 @@ module BoardTests =
         // White Rook on a1 captures Black Rook on a8
         let m = { From = Square.fromString "a1"; To = Square.fromString "a8"; Kind = Capture }
         let b2 = Board.applyMove m b
-        Assert.False(b2.CastlingRights.BlackQueenSide)
-        Assert.True(b2.CastlingRights.BlackKingSide)
+        Assert.False(b2.CastlingRights.HasFlag CastlingRights.BQ)
+        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BK)
 
     [<Fact>]
     let ``Pawn move resets halfmove clock`` () =
@@ -1070,9 +1070,9 @@ module ZobristTests =
 
     [<Fact>]
     let ``Castling combinations result in different keys`` () =
-        let none = CastlingRights.none
-        let whiteKing = { none with WhiteKingSide = true }
-        let blackKing = { none with BlackKingSide = true }
+        let none = CastlingRights.None
+        let whiteKing = none ||| CastlingRights.WK
+        let blackKing = none ||| CastlingRights.BK
         
         let keyNone = Zobrist.getCastlingKey none
         let keyWK = Zobrist.getCastlingKey whiteKing
