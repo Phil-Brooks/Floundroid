@@ -6,6 +6,7 @@ open Types
 module ColourTests =
 
     [<Fact>]
+    /// Tests that the opposite colour function works correctly.
     let ``Colour opposite works`` () =
         Assert.Equal(Colour.Black, Colour.opposite Colour.White)
         Assert.Equal(Colour.White, Colour.opposite Colour.Black)

@@ -1,52 +1,56 @@
 # Code File: Types.fs
+
 ## 📑 Table of Contents
-- [Types](#-module-types)
-- [Colour](#-module-colour)
-- [File](#-module-file)
-- [Rank](#-module-rank)
-- [Square](#-module-square)
-- [PieceType](#-module-piecetype)
-- [Piece](#-module-piece)
-- [CastlingRights](#-module-castlingrights)
-- [Move](#-module-move)
+- [Types](#module-types)
+- [Colour](#module-colour)
+- [File](#module-file)
+- [Rank](#module-rank)
+- [Square](#module-square)
+- [PieceType](#module-piecetype)
+- [Piece](#module-piece)
+- [CastlingRights](#module-castlingrights)
+- [Move](#module-move)
 
 
 
 ## 📦 module Types
 ---
 
-#### 🧩 `type Colour =`
+#### 🧩 `type Colour`
+> Colour is represented as an integer 0–1, where 0 = White and 1 = Black.
 
 ## 📦 module Colour
 ---
-- **fn** `inline`
-- **fn** `inline`
-- **fn** `inline`
+- **fn** `toChar`
+- **fn** `fromChar`
+- **fn** `opposite`
 
-#### 🧩 `type File =`
+#### 🧩 `type File`
 
 ## 📦 module File
 ---
-- **fn** `inline`
+- **fn** `firstChar`
+- **fn** `toInt`
     - *Converts a File to its integer representation (0–7).*
-- **fn** `inline`
+- **fn** `fromInt`
     - *Converts an integer (0–7) to a File.*
-- **fn** `inline`
+- **fn** `toChar`
     - *Converts a File to its character representation ('a'–'h').*
-- **fn** `inline`
+- **fn** `fromChar`
     - *Converts a character ('a'–'h') to a File.*
 
-#### 🧩 `type Rank =`
+#### 🧩 `type Rank`
 
 ## 📦 module Rank
 ---
-- **fn** `inline`
+- **fn** `firstChar`
+- **fn** `toInt`
     - *Converts a Rank to its integer representation (0–7).*
-- **fn** `inline`
+- **fn** `fromInt`
     - *Converts an integer (0–7) to a Rank.*
-- **fn** `inline`
+- **fn** `toChar`
     - *Converts a Rank to its character representation ('1'–'8').*
-- **fn** `inline`
+- **fn** `fromChar`
     - *Converts a character ('1'–'8') to a Rank.*
 
 #### 🧩 `type Square = int`
@@ -54,72 +58,75 @@
 
 ## 📦 module Square
 ---
-- **fn** `inline`
+- **fn** `ofFileRank`
     - *Converts a File and Rank to a Square.*
-- **fn** `inline`
+- **fn** `file`
     - *Gets the File of a Square.*
-- **fn** `inline`
+- **fn** `rank`
     - *Gets the Rank of a Square.*
-- **fn** `inline`
+- **fn** `toString`
     - *Converts a Square to algebraic notation (e.g. "e4").*
-- **fn** `inline`
+- **fn** `fromString`
     - *Converts algebraic notation (e.g. "d4") to a Square.*
-- **fn** `inline`
+- **fn** `isOnBoard`
     - *Checks if a file/rank pair is on the board.*
 
-#### 🧩 `type PieceType =`
+#### 🧩 `type PieceType`
 
 ## 📦 module PieceType
 ---
-- **fn** `inline`
+- **fn** `chars`
+- **fn** `toChar`
     - *Converts a PieceType to its character representation ('p'..'k').*
-- **fn** `inline`
+- **fn** `fromChar`
     - *Converts a character to a PieceType.*
 
-#### 🧩 `type Piece =`
+#### 🧩 `type Piece`
 
 ## 📦 module Piece
 ---
-- **fn** `inline`
-- **fn** `inline`
-- **fn** `inline`
-- **fn** `inline`
+- **fn** `colour`
+- **fn** `kind`
+- **fn** `toChar`
+- **fn** `fromChar`
 
-#### 🧩 `type CastlingRights =`
+#### 🧩 `type CastlingRights`
 
 ## 📦 module CastlingRights
 ---
-- **fn** `inline`
-- **fn** `inline`
+- **fn** `fromString`
+- **fn** `toString`
 
-#### 🧩 `type Move =`
+#### 🧩 `type Move`
 
 ## 📦 module Move
 ---
-- **fn** `inline`
-- **fn** `inline`
-- **fn** `inline`
-- **fn** `inline`
+- **fn** `fromSq`
+- **fn** `toSq`
+- **fn** `kind`
+- **fn** `promo`
 - **fn** `toUci`
+
 # Code File: Program.fs
+
 ## 📑 Table of Contents
-- [Floundroid](#-module-floundroid)
-- [Bitboard](#-module-bitboard)
-- [BitboardSet](#-module-bitboardset)
-- [SlidingAttackGen](#-module-slidingattackgen)
-- [Magic](#-module-magic)
-- [BitboardGen](#-module-bitboardgen)
-- [Attack](#-module-attack)
-- [Zobrist](#-module-zobrist)
-- [TranspositionTable](#-module-transpositiontable)
-- [Board](#-module-board)
-- [MoveGen](#-module-movegen)
-- [San](#-module-san)
-- [Evaluation](#-module-evaluation)
-- [Search](#-module-search)
-- [Perft](#-module-perft)
-- [Debug](#-module-debug)
-- [UciLoop](#-module-uciloop)
+- [Floundroid](#module-floundroid)
+- [Bitboard](#module-bitboard)
+- [BitboardSet](#module-bitboardset)
+- [SlidingAttackGen](#module-slidingattackgen)
+- [Magic](#module-magic)
+- [BitboardGen](#module-bitboardgen)
+- [Attack](#module-attack)
+- [Zobrist](#module-zobrist)
+- [TranspositionTable](#module-transpositiontable)
+- [Board](#module-board)
+- [MoveGen](#module-movegen)
+- [San](#module-san)
+- [Evaluation](#module-evaluation)
+- [Search](#module-search)
+- [Perft](#module-perft)
+- [Debug](#module-debug)
+- [UciLoop](#module-uciloop)
 
 
 
@@ -132,15 +139,23 @@
 
 ## 📦 module Bitboard
 ---
-- **fn** `inline`
+- **fn** `empty`
+- **fn** `all`
+- **fn** `set`
+    - *Sets the bit at the given square.*
+- **fn** `clear`
+    - *Clears the bit at the given square.*
+- **fn** `contains`
+    - *Checks if a square is set.*
+- **fn** `count`
     - *Returns the number of set bits (population count).*
-- **fn** `inline`
+- **fn** `popLsb`
     - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
     - *This is a high-performance way to iterate through pieces.*
 - **fn** `toString`
     - *Visualizes the bitboard as an 8x8 grid for debugging.*
 
-#### 🧩 `type BitboardSet =`
+#### 🧩 `type BitboardSet`
 > A collection of bitboards representing all pieces on the board.
 
 ## 📦 module BitboardSet
@@ -174,6 +189,10 @@
 
 #### 🧩 `type MagicEntry = { Mask: Bitboard; Offset: int }`
 > Represents a magic entry for a square, containing the mask and the offset into the attack table.
+- **fn** `bishopTable`
+- **fn** `rookTable`
+- **fn** `bishopEntries`
+- **fn** `rookEntries`
 - **fn** `getIndex`
     - *This maps an occupancy bitboard to a unique index from 0 to 2^bits-1*
     - *It is essentially a manual "PEXT" instruction.*
@@ -184,9 +203,15 @@
 
 ## 📦 module BitboardGen
 ---
+- **fn** `knightAttacks`
+    - *Pre-calculated knight attacks for every square*
+- **fn** `kingAttacks`
+    - *Pre-calculated king attacks for every square*
+- **fn** `pawnAttacks`
+    - *Pawn attacks: [Colour index 0=White, 1=Black, Square 0-63]*
 - **fn** `private`
 
-#### 🧩 `type Board =`
+#### 🧩 `type Board`
 > The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 
 ## 📦 module Attack
@@ -198,8 +223,14 @@
 
 #### 🧩 `type ZobristTable = {`
 > Storage for all random keys used for hashing.
+- **fn** `pieceIdx`
+    - *Maps PieceType to an index 0-5*
+- **fn** `colourIdx`
+    - *Maps Colour to index 0-1*
 - **fn** `private`
     - *Pre-calculates the table with a fixed seed for reproducibility.*
+- **fn** `Table`
+    - *The global lookup table for Zobrist keys.*
 - **fn** `getPieceKey`
     - *Gets the key for a specific piece on a square.*
 - **fn** `getCastlingKey`
@@ -210,10 +241,16 @@
 ## 📦 module TranspositionTable
 ---
 
-#### 🧩 `type NodeFlag =`
+#### 🧩 `type NodeFlag`
 > Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)
 
 #### 🧩 `type TTEntry = {`
+- **fn** `emptyEntry`
+- **fn** `advanceAge`
+    - *Advances the age of the transposition table, allowing for aging out old entries.*
+- **fn** `SIZE`
+    - *A table size of 2^20 is roughly 32-64MB depending on padding.*
+- **fn** `table`
 - **fn** `mateToTT`
     - *Adjusts mate scores from the search to be relative to the root.*
     - *This ensures "Mate in 5" found at depth 10 is stored correctly.*
@@ -229,6 +266,8 @@
 ---
 - **fn** `fromUci`
 - **fn** `empty`
+- **fn** `tryGetPiece`
+    - *Tries to get a piece from a square (Source of truth: Bitboards).*
 - **fn** `isOccupied`
     - *Checks if a square is occupied (Source of truth: Bitboards).*
 - **fn** `findKing`
@@ -246,6 +285,8 @@
     - ***Param colour**: The colour of the player to check.*
     - ***Param b**: The current game state.*
     - ***Returns**: True if the player is in check, false otherwise.*
+- **fn** `isInCheck`
+    - *Checks if the side to move is currently in check.*
 - **fn** `applyMove`
     - *Executes a move on the board and returns a new immutable board state.*
     - *Updates castling rights, en passant targets, and move clocks.*
@@ -303,7 +344,11 @@
 
 ## 📦 module Search
 ---
+- **fn** `MATE_VALUE`
+- **fn** `INF`
+- **fn** `killerMoves`
 - **fn** `clearKillers`
+- **fn** `historyTable`
 - **fn** `clearHistory`
 - **fn** `isRepetition`
 - **fn** `quiesce`
@@ -315,7 +360,7 @@
 - **fn** `findBestMove`
     - *Iterative Deepening*
 
-#### 🧩 `type PerftSuiteItem =`
+#### 🧩 `type PerftSuiteItem`
 > Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 
 ## 📦 module Perft
@@ -338,7 +383,8 @@
 
 ## 📦 module UciLoop
 ---
+- **fn** `startFen`
 - **fn** `tryGetIntArg`
 - **fn** `calculateTargetTime`
 - **fn** `run`
-- **fn** `main`
+

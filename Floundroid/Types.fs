@@ -3,6 +3,8 @@ module Types
 open System
 open System.Text
 
+/// Colour is represented as an integer 0–1, where 0 = White and 1 = Black.
+[<RequireQualifiedAccess>]
 type Colour =
     | White = 0
     | Black = 1
