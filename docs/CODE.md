@@ -1,3 +1,10 @@
+# Code Documentation
+
+## 📑 Table of Contents
+
+- [Types.fs](#code-file-types.fs)
+- [Program.fs](#code-file-program.fs)
+
 # Code File: Types.fs
 
 ## 📑 Table of Contents
@@ -22,8 +29,11 @@
 ## 📦 module Colour
 ---
 - **fn** `toChar`
+    - *Converts a Colour to its character representation ('w' or 'b').*
 - **fn** `fromChar`
+    - *Converts a character ('w' or 'b') to a Colour.*
 - **fn** `opposite`
+    - *Returns the opposite colour.*
 
 #### 🧩 `type File`
 

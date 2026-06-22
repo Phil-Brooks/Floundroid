@@ -13,7 +13,7 @@ let cleanXml (line: string) =
         .Replace("</returns>", "")
         .Trim()
 
-let generateDocs (sourceFile: string, outfile: string, append: bool) =
+let generateForFile (sourceFile: string, outfile: string) =
     if not (File.Exists(sourceFile)) then
         printfn "Source file not found!"
     else
@@ -128,17 +128,21 @@ let generateDocs (sourceFile: string, outfile: string, append: bool) =
             @ content
             @ [ "" ]
 
-        if append then
-            File.AppendAllLines(outfile, md)
-        else
-            File.WriteAllLines(outfile, md)
+        File.AppendAllLines(outfile, md)
 
-let src1 = @"D:\Github\Floundroid\Floundroid\Types.fs" 
-do generateDocs (src1, "../docs/CODE.md", false)
-let src2 = @"D:\Github\Floundroid\Floundroid\Program.fs" 
-do generateDocs (src2, "../docs/CODE.md", true)
-let test1 = @"D:\Github\Floundroid\TestFloundroid\TypesTests.fs" 
-do generateDocs (test1, "../docs/TESTS.md", false)
-let test2 = @"D:\Github\Floundroid\TestFloundroid\Tests.fs" 
-do generateDocs (test2, "../docs/TESTS.md", true)
+let generateDocs (hdr: string, sourceFiles: string[], outfile: string) =
+    let files = 
+        sourceFiles 
+        |> Array.map (fun f -> Path.GetFileName(f))
+        |> Array.map (fun f -> sprintf "- [%s](#code-file-%s)" f (f.ToLower()))
+        |>Array.toList
+    let toc = [ "## 📑 Table of Contents" ; "" ] @ files @ [ "" ]
+    File.WriteAllLines(outfile, [ hdr ; ""] @ toc)
+    for sourceFile in sourceFiles do
+        generateForFile (sourceFile, outfile)
+
+let srcs = [|"../Floundroid/Types.fs"; "../Floundroid/Program.fs"|]
+do generateDocs ("# Code Documentation", srcs, "../docs/CODE.md")
+let tests = [|"../TestFloundroid/TypesTests.fs"; "../TestFloundroid/Tests.fs" |]
+do generateDocs ("# Tests Documentation", tests, "../docs/TESTS.md")
 printfn "Complete! Documentation updated."

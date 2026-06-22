@@ -1,3 +1,10 @@
+# Tests Documentation
+
+## 📑 Table of Contents
+
+- [TypesTests.fs](#code-file-typestests.fs)
+- [Tests.fs](#code-file-tests.fs)
+
 # Code File: TypesTests.fs
 
 ## 📑 Table of Contents
@@ -10,9 +17,16 @@
 
 ## 📦 module ColourTests
 ---
-- **fn** `Colour opposite works`
-    - *Tests that the opposite colour function works correctly.*
-- **fn** `Colour char roundtrip`
+- **fn** `opposite works both ways`
+    - *Tests that the opposite of a colour is correctly computed.*
+- **fn** `opposite is involutive`
+    - *Tests that the opposite of a colour is involutive.*
+- **fn** `fromChar toChar roundtrip`
+    - *Tests that the colour character conversion works correctly.*
+- **fn** `toChar fromChar roundtrip`
+    - *Tests that the colour character conversion works correctly.*
+- **fn** `fromChar rejects invalid characters`
+    - *Tests that the colour character conversion rejects invalid characters.*
 
 ## 📦 module FileTests
 ---

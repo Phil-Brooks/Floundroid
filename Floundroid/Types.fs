@@ -12,15 +12,18 @@ type Colour =
 [<RequireQualifiedAccess>]
 module Colour =
 
+    /// Converts a Colour to its character representation ('w' or 'b').
     let inline toChar (c: Colour) =
         if c = Colour.White then 'w' else 'b'
 
+    /// Converts a character ('w' or 'b') to a Colour.
     let inline fromChar c =
         match c with
         | 'w' | 'W' -> Colour.White
         | 'b' | 'B' -> Colour.Black
         | _ -> invalidArg "c" $"Invalid colour char: %c{c}"
 
+    /// Returns the opposite colour.
     let inline opposite (c: Colour) =
         if c = Colour.White then Colour.Black else Colour.White
 

@@ -1,23 +1,43 @@
 namespace TypesTests
 
+open System
 open Xunit
 open Types
+
 
 module ColourTests =
 
     [<Fact>]
-    /// Tests that the opposite colour function works correctly.
-    let ``Colour opposite works`` () =
+    /// Tests that the opposite of a colour is correctly computed.
+    let ``opposite works both ways`` () =
         Assert.Equal(Colour.Black, Colour.opposite Colour.White)
         Assert.Equal(Colour.White, Colour.opposite Colour.Black)
 
     [<Fact>]
-    let ``Colour char roundtrip`` () =
-        let chars = [ 'w'; 'b'; 'W'; 'B' ]
+    /// Tests that the opposite of a colour is involutive.
+    let ``opposite is involutive`` () =
+        for c in [ Colour.White; Colour.Black ] do
+            Assert.Equal(c, Colour.opposite (Colour.opposite c))
 
-        for c in chars do
+    [<Fact>]
+    /// Tests that the colour character conversion works correctly.
+    let ``fromChar toChar roundtrip`` () =
+        for c in [ 'w'; 'b'; 'W'; 'B' ] do
             let col = Colour.fromChar c
             Assert.Equal(c.ToString().ToLower()[0], Colour.toChar col)
+
+    [<Fact>]
+    /// Tests that the colour character conversion works correctly.
+    let ``toChar fromChar roundtrip`` () =
+        for c in [ Colour.White; Colour.Black ] do
+            Assert.Equal(c, Colour.fromChar (Colour.toChar c))
+
+    [<Fact>]
+    /// Tests that the colour character conversion rejects invalid characters.
+    let ``fromChar rejects invalid characters`` () =
+        for c in [ 'x'; '1'; ' '; '\n' ] do
+            Assert.Throws<ArgumentException>(fun () -> Colour.fromChar c |> ignore)
+            |> ignore
 
 module FileTests =
 
