@@ -14,13 +14,16 @@
     <File Path="bat/run_match8.bat" />
     <File Path="bat/run_match8_2.bat" />
   </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/CODE.md" />
+    <File Path="docs/TESTS.md" />
+    <File Path="docs/TODO.md" />
+  </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/generate-docs.fsx" />
   </Folder>
   <Folder Name="/Solution Items/">
-    <File Path="CODE_STRUCTURE.md" />
     <File Path="README.md" />
-    <File Path="TODO.md" />
   </Folder>
   <Project Path="Floundroid/Floundroid.fsproj" Id="f8144d16-8951-45a2-9976-8dba2f10ce43">
     <Platform Solution="*|x64" Project="x64" />

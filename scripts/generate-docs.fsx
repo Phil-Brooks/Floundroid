@@ -15,10 +15,9 @@ let cleanXml (line: string) =
         .Replace("</returns>", "")
         .Trim()
 
-let generateDocs (sourceFile: string) =
+let generateDocs (sourceFile: string, outfile: string, append: bool) =
     if not (File.Exists(sourceFile)) then
         printfn "Source file not found!"
-        []
     else
         let lines = File.ReadAllLines(sourceFile)
         let mutable toc = [ "## 📑 Table of Contents" ]
@@ -93,26 +92,21 @@ let generateDocs (sourceFile: string) =
                 lastComments <- []
 
         let md =
-            toc
+            ["# Code File: " + Path.GetFileName(sourceFile)]
+            @ toc
             @ [ "" ]
             @ content
-        md
+        if append then
+            File.AppendAllLines(outfile, md)
+        else
+            File.WriteAllLines(outfile, md)
 
 let src1 = @"D:\Github\Floundroid\Floundroid\Types.fs" 
-let md1 = ["# Code File: Types.fs"] @ generateDocs (src1)
+do generateDocs (src1, "../docs/CODE.md", false)
 let src2 = @"D:\Github\Floundroid\Floundroid\Program.fs" 
-let md2 = ["# Code File: Program.fs"] @ generateDocs (src2)
+do generateDocs (src2, "../docs/CODE.md", true)
 let test1 = @"D:\Github\Floundroid\TestFloundroid\TypesTests.fs" 
-let tmd1 = ["# TypeTests File: TypesTests.fs"] @ generateDocs (test1)
+do generateDocs (test1, "../docs/TESTS.md", false)
 let test2 = @"D:\Github\Floundroid\TestFloundroid\Tests.fs" 
-let tmd2 = ["# Tests File: Tests.fs"] @ generateDocs (test2)
-let finalMarkdown =
-    [ "# Floundroid Technical Reference"
-      "Generated on: " + DateTime.Now.ToString()
-      "" ]
-    @ md1
-    @ md2
-    @ tmd1
-    @ tmd2
-File.WriteAllLines(outputFile, finalMarkdown)
+do generateDocs (test2, "../docs/TESTS.md", true)
 printfn "Complete! Documentation updated."
