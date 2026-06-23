@@ -19,7 +19,7 @@
 ---
 - **fn** `opposite works both ways`
     - *Tests that the opposite of a colour is correctly computed.*
-- **fn** `opposite is involutive`
+- **fn** `opposite is involutive (example)`
     - *Tests that the opposite of a colour is involutive.*
 - **fn** `fromChar toChar roundtrip`
     - *Tests that the colour character conversion works correctly.*
@@ -32,6 +32,9 @@
 ---
 - **fn** `File int roundtrip`
 - **fn** `File char roundtrip`
+- **fn** `File.fromInt rejects invalid integers`
+- **fn** `File.fromChar rejects invalid characters`
+- **fn** `File toChar fromChar roundtrip`
 
 ## 📦 module RankTests
 ---

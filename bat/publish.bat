@@ -1,17 +1,16 @@
 @echo off
 pushd "%~dp0.."
 
-set VERSION=0.3.3
 set OUTPUT_DIR=.\publish
 
-echo --- Floundroid Optimized Publish (v%VERSION%) ---
+echo --- Floundroid Optimized Publish ---
 
 if exist %OUTPUT_DIR% rd /s /q %OUTPUT_DIR%
 
 :: -p:PublishTrimmed=true : Removes unused .NET code
 :: -p:TrimMode=link : Most aggressive trimming
 :: -p:EnableCompressionInSingleFile=true : Squeezes the final EXE
-dotnet publish Floundroid/Floundroid.fsproj ^
+dotnet publish src/Floundroid/Floundroid.fsproj ^
   -c Release ^
   -r win-x64 ^
   --self-contained true ^

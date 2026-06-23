@@ -4,15 +4,15 @@
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/bat/">
+    <File Path="bat/cin_match.bat" />
+    <File Path="bat/cin_match8.bat" />
     <File Path="bat/commands.txt" />
     <File Path="bat/git_tag.bat" />
-    <File Path="bat/log8.txt" />
+    <File Path="bat/perft-log.txt" />
     <File Path="bat/publish.bat" />
     <File Path="bat/runlog.txt" />
-    <File Path="bat/run_match.bat" />
-    <File Path="bat/run_match4.bat" />
-    <File Path="bat/run_match8.bat" />
-    <File Path="bat/run_match8_2.bat" />
+    <File Path="bat/self_match.bat" />
+    <File Path="bat/self_match8.bat" />
   </Folder>
   <Folder Name="/docs/">
     <File Path="docs/CODE.md" />
@@ -25,10 +25,11 @@
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="Floundroid/Floundroid.fsproj" Id="f8144d16-8951-45a2-9976-8dba2f10ce43">
-    <Platform Solution="*|x64" Project="x64" />
+  <Project Path="src/Floundroid.Engine/Floundroid.Engine.fsproj" Id="9cd87b4d-9045-490d-878f-f9a1d8d7e1b3" />
+  <Project Path="src/Floundroid/Floundroid.fsproj">
+    <Platform Project="x64" />
   </Project>
-  <Project Path="TestFloundroid/TestFloundroid.fsproj" Id="25a39fc7-3746-42c7-9b90-4ff38e7cb668">
+  <Project Path="tests/Floundroid.Tests/Floundroid.Tests.fsproj">
     <Platform Solution="*|x64" Project="x64" />
   </Project>
 </Solution>

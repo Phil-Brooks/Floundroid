@@ -1,4 +1,4 @@
-namespace TestFloundroid
+namespace Floundroid.Tests
 
 open Xunit
 open Types

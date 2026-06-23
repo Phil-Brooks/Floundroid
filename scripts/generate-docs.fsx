@@ -141,8 +141,8 @@ let generateDocs (hdr: string, sourceFiles: string[], outfile: string) =
     for sourceFile in sourceFiles do
         generateForFile (sourceFile, outfile)
 
-let srcs = [|"../Floundroid/Types.fs"; "../Floundroid/Program.fs"|]
+let srcs = [|"../src/Floundroid.Engine/Types.fs"; "../src/Floundroid/Program.fs"|]
 do generateDocs ("# Code Documentation", srcs, "../docs/CODE.md")
-let tests = [|"../TestFloundroid/TypesTests.fs"; "../TestFloundroid/Tests.fs" |]
+let tests = [|"../tests/Floundroid.Tests/TypesTests.fs"; "../tests/Floundroid.Tests/Tests.fs" |]
 do generateDocs ("# Tests Documentation", tests, "../docs/TESTS.md")
 printfn "Complete! Documentation updated."
