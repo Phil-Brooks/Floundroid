@@ -1,17 +1,34 @@
 # Tests Documentation
 
-## 📑 Table of Contents
-
-- [TypesTests.fs](#code-file-typestests.fs)
-- [Tests.fs](#code-file-tests.fs)
-
-# Code File: TypesTests.fs
+# Code File: Tests.fs
 
 ## 📑 Table of Contents
 - [ColourTests](#module-colourtests)
 - [FileTests](#module-filetests)
 - [RankTests](#module-ranktests)
 - [SquareTests](#module-squaretests)
+- [PieceTypeTests](#module-piecetypetests)
+- [PieceTests](#module-piecetests)
+- [BoardTests](#module-boardtests)
+- [FenTests](#module-fentests)
+- [MoveGenTests](#module-movegentests)
+- [PromotionTests](#module-promotiontests)
+- [AttackTests](#module-attacktests)
+- [CheckDetectionTests](#module-checkdetectiontests)
+- [LegalMoveFilteringTests](#module-legalmovefilteringtests)
+- [PerftTests](#module-perfttests)
+- [EvaluationTests](#module-evaluationtests)
+- [SearchTests](#module-searchtests)
+- [BitboardTests](#module-bitboardtests)
+- [SlidingAttackTests](#module-slidingattacktests)
+- [ZobristTests](#module-zobristtests)
+- [HashTests](#module-hashtests)
+- [TTTests](#module-tttests)
+- [MoveOrderingTests](#module-moveorderingtests)
+- [InsufficientMaterialTests](#module-insufficientmaterialtests)
+- [UciParsingTests](#module-uciparsingtests)
+- [RepetitionTests](#module-repetitiontests)
+- [FiftyMoveRuleTests](#module-fiftymoveruletests)
 
 
 
@@ -50,34 +67,6 @@
 - **fn** `Square string roundtrip`
 - **fn** `Square.fromString rejects invalid strings`
 - **fn** `Square.isOnBoard works for valid and invalid coords`
-
-# Code File: Tests.fs
-
-## 📑 Table of Contents
-- [PieceTypeTests](#module-piecetypetests)
-- [PieceTests](#module-piecetests)
-- [BoardTests](#module-boardtests)
-- [FenTests](#module-fentests)
-- [MoveGenTests](#module-movegentests)
-- [PromotionTests](#module-promotiontests)
-- [AttackTests](#module-attacktests)
-- [CheckDetectionTests](#module-checkdetectiontests)
-- [LegalMoveFilteringTests](#module-legalmovefilteringtests)
-- [PerftTests](#module-perfttests)
-- [EvaluationTests](#module-evaluationtests)
-- [SearchTests](#module-searchtests)
-- [BitboardTests](#module-bitboardtests)
-- [SlidingAttackTests](#module-slidingattacktests)
-- [ZobristTests](#module-zobristtests)
-- [HashTests](#module-hashtests)
-- [TTTests](#module-tttests)
-- [MoveOrderingTests](#module-moveorderingtests)
-- [InsufficientMaterialTests](#module-insufficientmaterialtests)
-- [UciParsingTests](#module-uciparsingtests)
-- [RepetitionTests](#module-repetitiontests)
-- [FiftyMoveRuleTests](#module-fiftymoveruletests)
-
-
 
 ## 📦 module PieceTypeTests
 ---

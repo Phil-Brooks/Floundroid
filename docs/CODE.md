@@ -1,14 +1,9 @@
 # Code Documentation
 
-## 📑 Table of Contents
-
-- [Types.fs](#code-file-types.fs)
-- [Program.fs](#code-file-program.fs)
-
-# Code File: Types.fs
+# Code File: Program.fs
 
 ## 📑 Table of Contents
-- [Types](#module-types)
+- [Floundroid](#module-floundroid)
 - [Colour](#module-colour)
 - [File](#module-file)
 - [Rank](#module-rank)
@@ -17,10 +12,26 @@
 - [Piece](#module-piece)
 - [CastlingRights](#module-castlingrights)
 - [Move](#module-move)
+- [Bitboard](#module-bitboard)
+- [BitboardSet](#module-bitboardset)
+- [SlidingAttackGen](#module-slidingattackgen)
+- [Magic](#module-magic)
+- [BitboardGen](#module-bitboardgen)
+- [Attack](#module-attack)
+- [Zobrist](#module-zobrist)
+- [TranspositionTable](#module-transpositiontable)
+- [Board](#module-board)
+- [MoveGen](#module-movegen)
+- [San](#module-san)
+- [Evaluation](#module-evaluation)
+- [Search](#module-search)
+- [Perft](#module-perft)
+- [Debug](#module-debug)
+- [UciLoop](#module-uciloop)
 
 
 
-## 📦 module Types
+## 📦 module Floundroid
 ---
 
 #### 🧩 `type Colour`
@@ -116,32 +127,6 @@
 - **fn** `kind`
 - **fn** `promo`
 - **fn** `toUci`
-
-# Code File: Program.fs
-
-## 📑 Table of Contents
-- [Floundroid](#module-floundroid)
-- [Bitboard](#module-bitboard)
-- [BitboardSet](#module-bitboardset)
-- [SlidingAttackGen](#module-slidingattackgen)
-- [Magic](#module-magic)
-- [BitboardGen](#module-bitboardgen)
-- [Attack](#module-attack)
-- [Zobrist](#module-zobrist)
-- [TranspositionTable](#module-transpositiontable)
-- [Board](#module-board)
-- [MoveGen](#module-movegen)
-- [San](#module-san)
-- [Evaluation](#module-evaluation)
-- [Search](#module-search)
-- [Perft](#module-perft)
-- [Debug](#module-debug)
-- [UciLoop](#module-uciloop)
-
-
-
-## 📦 module Floundroid
----
 
 #### 🧩 `type Bitboard = uint64`
 > Bitboards are 64-bit unsigned integers where each bit represents a square.

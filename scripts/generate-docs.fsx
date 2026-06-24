@@ -131,18 +131,21 @@ let generateForFile (sourceFile: string, outfile: string) =
         File.AppendAllLines(outfile, md)
 
 let generateDocs (hdr: string, sourceFiles: string[], outfile: string) =
-    let files = 
-        sourceFiles 
-        |> Array.map (fun f -> Path.GetFileName(f))
-        |> Array.map (fun f -> sprintf "- [%s](#code-file-%s)" f (f.ToLower()))
-        |>Array.toList
-    let toc = [ "## 📑 Table of Contents" ; "" ] @ files @ [ "" ]
-    File.WriteAllLines(outfile, [ hdr ; ""] @ toc)
+    if sourceFiles.Length = 1 then
+        File.WriteAllLines(outfile, [ hdr ; ""])
+    else
+        let files = 
+            sourceFiles 
+            |> Array.map (fun f -> Path.GetFileName(f))
+            |> Array.map (fun f -> sprintf "- [%s](#code-file-%s)" f (f.ToLower()))
+            |>Array.toList
+        let toc = [ "## 📑 Table of Contents" ; "" ] @ files @ [ "" ]
+        File.WriteAllLines(outfile, [ hdr ; ""] @ toc)
     for sourceFile in sourceFiles do
         generateForFile (sourceFile, outfile)
 
-let srcs = [|"../src/Floundroid/Types.fs"; "../src/Floundroid/Program.fs"|]
+let srcs = [|"../src/Floundroid/Program.fs"|]
 do generateDocs ("# Code Documentation", srcs, "../docs/CODE.md")
-let tests = [|"../tests/Floundroid.Tests/TypesTests.fs"; "../tests/Floundroid.Tests/Tests.fs" |]
+let tests = [|"../tests/Floundroid.Tests/Tests.fs"|]
 do generateDocs ("# Tests Documentation", tests, "../docs/TESTS.md")
 printfn "Complete! Documentation updated."
