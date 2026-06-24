@@ -204,9 +204,6 @@ module SquareTests =
         else
             true
 
-
-
-
 module PieceTypeTests =
 
     [<Fact>]
@@ -226,6 +223,106 @@ module PieceTests =
         for c in chars do
             let p = Piece.fromChar c
             Assert.Equal(c, Piece.toChar p)
+
+module BitboardTests =
+
+    [<Fact>]
+    let ``Bitboard set and contains works`` () =
+        let sq = Square.fromString "e4"
+        let bb = Bitboard.empty |> Bitboard.set sq
+        Assert.True(Bitboard.contains sq bb)
+        Assert.False(Bitboard.contains (Square.fromString "e5") bb)
+
+    [<Fact>]
+    let ``Bitboard count works`` () =
+        let bb =
+            Bitboard.empty
+            |> Bitboard.set (Square.fromString "a1")
+            |> Bitboard.set (Square.fromString "h8")
+        Assert.Equal(2, Bitboard.count bb)
+
+    [<Fact>]
+    let ``Bitboard popLsb iterates and clears bits`` () =
+        let mutable bb =
+            Bitboard.empty
+            |> Bitboard.set (Square.fromString "c3")
+            |> Bitboard.set (Square.fromString "f6")
+
+        let first = Bitboard.popLsb &bb
+        let second = Bitboard.popLsb &bb
+
+        Assert.Equal(Square.fromString "c3", first)
+        Assert.Equal(Square.fromString "f6", second)
+        Assert.Equal(Bitboard.empty, bb)
+
+    // --- New Boundary & Technical Tests ---
+
+    [<Fact>]
+    let ``Constants are correct`` () =
+        Assert.Equal(0uL, Bitboard.empty)
+        Assert.Equal(0xFFFFFFFFFFFFFFFFuL, Bitboard.all)
+
+    [<Theory>]
+    [<InlineData(0)>]  // a1
+    [<InlineData(7)>]  // h1
+    [<InlineData(56)>] // a8
+    [<InlineData(63)>] // h8
+    let ``Boundary squares (corners) work correctly`` (sqIdx: int) =
+        let sq = sqIdx // Assuming Square is an int alias or can be cast
+        let bb = Bitboard.set sq Bitboard.empty
+        Assert.True(Bitboard.contains sq bb)
+        Assert.Equal(1, Bitboard.count bb)
+
+    // --- Property Based Tests (FsCheck) ---
+
+    [<Property>]
+    let ``prop - setting a bit is idempotent`` (bb: Bitboard) (sq: int) =
+        let s = abs sq % 64
+        Bitboard.set s (Bitboard.set s bb) = Bitboard.set s bb
+
+    [<Property>]
+    let ``prop - set then clear restores state if bit was absent`` (bb: Bitboard) (sq: int) =
+        let s = abs sq % 64
+        if not (Bitboard.contains s bb) then
+            Bitboard.clear s (Bitboard.set s bb) = bb
+        else
+            Bitboard.clear s bb <> bb
+
+    [<Property>]
+    let ``prop - count is always consistent with popLsb loop`` (bb: Bitboard) =
+        let expectedCount = Bitboard.count bb
+        let mutable temp = bb
+        let mutable actualCount = 0
+        while temp <> Bitboard.empty do
+            Bitboard.popLsb &temp |> ignore
+            actualCount <- actualCount + 1
+        actualCount = expectedCount
+
+    [<Property>]
+    let ``prop - popLsb always returns bits in strictly increasing order`` (bb: Bitboard) =
+        let mutable temp = bb
+        let mutable lastBit = -1
+        let mutable inOrder = true
+        while temp <> Bitboard.empty do
+            let currentBit = Bitboard.popLsb &temp
+            if currentBit <= lastBit then inOrder <- false
+            lastBit <- currentBit
+        inOrder
+
+    [<Property>]
+    let ``prop - popLsb bit-clearing logic invariant`` (bb: Bitboard) =
+        if bb = Bitboard.empty then true
+        else
+            let mutable temp = bb
+            let lsb = Bitboard.popLsb &temp
+            // Logic: bit (1 << lsb) must have been set, 
+            // and no bits lower than lsb should be set.
+            let bitWasSet = (bb &&& (1uL <<< lsb)) <> 0uL
+            let noLowerBits = (bb &&& ((1uL <<< lsb) - 1uL)) = 0uL
+            bitWasSet && noLowerBits
+
+
+
 
 module BoardTests =
 
@@ -940,37 +1037,7 @@ module SearchTests =
         
         Assert.Equal(scoreWithout, scoreWith)
 
-module BitboardTests =
-
-    [<Fact>]
-    let ``Bitboard set and contains works`` () =
-        let sq = Square.fromString "e4"
-        let bb = Bitboard.empty |> Bitboard.set sq
-        Assert.True(Bitboard.contains sq bb)
-        Assert.False(Bitboard.contains (Square.fromString "e5") bb)
-
-    [<Fact>]
-    let ``Bitboard count works`` () =
-        let bb =
-            Bitboard.empty
-            |> Bitboard.set (Square.fromString "a1")
-            |> Bitboard.set (Square.fromString "h8")
-
-        Assert.Equal(2, Bitboard.count bb)
-
-    [<Fact>]
-    let ``Bitboard popLsb iterates and clears bits`` () =
-        let mutable bb =
-            Bitboard.empty
-            |> Bitboard.set (Square.fromString "c3")
-            |> Bitboard.set (Square.fromString "f6")
-
-        let first = Bitboard.popLsb &bb
-        let second = Bitboard.popLsb &bb
-
-        Assert.Equal(Square.fromString "c3", first)
-        Assert.Equal(Square.fromString "f6", second)
-        Assert.Equal(0uL, bb) // Should be empty now
+module BitboardGenTests =
 
     [<Fact>]
     let ``Knight attacks on b1 are correct`` () =
