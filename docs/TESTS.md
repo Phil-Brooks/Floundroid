@@ -40,11 +40,16 @@
 ---
 - **fn** `Rank int roundtrip`
 - **fn** `Rank char roundtrip`
+- **fn** `Rank.fromInt rejects invalid integers`
+- **fn** `Rank.fromChar rejects invalid characters`
+- **fn** `Rank toChar fromChar roundtrip`
 
 ## 📦 module SquareTests
 ---
 - **fn** `Square file/rank roundtrip`
 - **fn** `Square string roundtrip`
+- **fn** `Square.fromString rejects invalid strings`
+- **fn** `Square.isOnBoard works for valid and invalid coords`
 
 # Code File: Tests.fs
 

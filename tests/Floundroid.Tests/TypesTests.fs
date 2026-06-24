@@ -168,7 +168,7 @@ module SquareTests =
             [ ""; "a"; "11"; "z9"; "a9"; "i1"; "a0"; "h9"; "aa1"; "a10" ]
 
         for s in bad do
-            Assert.Throws<Exception>(fun () -> Square.fromString s |> ignore)
+            Assert.ThrowsAny<Exception>(fun () -> Square.fromString s |> ignore)
             |> ignore
 
     [<Fact>]

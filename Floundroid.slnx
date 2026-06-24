@@ -25,7 +25,6 @@
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="src/Floundroid.Engine/Floundroid.Engine.fsproj" Id="9cd87b4d-9045-490d-878f-f9a1d8d7e1b3" />
   <Project Path="src/Floundroid/Floundroid.fsproj">
     <Platform Project="x64" />
   </Project>

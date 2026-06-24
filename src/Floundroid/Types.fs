@@ -127,7 +127,11 @@ module Square =
 
     /// Converts algebraic notation (e.g. "d4") to a Square.
     let inline fromString (s: string) : Square =
-        ofFileRank (File.fromChar s[0]) (Rank.fromChar s[1])
+        if s.Length <> 2 then
+            invalidArg "s" $"Invalid square string: {s}"
+        let f = File.fromChar s[0]
+        let r = Rank.fromChar s[1]
+        ofFileRank f r
 
     /// Checks if a file/rank pair is on the board.
     let inline isOnBoard (f: int) (r: int) =

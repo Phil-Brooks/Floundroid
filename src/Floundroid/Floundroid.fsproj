@@ -16,11 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Types.fs" />
     <Compile Include="Program.fs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Floundroid.Engine\Floundroid.Engine.fsproj" />
   </ItemGroup>
 
 </Project>
