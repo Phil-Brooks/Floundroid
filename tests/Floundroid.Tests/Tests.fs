@@ -625,7 +625,6 @@ module MagicTests =
                 nr <- nr + dr
                 nf <- nf + df
 
-
 module BitboardGenTests =
 
     [<Fact>]
@@ -677,6 +676,99 @@ module BitboardGenTests =
         // Should only hit b3 (sq 17), not h1 or anything else
         Assert.Equal(1, Bitboard.count attacks)
         Assert.True(Bitboard.contains (Square.fromString "b3") attacks)
+
+    [<Fact>]
+    let ``Knight on d4 has 8 attacks`` () =
+        let d4 = Square.fromString "d4"
+        let attacks = BitboardGen.knightAttacks.[d4]
+        Assert.Equal(8, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``King on d4 has 8 attacks`` () =
+        let d4 = Square.fromString "d4"
+        let attacks = BitboardGen.kingAttacks.[d4]
+        Assert.Equal(8, Bitboard.count attacks)
+
+    [<Fact>]
+    let ``White pawn on 7th rank has no forward attacks`` () =
+        let e7 = Square.fromString "e7"
+        let attacks = BitboardGen.pawnAttacks.[0, e7]
+        Assert.Equal(2, Bitboard.count attacks)
+        Assert.True(Bitboard.contains (Square.fromString "d8") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "f8") attacks)
+
+    [<Fact>]
+    let ``Black pawn on 2nd rank has no forward attacks`` () =
+        let d2 = Square.fromString "d2"
+        let attacks = BitboardGen.pawnAttacks.[1, d2]
+        Assert.Equal(2, Bitboard.count attacks)
+        Assert.True(Bitboard.contains (Square.fromString "c1") attacks)
+        Assert.True(Bitboard.contains (Square.fromString "e1") attacks)
+
+    [<Property>]
+    let ``Knight attacks never wrap off the board`` (sq: int) =
+        let sq = (sq % 64 + 64) % 64
+        let attacks = BitboardGen.knightAttacks.[sq]
+
+        // For every bit set in attacks, ensure it's a legal knight move
+        for target in Bitboard.bits attacks do
+            let df = abs ((target % 8) - (sq % 8))
+            let dr = abs ((target / 8) - (sq / 8))
+            Assert.True((df = 1 && dr = 2) || (df = 2 && dr = 1))
+
+    [<Property>]
+    let ``King attacks are always 1 square away`` (sq: int) =
+        let sq = (sq % 64 + 64) % 64
+        let attacks = BitboardGen.kingAttacks.[sq]
+
+        for target in Bitboard.bits attacks do
+            let df = abs ((target % 8) - (sq % 8))
+            let dr = abs ((target / 8) - (sq / 8))
+            Assert.True(df <= 1 && dr <= 1 && not (df = 0 && dr = 0))
+
+    [<Property>]
+    let ``White pawn attacks are only NE or NW`` (sq: int) =
+        let sq = (sq % 64 + 64) % 64
+        let attacks = BitboardGen.pawnAttacks.[0, sq]
+
+        for target in Bitboard.bits attacks do
+            let df = (target % 8) - (sq % 8)
+            let dr = (target / 8) - (sq / 8)
+            Assert.True(dr = 1 && (df = 1 || df = -1))
+
+    [<Property>]
+    let ``Black pawn attacks are only SE or SW`` (sq: int) =
+        let sq = (sq % 64 + 64) % 64
+        let attacks = BitboardGen.pawnAttacks.[1, sq]
+
+        for target in Bitboard.bits attacks do
+            let df = (target % 8) - (sq % 8)
+            let dr = (target / 8) - (sq / 8)
+            Assert.True(dr = -1 && (df = 1 || df = -1))
+
+    [<Fact>]
+    let ``Knight on h8 has 2 attacks`` () =
+        let h8 = Square.fromString "h8"
+        Assert.Equal(2, Bitboard.count BitboardGen.knightAttacks.[h8])
+
+    [<Fact>]
+    let ``King on h8 has 3 attacks`` () =
+        let h8 = Square.fromString "h8"
+        Assert.Equal(3, Bitboard.count BitboardGen.kingAttacks.[h8])
+
+    [<Fact>]
+    let ``White pawn on a7 only attacks b8`` () =
+        let a7 = Square.fromString "a7"
+        let attacks = BitboardGen.pawnAttacks.[0, a7]
+        Assert.Equal(1, Bitboard.count attacks)
+        Assert.True(Bitboard.contains (Square.fromString "b8") attacks)
+
+
+
+
+
+
+
 
 module BoardTests =
 

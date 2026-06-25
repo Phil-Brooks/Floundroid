@@ -275,6 +275,14 @@ module Bitboard =
         bb <- bb &&& (bb - 1uL)
         lsb
 
+    let bits (bb: Bitboard) : seq<Square> =
+        seq {
+            let mutable x = bb
+            while x <> 0UL do
+                let sq = popLsb &x
+                yield sq
+        }
+    
     /// Visualizes the bitboard as an 8x8 grid for debugging.
     let toString (bb: Bitboard) =
         let sb = StringBuilder()
