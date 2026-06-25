@@ -2178,15 +2178,6 @@ module DebugTests =
         finally
             Console.SetOut(originalOut)
 
-
-
-
-
-
-
-
-
-
 module UciTests =
 
     [<Fact>]
@@ -2220,3 +2211,12 @@ module UciTests =
 
         Assert.Equal(2250, targetTime)
 
+    [<Fact>]
+    let ``tryGetIntArg extracts integer after key`` () =
+        let args = [ "wtime"; "60000"; "btime"; "40000" ]
+        Assert.Equal(Some 60000, UciLoop.tryGetIntArg "wtime" args)
+
+    [<Fact>]
+    let ``tryGetIntArg returns None when key missing`` () =
+        let args = [ "wtime"; "60000" ]
+        Assert.Equal(None, UciLoop.tryGetIntArg "depth" args)
