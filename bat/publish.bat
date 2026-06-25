@@ -7,18 +7,13 @@ echo --- Floundroid Optimized Publish ---
 
 if exist %OUTPUT_DIR% rd /s /q %OUTPUT_DIR%
 
-:: -p:PublishTrimmed=true : Removes unused .NET code
-:: -p:TrimMode=link : Most aggressive trimming
-:: -p:EnableCompressionInSingleFile=true : Squeezes the final EXE
 dotnet publish src/Floundroid/Floundroid.fsproj ^
   -c Release ^
   -r win-x64 ^
-  --self-contained true ^
   -p:PublishSingleFile=true ^
-  -p:PublishReadyToRun=true ^
-  -p:PublishTrimmed=true ^
-  -p:TrimMode=link ^
-  -p:EnableCompressionInSingleFile=true ^
+  -p:IncludeNativeLibrariesForSelfExtract=true ^
+  -p:InvariantGlobalization=true ^
+  --self-contained false ^
   -o %OUTPUT_DIR%
 
 echo.

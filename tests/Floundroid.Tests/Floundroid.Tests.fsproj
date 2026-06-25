@@ -5,7 +5,7 @@
     <IsPackable>false</IsPackable>
     <OutputType>Library</OutputType>
     <Platforms>AnyCPU;x64</Platforms>
-    <ParallelizeTestCollections>false</ParallelizeTestCollections>
+    <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
