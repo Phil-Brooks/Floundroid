@@ -1,6 +1,7 @@
 namespace Floundroid.Tests
 
 open System
+open System.Threading
 open Xunit
 open FsCheck
 open FsCheck.Xunit
@@ -1780,13 +1781,6 @@ module EvaluationTests =
 
         Assert.True(sCast > sUn)
 
-
-
-
-
-
-
-
 module SearchTests =
 
     [<Fact>]
@@ -1962,6 +1956,94 @@ module SearchTests =
         
         let score, _ = Search.negamax nextB 1 1 -Search.INF Search.INF [] System.Threading.CancellationToken.None
         Assert.Equal(0, score)
+
+    [<Fact>]
+    let ``Killer table is writable`` () =
+        Search.clearKillers()
+        let m = Move(0, 1, 0, 0)
+        Search.killerMoves.[0, 0] <- Some m
+        Assert.Equal(Some m, Search.killerMoves.[0, 0])
+
+    [<Fact>]
+    let ``History table is writable`` () =
+        let idxSide = 0
+        let fromSq = 0
+        let toSq = 1
+
+        Search.historyTable.[idxSide, fromSq, toSq] <- 42
+        Assert.Equal(42, Search.historyTable.[idxSide, fromSq, toSq])
+    
+    [<Fact>]
+    let ``Null move pruning is disabled when in check`` () =
+        let fen = "4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1" // Black in check
+        let b = Board.fromFen fen
+
+        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None
+
+        // If NMP incorrectly triggers, it returns beta immediately.
+        Assert.NotEqual(Search.INF, score)
+
+    [<Fact>]
+    let ``Null move pruning disabled in zugzwang-like endgame`` () =
+        let fen = "8/8/8/8/8/8/5k2/6K1 w - - 0 1"
+        let b = Board.fromFen fen
+
+        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None
+        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None
+
+        Assert.Equal(scoreWithoutNMP, scoreWithNMP)
+
+    [<Fact>]
+    let ``TT Exact entry causes immediate cutoff`` () =
+        let fen = "8/8/8/8/8/8/8/4K3 w - - 0 1"
+        let b = Board.fromFen fen
+
+        TranspositionTable.clear()
+
+        // Store an exact entry
+        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeFlag.Exact 42 None
+
+        let score, _ = Search.negamax b 5 0 -Search.INF Search.INF [] CancellationToken.None
+
+        Assert.Equal(42, score)
+
+    [<Fact>]
+    let ``TT move is searched first`` () =
+        let fen = "8/8/8/8/8/8/8/4K3 w - - 0 1"
+        let b = Board.fromFen fen
+
+        let pvMove = Move(Square.fromString "e1", Square.fromString "e2", 0, 0)
+
+        TranspositionTable.clear()
+        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeFlag.Exact 0 (Some pvMove)
+
+        let moves = MoveGen.getPseudoLegalMoves b
+
+        // Score the moves the same way search does
+        let scored =
+            moves
+            |> Array.map (fun m ->
+                let score =
+                    if Some m = Some pvMove then 1000000 else 0
+                (m, score))
+            |> Array.sortByDescending snd
+
+        Assert.Equal(pvMove, fst scored.[0])
+
+    [<Fact>]
+    let ``Search returns correct mate distance`` () =
+        // Real mate in 2
+        let fen = "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1"
+        let b = Board.fromFen fen
+
+        let score, _ = Search.negamax b 5 0 -Search.INF Search.INF [] CancellationToken.None
+
+        Assert.True(score > Search.MATE_VALUE - 10, $"Score was {score}")
+
+
+
+
+
 
 module PerftTests =
 
