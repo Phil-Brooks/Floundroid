@@ -1400,9 +1400,13 @@ module MoveGen =
         moves.ToArray()
 
 module Evaluation =
+    let wtMaterial      = 1
+    let wtPst           = 1
+    let wtPawnStructure = 1
+    let wtKingSafety    = 0
 
     /// Assigns a base value to each piece type for evaluation purposes.
-    let pieceValue =
+    let matScore =
         function
         | PieceType.Pawn -> 100
         | PieceType.Knight -> 320
@@ -1665,7 +1669,7 @@ module Evaluation =
             // We know a piece exists here, so we call getPieceAt
             let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
             
-            let baseVal = pieceValue (Piece.kind p)
+            let baseVal = matScore (Piece.kind p)
             let pstIndex = if Piece.colour p = Colour.White then sq else sq ^^^ 56
             let pstBonus = 
                 match Piece.kind p with
@@ -1728,11 +1732,11 @@ module Search =
                     let m = moves.[i]
                     let victimVal = 
                         match Board.tryGetPiece b (Move.toSq m) with 
-                        | Some p -> Evaluation.pieceValue (Piece.kind p) 
+                        | Some p -> Evaluation.matScore (Piece.kind p) 
                         | None -> 100 // En Passant
                     let attackerVal = 
                         match Board.tryGetPiece b (Move.fromSq m) with 
-                        | Some p -> Evaluation.pieceValue (Piece.kind p) 
+                        | Some p -> Evaluation.matScore (Piece.kind p) 
                         | None -> 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
@@ -1840,12 +1844,12 @@ module Search =
                                 | 1 | 2 ->
                                     let victimVal = 
                                         if Board.isOccupied b (Move.toSq m) then 
-                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0) 
+                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matScore (Piece.kind p) | None -> 0) 
                                         else 100 // En Passant
                                     let attackerVal = 
-                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.pieceValue (Piece.kind p) | None -> 0
+                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matScore (Piece.kind p) | None -> 0
                                     10000 + (victimVal * 10) - attackerVal
-                                | 5 -> 9000 + Evaluation.pieceValue (enum<PieceType>(Move.promo m))
+                                | 5 -> 9000 + Evaluation.matScore (enum<PieceType>(Move.promo m))
                                 | _ -> 
                                     if Some m = killerMoves.[0, ply] then 8000
                                     elif Some m = killerMoves.[1, ply] then 7000

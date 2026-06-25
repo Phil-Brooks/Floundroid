@@ -90,9 +90,6 @@ A detailed, structured task list aligned with the project roadmap.
 - [ ] Bishop pair bonus
 
 ### Overall and Evaluation Refactor (Pre‑Step 4) 🟡 *next*
-- [x] Refactor types - optimise e.g with enums and structs (in progress)
-- [ ] Refactor bitboards - optimise e.g with enums and structs
-- [ ] Other refactors to improve performance and readability
 - [ ] Refactor `evaluate` into sub‑evaluators for each term
 - [ ] Extract king safety into `KingSafety` module
 - [ ] Extract PST evaluation into standalone function
