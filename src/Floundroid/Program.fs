@@ -12,18 +12,18 @@ type Colour =
 module Colour =
 
     /// Converts a Colour to its character representation ('w' or 'b').
-    let inline toChar (c: Colour) =
+    let toChar (c: Colour) =
         if c = Colour.White then 'w' else 'b'
 
     /// Converts a character ('w' or 'b') to a Colour.
-    let inline fromChar c =
+    let fromChar c =
         match c with
         | 'w' | 'W' -> Colour.White
         | 'b' | 'B' -> Colour.Black
         | _ -> invalidArg "c" $"Invalid colour char: %c{c}"
 
     /// Returns the opposite colour.
-    let inline opposite (c: Colour) =
+    let opposite (c: Colour) =
         if c = Colour.White then Colour.Black else Colour.White
 
 type File =
@@ -41,20 +41,20 @@ module File =
     let firstChar = int 'a'
     
     /// Converts a File to its integer representation (0–7).
-    let inline toInt (f: File) : int =
+    let toInt (f: File) : int =
         int f
 
     /// Converts an integer (0–7) to a File.
-    let inline fromInt (i: int) : File =
+    let fromInt (i: int) : File =
         if uint i <= 7u then enum<File> i
         else invalidArg "i" $"File index {i} out of range (0–7)"
 
     /// Converts a File to its character representation ('a'–'h').
-    let inline toChar (f: File) : char =
+    let toChar (f: File) : char =
         char (firstChar + int f)
 
     /// Converts a character ('a'–'h') to a File.
-    let inline fromChar (c: char) : File =
+    let fromChar (c: char) : File =
         let i = int c - firstChar
         if uint i <= 7u then enum<File> i
         else invalidArg "c" $"Invalid file char: {c}"
@@ -75,20 +75,20 @@ module Rank =
     let firstChar = int '1'
 
     /// Converts a Rank to its integer representation (0–7).
-    let inline toInt (r: Rank) : int =
+    let toInt (r: Rank) : int =
         int r
 
     /// Converts an integer (0–7) to a Rank.
-    let inline fromInt (i: int) : Rank =
+    let fromInt (i: int) : Rank =
         if uint i <= 7u then enum<Rank> i
         else invalidArg "i" $"Rank index {i} out of range (0–7)"
 
     /// Converts a Rank to its character representation ('1'–'8').
-    let inline toChar (r: Rank) : char =
+    let toChar (r: Rank) : char =
         char (firstChar + int r)
 
     /// Converts a character ('1'–'8') to a Rank.
-    let inline fromChar (c: char) : Rank =
+    let fromChar (c: char) : Rank =
         let i = int c - firstChar
         if uint i <= 7u then enum<Rank> i
         else invalidArg "c" $"Invalid rank char: {c}"
@@ -99,28 +99,28 @@ type Square = int
 module Square =
 
     /// Converts a File and Rank to a Square.
-    let inline ofFileRank (f: File) (r: Rank) : Square =
+    let ofFileRank (f: File) (r: Rank) : Square =
         (Rank.toInt r <<< 3) + File.toInt f
         // same as r*8 + f, but uses bit shift
 
     /// Gets the File of a Square.
-    let inline file (sq: Square) : File =
+    let file (sq: Square) : File =
         File.fromInt (sq &&& 7)
         // sq % 8 → sq & 7
 
     /// Gets the Rank of a Square.
-    let inline rank (sq: Square) : Rank =
+    let rank (sq: Square) : Rank =
         Rank.fromInt (sq >>> 3)
         // sq / 8 → sq >> 3
 
     /// Converts a Square to algebraic notation (e.g. "e4").
-    let inline toString (sq: Square) : string =
+    let toString (sq: Square) : string =
         let f = file sq |> File.toChar
         let r = rank sq |> Rank.toChar
         string f + string r
 
     /// Converts algebraic notation (e.g. "d4") to a Square.
-    let inline fromString (s: string) : Square =
+    let fromString (s: string) : Square =
         if s.Length <> 2 then
             invalidArg "s" $"Invalid square string: {s}"
         let f = File.fromChar s[0]
@@ -128,7 +128,7 @@ module Square =
         ofFileRank f r
 
     /// Checks if a file/rank pair is on the board.
-    let inline isOnBoard (f: int) (r: int) =
+    let isOnBoard (f: int) (r: int) =
         uint f <= 7u && uint r <= 7u
 
 type PieceType =
@@ -145,11 +145,11 @@ module PieceType =
     let chars = [| 'p'; 'n'; 'b'; 'r'; 'q'; 'k' |]
 
     /// Converts a PieceType to its character representation ('p'..'k').
-    let inline toChar (pt: PieceType) : char =
+    let toChar (pt: PieceType) : char =
         chars[int pt]
 
     /// Converts a character to a PieceType.
-    let inline fromChar (c: char) : PieceType =
+    let fromChar (c: char) : PieceType =
         match c with
         | 'p' | 'P' -> PieceType.Pawn
         | 'n' | 'N' -> PieceType.Knight
@@ -167,17 +167,17 @@ type Piece =
 
 module Piece =
 
-    let inline colour (p: Piece) : Colour =
+    let colour (p: Piece) : Colour =
         enum<Colour> (int p.data >>> 3)
 
-    let inline kind (p: Piece) : PieceType =
+    let kind (p: Piece) : PieceType =
         enum<PieceType> (int p.data &&& 0b111)
 
-    let inline toChar (p: Piece) : char =
+    let toChar (p: Piece) : char =
         let c = PieceType.toChar (kind p)
         if colour p = Colour.White then Char.ToUpper c else c
 
-    let inline fromChar (c: char) : Piece =
+    let fromChar (c: char) : Piece =
         let col = if Char.IsUpper c then Colour.White else Colour.Black
         let kind = PieceType.fromChar c
         Piece(col, kind)
@@ -192,7 +192,7 @@ type CastlingRights =
 
 module CastlingRights =
 
-    let inline fromString (s: string) =
+    let fromString (s: string) =
         if s = "-" then CastlingRights.None
         else
             (if s.Contains "K" then CastlingRights.WK else CastlingRights.None)
@@ -200,7 +200,7 @@ module CastlingRights =
             ||| (if s.Contains "k" then CastlingRights.BK else CastlingRights.None)
             ||| (if s.Contains "q" then CastlingRights.BQ else CastlingRights.None)
 
-    let inline toString (cr: CastlingRights) =
+    let toString (cr: CastlingRights) =
         let sb = System.Text.StringBuilder()
 
         if cr.HasFlag CastlingRights.WK then sb.Append('K') |> ignore
@@ -223,16 +223,16 @@ type Move =
 
 module Move =
 
-    let inline fromSq (m: Move) =
+    let fromSq (m: Move) =
         int (m.data &&& 0b111111u)
 
-    let inline toSq (m: Move) =
+    let toSq (m: Move) =
         int ((m.data >>> 6) &&& 0b111111u)
 
-    let inline kind (m: Move) =
+    let kind (m: Move) =
         int ((m.data >>> 12) &&& 0b1111u)
 
-    let inline promo (m: Move) =
+    let promo (m: Move) =
         int ((m.data >>> 16) &&& 0b1111u)
 
     let toUci (m: Move) =
@@ -257,21 +257,21 @@ module Bitboard =
     let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
 
     /// Sets the bit at the given square.
-    let inline set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
+    let set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
 
     /// Clears the bit at the given square.
-    let inline clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
+    let clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
 
     /// Checks if a square is set.
-    let inline contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
+    let contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
 
     /// Returns the number of set bits (population count).
-    let inline count (bb: Bitboard) : int =
+    let count (bb: Bitboard) : int =
         System.Numerics.BitOperations.PopCount(bb)
 
     /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
     /// This is a high-performance way to iterate through pieces.
-    let inline popLsb (bb: byref<Bitboard>) : Square =
+    let popLsb (bb: byref<Bitboard>) : Square =
         let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
         bb <- bb &&& (bb - 1uL)
         lsb
@@ -771,10 +771,10 @@ module Zobrist =
     }
 
     /// Maps PieceType to an index 0-5
-    let inline pieceIdx (pt: PieceType) = int pt
+    let pieceIdx (pt: PieceType) = int pt
 
     /// Maps Colour to index 0-1
-    let inline colourIdx (c: Colour) = int c
+    let colourIdx (c: Colour) = int c
     
     /// Pre-calculates the table with a fixed seed for reproducibility.
     let private initializeTable () =
