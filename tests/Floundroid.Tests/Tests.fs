@@ -995,13 +995,6 @@ module TTTests =
         Assert.Equal(score, stored)
         Assert.Equal(score, back)
 
-
-
-
-
-
-
-
 module BoardTests =
 
     [<Fact>]
@@ -1220,6 +1213,82 @@ module BoardTests =
         let board = Board.fromFen fen
         let output = Board.toFen board
         Assert.Equal(fen, output)
+
+    [<Fact>]
+    let ``fromUci parses promotion correctly`` () =
+        let b = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
+        let m = Board.fromUci b "a7a8q"
+        Assert.Equal(5, Move.kind m)
+        Assert.Equal(int PieceType.Queen, Move.promo m)
+
+    [<Fact>]
+    let ``fromUci parses kingside castling correctly`` () =
+        let b = Board.fromFen "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1"
+        let m = Board.fromUci b "e1g1"
+        Assert.Equal(3, Move.kind m)
+
+    [<Fact>]
+    let ``fromUci parses en passant correctly`` () =
+        let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
+        let m = Board.fromUci b "e5d6"
+        Assert.Equal(2, Move.kind m)
+
+    [<Fact>]
+    let ``fromUci parses capture correctly`` () =
+        let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - - 0 1"
+        let m = Board.fromUci b "e5d5"
+        Assert.Equal(1, Move.kind m)
+
+    [<Fact>]
+    let ``fromUci parses quiet move correctly`` () =
+        let b = Board.fromFen "8/8/8/8/4P3/8/8/8 w - - 0 1"
+        let m = Board.fromUci b "e4e5"
+        Assert.Equal(0, Move.kind m)
+
+    [<Fact>]
+    let ``isInCheck detects simple check`` () =
+        let b = Board.fromFen "8/8/8/8/4k3/8/4Q3/8 w - - 0 1"
+        Assert.True(Board.isInCheckFor Colour.Black b)
+
+    [<Fact>]
+    let ``isInCheck is false when king not attacked`` () =
+        let b = Board.fromFen "8/8/8/8/4k3/8/8/3Q4 w - - 0 1"
+        Assert.False(Board.isInCheckFor Colour.Black b)
+
+    [<Fact>]
+    let ``applyNullMove flips side and updates hash consistently`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let b2 = Board.applyNullMove b
+        Assert.Equal(Colour.Black, b2.SideToMove)
+        Assert.Equal(None, b2.EnPassantSquare)
+        Assert.Equal(b.HalfmoveClock + 1, b2.HalfmoveClock)
+
+        let scratch = Board.calculateHash b2
+        Assert.Equal(scratch, b2.Hash)
+
+    [<Fact>]
+    let ``K vs K is insufficient material`` () =
+        let b = Board.fromFen "8/8/8/8/8/8/8/K6k w - - 0 1"
+        Assert.True(Board.hasInsufficientMaterial b)
+
+    [<Fact>]
+    let ``KN vs K is insufficient material`` () =
+        let b = Board.fromFen "8/8/8/8/8/8/8/KN4k1 w - - 0 1"
+        Assert.True(Board.hasInsufficientMaterial b)
+
+    [<Fact>]
+    let ``KB vs KB on opposite colors is not insufficient`` () =
+        let b = Board.fromFen "8/8/8/8/8/8/8/Kb4Bk w - - 0 1"
+        Assert.False(Board.hasInsufficientMaterial b)
+
+
+
+
+
+
+
+
+
 
 
 module MoveGenTests =
