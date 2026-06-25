@@ -838,7 +838,162 @@ module ZobristTests =
         let h = 0UL ^^^ key ^^^ key
         Assert.Equal(0UL, h)
 
+module TTTests =
+    open TranspositionTable   
+    [<Fact>]
+    let ``TT can store and retrieve an entry`` () =
+        let hash = 12345UL
+        let move = Some (Move(12, 28, 0, 0))
+        
+        TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
+        let result = TranspositionTable.probe hash
+        
+        Assert.True(result.IsSome)
+        Assert.Equal(100, result.Value.Value)
+        Assert.Equal(5, result.Value.Depth)
+        Assert.Equal(move, result.Value.Move)
 
+    [<Fact>]
+    let ``Mate scores are adjusted correctly for ply`` () =
+        let mateValue = 30000 // MATE_VALUE from your search
+        let ply = 5
+        
+        // When storing, we "push" the mate further away
+        let stored = mateToTT mateValue ply
+        Assert.Equal(30005, stored)
+        
+        // When retrieving, we "pull" it back to the current context
+        let retrieved = mateFromTT stored ply
+        Assert.Equal(30000, retrieved)
+
+    [<Fact>]
+    let ``TT handles collisions via replacement`` () =
+        let hash1 = 1UL
+        let hash2 = uint64 TranspositionTable.SIZE + 1UL // Different hash, same index
+        
+        TranspositionTable.store hash1 5 0 NodeFlag.Exact 100 None
+        TranspositionTable.store hash2 6 0 NodeFlag.Exact 200 None // Deeper, should replace
+        
+        let result = TranspositionTable.probe hash2
+        Assert.Equal(200, result.Value.Value)
+        
+        let resultOld = TranspositionTable.probe hash1
+        Assert.True(resultOld.IsNone) // Collision should have wiped the first entry
+
+    [<Fact>]
+    let ``TT reduces node count in transpositions`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    
+        // Search depth 4 from startpos
+        Search.nodes <- 0uL
+        TranspositionTable.clear()
+        let cts = new System.Threading.CancellationTokenSource()
+        Search.negamax b 4 0 -1000000 1000000 [] cts.Token |> ignore
+        let nodesWithTT = Search.nodes
+    
+        // This is hard to assert exactly, but nodesWithTT will be significantly 
+        // lower than a pure perft(4) because identical branches are pruned.
+        Assert.True(nodesWithTT < 197281uL) // 197281 is the perft count for depth 4
+
+    [<Fact>]
+    let ``Search does not poison TT when cancelled`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        TranspositionTable.clear()
+        
+        // 1. Create a cancellation token and cancel it immediately
+        let cts = new System.Threading.CancellationTokenSource()
+        cts.Cancel()
+        
+        // 2. Run negamax with the cancelled token
+        let _ = Search.negamax b 3 0 -Search.INF Search.INF [] cts.Token
+        
+        // 3. Probe the TT for this position
+        let entry = TranspositionTable.probe b.Hash
+        
+        // 4. ASSERT: The entry should be None because we cancelled 
+        // before the search could find a valid result.
+        Assert.True(entry.IsNone, "TT should not store results from a cancelled search")
+
+    [<Fact>]
+    let ``TT Ageing replaces shallow new move over deep old move`` () =
+        TranspositionTable.clear()
+        let hash = 999UL
+        
+        // 1. Store a very deep search in Age 0
+        TranspositionTable.currentAge <- 0uy
+        TranspositionTable.store hash 20 0 TranspositionTable.NodeFlag.Exact 100 None
+        
+        // 2. Advance Age
+        TranspositionTable.advanceAge() // Age is now 1
+        
+        // 3. Store a shallow search in Age 1
+        TranspositionTable.store hash 2 0 TranspositionTable.NodeFlag.Exact 200 None
+        
+        // 4. Probe
+        let entry = TranspositionTable.probe hash
+        Assert.Equal(2, entry.Value.Depth)
+        Assert.Equal(200, entry.Value.Value)
+        Assert.Equal(1uy, entry.Value.Age)
+
+    [<Fact>]
+    let ``TT clear resets all entries`` () =
+        TranspositionTable.clear()
+        let hash = 42UL
+        TranspositionTable.store hash 5 0 NodeFlag.Exact 123 None
+        Assert.True((TranspositionTable.probe hash).IsSome)
+
+        TranspositionTable.clear()
+        Assert.True((TranspositionTable.probe hash).IsNone)
+
+    [<Fact>]
+    let ``TT probe returns None on hash mismatch at same index`` () =
+        TranspositionTable.clear()
+        let h1 = 1UL
+        let h2 = uint64 TranspositionTable.SIZE + 1UL // same index, different hash
+
+        TranspositionTable.store h1 5 0 NodeFlag.Exact 100 None
+        let res = TranspositionTable.probe h2
+        Assert.True(res.IsNone)
+
+    [<Fact>]
+    let ``TT keeps deeper entry when ages are equal`` () =
+        TranspositionTable.clear()
+        let hash = 777UL
+
+        TranspositionTable.currentAge <- 0uy
+        TranspositionTable.store hash 4 0 NodeFlag.Exact 100 None
+        TranspositionTable.store hash 6 0 NodeFlag.Exact 200 None
+
+        let entry = TranspositionTable.probe hash
+        Assert.Equal(6, entry.Value.Depth)
+        Assert.Equal(200, entry.Value.Value)
+
+    [<Fact>]
+    let ``TT replaces deep old entry with shallow new entry of newer age`` () =
+        TranspositionTable.clear()
+        let h1 = 1000UL
+        let h2 = uint64 TranspositionTable.SIZE + 1000UL // same index, different hash
+
+        TranspositionTable.currentAge <- 0uy
+        TranspositionTable.store h1 10 0 NodeFlag.Exact 100 None
+
+        TranspositionTable.advanceAge() // age = 1
+        TranspositionTable.store h2 2 0 NodeFlag.Exact 200 None
+
+        let eNew = TranspositionTable.probe h2
+        let eOld = TranspositionTable.probe h1
+
+        Assert.True(eNew.IsSome)
+        Assert.True(eOld.IsNone)
+
+    [<Fact>]
+    let ``mateToTT and mateFromTT are identity for non-mate scores`` () =
+        let score = 150
+        let ply = 7
+        let stored = mateToTT score ply
+        let back = mateFromTT stored ply
+        Assert.Equal(score, stored)
+        Assert.Equal(score, back)
 
 
 
@@ -848,6 +1003,55 @@ module ZobristTests =
 
 
 module BoardTests =
+
+    [<Fact>]
+    let ``Incremental hash matches full hash after quiet move`` () =
+        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        
+        // Nf3 (Quiet move from g1 to f3)
+        let m = Move(6, 21, 0, 0)
+        let b2 = Board.applyMove m b1
+        
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash handles piece captures correctly`` () =
+        // e4, then Black plays d5, then White captures exd5
+        let b1 = Board.fromFen "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
+        let capture = Move(28, 35, 1, 0)
+        
+        let b2 = Board.applyMove capture b1
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash handles promotion correctly`` () =
+        // Pawn on a7 about to promote on a8
+        let b1 = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
+        let prom = Move(48, 56, 5, int PieceType.Queen)
+        
+        let b2 = Board.applyMove prom b1
+        let scratchHash = Board.calculateHash b2
+        Assert.Equal(scratchHash, b2.Hash)
+
+    [<Fact>]
+    let ``Hash remains same after repetition of moves`` () =
+        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        
+        // Knight moves out and back
+        let m1 = Move(1, 18, 0, 0) // Nb1-c3
+        let m2 = Move(18, 1, 0, 0) // Nc3-b1
+        
+        // Black does the same to keep the turn cycle correct
+        let m3 = Move(62, 45, 0, 0) // Ng8-f6
+        let m4 = Move(45, 62, 0, 0) // Nf6-g8
+        
+        let bFinal = b1 
+                     |> Board.applyMove m1 |> Board.applyMove m3 
+                     |> Board.applyMove m2 |> Board.applyMove m4
+        
+        Assert.Equal(b1.Hash, bFinal.Hash)
 
     [<Fact>]
     let ``Square attacked by knight`` () =
@@ -1008,8 +1212,6 @@ module BoardTests =
         let b2 = Board.applyMove m b
         Assert.Equal(1, b2.HalfmoveClock)
 
-module FenTests =
-
     [<Theory>]
     [<InlineData("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")>]
     [<InlineData("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")>]
@@ -1018,6 +1220,7 @@ module FenTests =
         let board = Board.fromFen fen
         let output = Board.toFen board
         Assert.Equal(fen, output)
+
 
 module MoveGenTests =
 
@@ -1558,154 +1761,6 @@ module SearchTests =
         
         Assert.Equal(scoreWithout, scoreWith)
 
-
-module HashTests =
-
-    [<Fact>]
-    let ``Incremental hash matches full hash after quiet move`` () =
-        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        
-        // Nf3 (Quiet move from g1 to f3)
-        let m = Move(6, 21, 0, 0)
-        let b2 = Board.applyMove m b1
-        
-        let scratchHash = Board.calculateHash b2
-        Assert.Equal(scratchHash, b2.Hash)
-
-    [<Fact>]
-    let ``Hash handles piece captures correctly`` () =
-        // e4, then Black plays d5, then White captures exd5
-        let b1 = Board.fromFen "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
-        let capture = Move(28, 35, 1, 0)
-        
-        let b2 = Board.applyMove capture b1
-        let scratchHash = Board.calculateHash b2
-        Assert.Equal(scratchHash, b2.Hash)
-
-    [<Fact>]
-    let ``Hash handles promotion correctly`` () =
-        // Pawn on a7 about to promote on a8
-        let b1 = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
-        let prom = Move(48, 56, 5, int PieceType.Queen)
-        
-        let b2 = Board.applyMove prom b1
-        let scratchHash = Board.calculateHash b2
-        Assert.Equal(scratchHash, b2.Hash)
-
-    [<Fact>]
-    let ``Hash remains same after repetition of moves`` () =
-        let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        
-        // Knight moves out and back
-        let m1 = Move(1, 18, 0, 0) // Nb1-c3
-        let m2 = Move(18, 1, 0, 0) // Nc3-b1
-        
-        // Black does the same to keep the turn cycle correct
-        let m3 = Move(62, 45, 0, 0) // Ng8-f6
-        let m4 = Move(45, 62, 0, 0) // Nf6-g8
-        
-        let bFinal = b1 
-                     |> Board.applyMove m1 |> Board.applyMove m3 
-                     |> Board.applyMove m2 |> Board.applyMove m4
-        
-        Assert.Equal(b1.Hash, bFinal.Hash)
-
-module TTTests =
-    open TranspositionTable   
-    [<Fact>]
-    let ``TT can store and retrieve an entry`` () =
-        let hash = 12345UL
-        let move = Some (Move(12, 28, 0, 0))
-        
-        TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
-        let result = TranspositionTable.probe hash
-        
-        Assert.True(result.IsSome)
-        Assert.Equal(100, result.Value.Value)
-        Assert.Equal(5, result.Value.Depth)
-        Assert.Equal(move, result.Value.Move)
-
-    [<Fact>]
-    let ``Mate scores are adjusted correctly for ply`` () =
-        let mateValue = 30000 // MATE_VALUE from your search
-        let ply = 5
-        
-        // When storing, we "push" the mate further away
-        let stored = mateToTT mateValue ply
-        Assert.Equal(30005, stored)
-        
-        // When retrieving, we "pull" it back to the current context
-        let retrieved = mateFromTT stored ply
-        Assert.Equal(30000, retrieved)
-
-    [<Fact>]
-    let ``TT handles collisions via replacement`` () =
-        let hash1 = 1UL
-        let hash2 = uint64 TranspositionTable.SIZE + 1UL // Different hash, same index
-        
-        TranspositionTable.store hash1 5 0 NodeFlag.Exact 100 None
-        TranspositionTable.store hash2 6 0 NodeFlag.Exact 200 None // Deeper, should replace
-        
-        let result = TranspositionTable.probe hash2
-        Assert.Equal(200, result.Value.Value)
-        
-        let resultOld = TranspositionTable.probe hash1
-        Assert.True(resultOld.IsNone) // Collision should have wiped the first entry
-
-    [<Fact>]
-    let ``TT reduces node count in transpositions`` () =
-        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    
-        // Search depth 4 from startpos
-        Search.nodes <- 0uL
-        TranspositionTable.clear()
-        let cts = new System.Threading.CancellationTokenSource()
-        Search.negamax b 4 0 -1000000 1000000 [] cts.Token |> ignore
-        let nodesWithTT = Search.nodes
-    
-        // This is hard to assert exactly, but nodesWithTT will be significantly 
-        // lower than a pure perft(4) because identical branches are pruned.
-        Assert.True(nodesWithTT < 197281uL) // 197281 is the perft count for depth 4
-
-    [<Fact>]
-    let ``Search does not poison TT when cancelled`` () =
-        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        TranspositionTable.clear()
-        
-        // 1. Create a cancellation token and cancel it immediately
-        let cts = new System.Threading.CancellationTokenSource()
-        cts.Cancel()
-        
-        // 2. Run negamax with the cancelled token
-        let _ = Search.negamax b 3 0 -Search.INF Search.INF [] cts.Token
-        
-        // 3. Probe the TT for this position
-        let entry = TranspositionTable.probe b.Hash
-        
-        // 4. ASSERT: The entry should be None because we cancelled 
-        // before the search could find a valid result.
-        Assert.True(entry.IsNone, "TT should not store results from a cancelled search")
-
-    [<Fact>]
-    let ``TT Ageing replaces shallow new move over deep old move`` () =
-        TranspositionTable.clear()
-        let hash = 999UL
-        
-        // 1. Store a very deep search in Age 0
-        TranspositionTable.currentAge <- 0uy
-        TranspositionTable.store hash 20 0 TranspositionTable.NodeFlag.Exact 100 None
-        
-        // 2. Advance Age
-        TranspositionTable.advanceAge() // Age is now 1
-        
-        // 3. Store a shallow search in Age 1
-        TranspositionTable.store hash 2 0 TranspositionTable.NodeFlag.Exact 200 None
-        
-        // 4. Probe
-        let entry = TranspositionTable.probe hash
-        Assert.Equal(2, entry.Value.Depth)
-        Assert.Equal(200, entry.Value.Value)
-        Assert.Equal(1uy, entry.Value.Age)
 
 module MoveOrderingTests =
 
