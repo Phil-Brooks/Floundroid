@@ -763,6 +763,83 @@ module BitboardGenTests =
         Assert.Equal(1, Bitboard.count attacks)
         Assert.True(Bitboard.contains (Square.fromString "b8") attacks)
 
+module ZobristTests =
+
+    [<Fact>]
+    let ``Zobrist Table is deterministic with fixed seed`` () =
+        let key1 = Zobrist.Table.SideToMove
+        let key2 = Zobrist.Table.SideToMove
+        Assert.Equal(key1, key2)
+
+    [<Fact>]
+    let ``Keys are unique for different pieces and squares`` () =
+        let p1 = Piece(Colour.White, PieceType.Pawn)
+        let k1 = Zobrist.getPieceKey p1 0 // a1
+        let k2 = Zobrist.getPieceKey p1 1 // b1
+        Assert.NotEqual(k1, k2)
+
+    [<Fact>]
+    let ``Castling combinations result in different keys`` () =
+        let none = CastlingRights.None
+        let whiteKing = none ||| CastlingRights.WK
+        let blackKing = none ||| CastlingRights.BK
+        
+        let keyNone = Zobrist.getCastlingKey none
+        let keyWK = Zobrist.getCastlingKey whiteKing
+        let keyBK = Zobrist.getCastlingKey blackKing
+        
+        Assert.NotEqual(keyNone, keyWK)
+        Assert.NotEqual(keyWK, keyBK)
+        Assert.NotEqual(keyNone, keyBK)   
+
+    [<Fact>]
+    let ``All piece-square Zobrist keys are unique`` () =
+        let keys =
+            [ for c in [Colour.White; Colour.Black] do
+                for pt in [PieceType.Pawn; PieceType.Knight; PieceType.Bishop; PieceType.Rook; PieceType.Queen; PieceType.King] do
+                    for sq in 0..63 do
+                        yield Zobrist.getPieceKey (Piece(c, pt)) sq ]
+
+        let distinct = keys |> List.distinct
+        Assert.Equal(keys.Length, distinct.Length)
+
+    [<Fact>]
+    let ``All 16 castling Zobrist keys are unique`` () =
+        let keys =
+            [ for i in 0..15 ->
+                Zobrist.getCastlingKey (enum<CastlingRights> i) ]
+
+        Assert.Equal(16, keys |> List.distinct |> List.length)
+
+    [<Fact>]
+    let ``En passant keys are unique per file`` () =
+        let keys =
+            [ for file in 0..7 ->
+                Zobrist.getEnPassantKey (Some file) ]
+
+        Assert.Equal(8, keys |> List.distinct |> List.length)
+
+    [<Fact>]
+    let ``En passant None returns 0`` () =
+        Assert.Equal(0UL, Zobrist.getEnPassantKey None)
+
+    [<Fact>]
+    let ``Empty board Zobrist hash is deterministic`` () =
+        let h1 = 0UL
+        let h2 = 0UL
+        Assert.Equal(h1, h2)
+
+    [<Fact>]
+    let ``Piece key XORing twice cancels out`` () =
+        let p = Piece(Colour.White, PieceType.Knight)
+        let sq = 42
+        let key = Zobrist.getPieceKey p sq
+
+        let h = 0UL ^^^ key ^^^ key
+        Assert.Equal(0UL, h)
+
+
+
 
 
 
@@ -771,6 +848,46 @@ module BitboardGenTests =
 
 
 module BoardTests =
+
+    [<Fact>]
+    let ``Square attacked by knight`` () =
+        let b = Board.fromFen "8/8/8/3n4/4K3/8/8/8 w - - 0 1"
+        Assert.True(Board.isSquareAttacked b (Square.fromString "f4") Colour.Black)
+
+    [<Fact>]
+    let ``Square attacked by bishop`` () =
+        let b = Board.fromFen "8/8/8/3b4/4K3/8/8/8 w - - 0 1"
+        Assert.True(Board.isSquareAttacked b (Square.fromString "e4") Colour.Black)
+
+    [<Fact>]
+    let ``Square attacked by pawn`` () =
+        let b = Board.fromFen "8/8/8/3p4/4K3/8/8/8 w - - 0 1"
+        Assert.True(Board.isSquareAttacked b (Square.fromString "e4") Colour.Black)
+
+    [<Fact>]
+    let ``Square not attacked`` () =
+        let b = Board.fromFen "8/8/8/8/4K3/8/8/8 w - - 0 1"
+        Assert.False(Board.isSquareAttacked b (Square.fromString "e4") Colour.Black)
+
+    [<Fact>]
+    let ``White pawn attacks upwards (should be detected but isSquareAttacked returns false)`` () =
+        // White pawn on e4 should attack d5 and f5.
+        let b = Board.fromFen "8/8/8/3p4/4P3/8/8/8 w - - 0 1"
+
+        // d5 is attacked by the pawn on e4.
+        let target = Square.fromString "d5"
+
+        // EXPECTED: true
+        Assert.True(Board.isSquareAttacked b target Colour.White)
+
+    [<Fact>]
+    let ``Black pawn attack detection is correct`` () =
+        // Black pawn on h5 attacks g4
+        let b = Board.fromFen "8/8/8/7p/8/8/8/8 w - - 0 1"
+
+        let target = Square.fromString "g4"
+
+        Assert.True(Board.isSquareAttacked b target Colour.Black)
 
     [<Fact>]
     let ``Empty board has no pieces`` () =
@@ -1096,48 +1213,6 @@ module PromotionTests =
             |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e2" && Move.toSq m = Square.fromString "f1")
 
         Assert.Equal(4, promos.Length)
-
-module AttackTests =
-
-    [<Fact>]
-    let ``Square attacked by knight`` () =
-        let b = Board.fromFen "8/8/8/3n4/4K3/8/8/8 w - - 0 1"
-        Assert.True(Attack.isSquareAttacked b (Square.fromString "f4") Colour.Black)
-
-    [<Fact>]
-    let ``Square attacked by bishop`` () =
-        let b = Board.fromFen "8/8/8/3b4/4K3/8/8/8 w - - 0 1"
-        Assert.True(Attack.isSquareAttacked b (Square.fromString "e4") Colour.Black)
-
-    [<Fact>]
-    let ``Square attacked by pawn`` () =
-        let b = Board.fromFen "8/8/8/3p4/4K3/8/8/8 w - - 0 1"
-        Assert.True(Attack.isSquareAttacked b (Square.fromString "e4") Colour.Black)
-
-    [<Fact>]
-    let ``Square not attacked`` () =
-        let b = Board.fromFen "8/8/8/8/4K3/8/8/8 w - - 0 1"
-        Assert.False(Attack.isSquareAttacked b (Square.fromString "e4") Colour.Black)
-
-    [<Fact>]
-    let ``White pawn attacks upwards (should be detected but isSquareAttacked returns false)`` () =
-        // White pawn on e4 should attack d5 and f5.
-        let b = Board.fromFen "8/8/8/3p4/4P3/8/8/8 w - - 0 1"
-
-        // d5 is attacked by the pawn on e4.
-        let target = Square.fromString "d5"
-
-        // EXPECTED: true
-        Assert.True(Attack.isSquareAttacked b target Colour.White)
-
-    [<Fact>]
-    let ``Black pawn attack detection is correct`` () =
-        // Black pawn on h5 attacks g4
-        let b = Board.fromFen "8/8/8/7p/8/8/8/8 w - - 0 1"
-
-        let target = Square.fromString "g4"
-
-        Assert.True(Attack.isSquareAttacked b target Colour.Black)
 
 module CheckDetectionTests =
 
@@ -1483,34 +1558,6 @@ module SearchTests =
         
         Assert.Equal(scoreWithout, scoreWith)
 
-module ZobristTests =
-
-    [<Fact>]
-    let ``Zobrist Table is deterministic with fixed seed`` () =
-        let key1 = Zobrist.Table.SideToMove
-        let key2 = Zobrist.Table.SideToMove
-        Assert.Equal(key1, key2)
-
-    [<Fact>]
-    let ``Keys are unique for different pieces and squares`` () =
-        let p1 = Piece(Colour.White, PieceType.Pawn)
-        let k1 = Zobrist.getPieceKey p1 0 // a1
-        let k2 = Zobrist.getPieceKey p1 1 // b1
-        Assert.NotEqual(k1, k2)
-
-    [<Fact>]
-    let ``Castling combinations result in different keys`` () =
-        let none = CastlingRights.None
-        let whiteKing = none ||| CastlingRights.WK
-        let blackKing = none ||| CastlingRights.BK
-        
-        let keyNone = Zobrist.getCastlingKey none
-        let keyWK = Zobrist.getCastlingKey whiteKing
-        let keyBK = Zobrist.getCastlingKey blackKing
-        
-        Assert.NotEqual(keyNone, keyWK)
-        Assert.NotEqual(keyWK, keyBK)
-        Assert.NotEqual(keyNone, keyBK)   
 
 module HashTests =
 

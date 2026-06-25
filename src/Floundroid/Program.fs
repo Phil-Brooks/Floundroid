@@ -644,45 +644,6 @@ type Board =
       FullmoveNumber: int
       Hash: uint64 }
 
-module Attack =
-    let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
-        let bbs = b.Bitboards
-        let them = attacker
-
-        // 1. Pawn, Knight, King (Keep existing logic)
-        let usIdx = if them = Colour.Black then 0 else 1
-        let pawnAttackMask = BitboardGen.pawnAttacks.[usIdx, sq]
-        let themPawns = if them = Colour.White then bbs.WhitePawns else bbs.BlackPawns
-
-        if (pawnAttackMask &&& themPawns) <> 0uL then true
-        else
-            let knightAttackMask = BitboardGen.knightAttacks.[sq]
-            let themKnights = if them = Colour.White then bbs.WhiteKnights else bbs.BlackKnights
-            if (knightAttackMask &&& themKnights) <> 0uL then true
-            else
-                let kingAttackMask = BitboardGen.kingAttacks.[sq]
-                let themKing = if them = Colour.White then bbs.WhiteKings else bbs.BlackKings
-                if (kingAttackMask &&& themKing) <> 0uL then true
-                else
-                    // Inside Attack.isSquareAttacked, replace the sliding logic with:
-                    let occ = bbs.Occupancy
-
-                    // Bishop & Queen
-                    let bEntry = Magic.bishopEntries.[sq]
-                    let bIdx = bEntry.Offset + Magic.getIndex occ bEntry.Mask
-                    let bishopAttacks = Magic.bishopTable.[bIdx]
-                    let themBishops = if them = Colour.White then (bbs.WhiteBishops ||| bbs.WhiteQueens) else (bbs.BlackBishops ||| bbs.BlackQueens)
-
-                    if (bishopAttacks &&& themBishops) <> 0uL then true
-                    else
-                        // Rook & Queen
-                        let rEntry = Magic.rookEntries.[sq]
-                        let rIdx = rEntry.Offset + Magic.getIndex occ rEntry.Mask
-                        let rookAttacks = Magic.rookTable.[rIdx]
-                        let themRooks = if them = Colour.White then (bbs.WhiteRooks ||| bbs.WhiteQueens) else (bbs.BlackRooks ||| bbs.BlackQueens)
-    
-                        (rookAttacks &&& themRooks) <> 0uL                    
-
 module Zobrist =
 
     /// Storage for all random keys used for hashing.
@@ -816,6 +777,53 @@ module TranspositionTable =
 
 module Board =
 
+    let empty =
+        { Bitboards = BitboardSet.empty // Placeholder
+          SideToMove = Colour.White
+          CastlingRights = CastlingRights.None
+          EnPassantSquare = None
+          HalfmoveClock = 0
+          FullmoveNumber = 1
+          Hash = 0UL }
+
+    let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
+        let bbs = b.Bitboards
+        let them = attacker
+
+        // 1. Pawn, Knight, King (Keep existing logic)
+        let usIdx = if them = Colour.Black then 0 else 1
+        let pawnAttackMask = BitboardGen.pawnAttacks.[usIdx, sq]
+        let themPawns = if them = Colour.White then bbs.WhitePawns else bbs.BlackPawns
+
+        if (pawnAttackMask &&& themPawns) <> 0uL then true
+        else
+            let knightAttackMask = BitboardGen.knightAttacks.[sq]
+            let themKnights = if them = Colour.White then bbs.WhiteKnights else bbs.BlackKnights
+            if (knightAttackMask &&& themKnights) <> 0uL then true
+            else
+                let kingAttackMask = BitboardGen.kingAttacks.[sq]
+                let themKing = if them = Colour.White then bbs.WhiteKings else bbs.BlackKings
+                if (kingAttackMask &&& themKing) <> 0uL then true
+                else
+                    // Inside Board.isSquareAttacked, replace the sliding logic with:
+                    let occ = bbs.Occupancy
+
+                    // Bishop & Queen
+                    let bEntry = Magic.bishopEntries.[sq]
+                    let bIdx = bEntry.Offset + Magic.getIndex occ bEntry.Mask
+                    let bishopAttacks = Magic.bishopTable.[bIdx]
+                    let themBishops = if them = Colour.White then (bbs.WhiteBishops ||| bbs.WhiteQueens) else (bbs.BlackBishops ||| bbs.BlackQueens)
+
+                    if (bishopAttacks &&& themBishops) <> 0uL then true
+                    else
+                        // Rook & Queen
+                        let rEntry = Magic.rookEntries.[sq]
+                        let rIdx = rEntry.Offset + Magic.getIndex occ rEntry.Mask
+                        let rookAttacks = Magic.rookTable.[rIdx]
+                        let themRooks = if them = Colour.White then (bbs.WhiteRooks ||| bbs.WhiteQueens) else (bbs.BlackRooks ||| bbs.BlackQueens)
+    
+                        (rookAttacks &&& themRooks) <> 0uL                    
+
     let fromUci (b: Board) (s: string) : Move =
         if s.Length < 4 then
             invalidArg "s" "UCI move string too short"
@@ -858,15 +866,6 @@ module Board =
         else
             Move(fromSq, toSq, 0, 0)
    
-    let empty =
-        { Bitboards = BitboardSet.empty // Placeholder
-          SideToMove = Colour.White
-          CastlingRights = CastlingRights.None
-          EnPassantSquare = None
-          HalfmoveClock = 0
-          FullmoveNumber = 1
-          Hash = 0UL }
-
     /// Tries to get a piece from a square (Source of truth: Bitboards).
     let tryGetPiece (b: Board) (sq: Square) = BitboardSet.getPieceAt sq b.Bitboards
 
@@ -981,7 +980,7 @@ module Board =
     let isInCheckFor (colour: Colour) (b: Board) =
         let kingSq = findKing colour b
         if kingSq = -1 then false
-        else Attack.isSquareAttacked b kingSq (Colour.opposite colour)
+        else isSquareAttacked b kingSq (Colour.opposite colour)
     
     /// Checks if the side to move is currently in check.
     let isInCheck (b: Board) = isInCheckFor b.SideToMove b
@@ -1318,8 +1317,8 @@ module MoveGen =
 
                         let destSquare = Square.ofFileRank destFile rnk
 
-                        not (Attack.isSquareAttacked b midSquare them)
-                        && not (Attack.isSquareAttacked b destSquare them)
+                        not (Board.isSquareAttacked b midSquare them)
+                        && not (Board.isSquareAttacked b destSquare them)
                 | _ -> true
 
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
@@ -1951,7 +1950,7 @@ module Search =
                                     // 2. Cannot castle THROUGH check
                                     let midFile = if Move.kind m = 3 then File.F else File.D
                                     let midSquare = Square.ofFileRank midFile rnk
-                                    Attack.isSquareAttacked b midSquare them
+                                    Board.isSquareAttacked b midSquare them
                             | _ -> false
 
                         if isIllegalCastle then
@@ -2206,7 +2205,7 @@ module Debug =
             for f in 0..7 do
                 let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
 
-                if Attack.isSquareAttacked b sq attacker then
+                if Board.isSquareAttacked b sq attacker then
                     printf "x "
                 else
                     printf ". "
