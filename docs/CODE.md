@@ -14,15 +14,12 @@
 - [Move](#module-move)
 - [Bitboard](#module-bitboard)
 - [BitboardSet](#module-bitboardset)
-- [SlidingAttackGen](#module-slidingattackgen)
 - [Magic](#module-magic)
 - [BitboardGen](#module-bitboardgen)
-- [Attack](#module-attack)
 - [Zobrist](#module-zobrist)
 - [TranspositionTable](#module-transpositiontable)
 - [Board](#module-board)
 - [MoveGen](#module-movegen)
-- [San](#module-san)
 - [Evaluation](#module-evaluation)
 - [Search](#module-search)
 - [Perft](#module-perft)
@@ -147,6 +144,7 @@
 - **fn** `popLsb`
     - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
     - *This is a high-performance way to iterate through pieces.*
+- **fn** `bits`
 - **fn** `toString`
     - *Visualizes the bitboard as an 8x8 grid for debugging.*
 
@@ -156,8 +154,6 @@
 ## 📦 module BitboardSet
 ---
 - **fn** `empty`
-- **fn** `fromMap`
-    - *Converts a Piece Map into a BitboardSet.*
 - **fn** `getPieceAt`
     - *Identifies the piece (if any) at a specific square using bitboards.*
 - **fn** `togglePiece`
@@ -165,7 +161,7 @@
 - **fn** `allPieces`
     - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
 
-## 📦 module SlidingAttackGen
+## 📦 module Magic
 ---
 - **fn** `bishopAttacks`
     - *Generates a bitboard of all squares a Bishop attacks from a given square,*
@@ -178,9 +174,6 @@
     - *on the edge of the board for every ray, because a blocker on the*
     - *edge doesn't change the attack bitboard.*
 - **fn** `rookMask`
-
-## 📦 module Magic
----
 
 #### 🧩 `type MagicEntry = { Mask: Bitboard; Offset: int }`
 > Represents a magic entry for a square, containing the mask and the offset into the attack table.
@@ -208,10 +201,6 @@
 
 #### 🧩 `type Board`
 > The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
-
-## 📦 module Attack
----
-- **fn** `isSquareAttacked`
 
 ## 📦 module Zobrist
 ---
@@ -259,8 +248,9 @@
 
 ## 📦 module Board
 ---
-- **fn** `fromUci`
 - **fn** `empty`
+- **fn** `isSquareAttacked`
+- **fn** `fromUci`
 - **fn** `tryGetPiece`
     - *Tries to get a piece from a square (Source of truth: Bitboards).*
 - **fn** `isOccupied`
@@ -304,11 +294,6 @@
     - *Gets all legal moves for the current position.*
 - **fn** `getCaptureMoves`
     - *Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.*
-
-## 📦 module San
----
-- **fn** `toSan`
-    - *Converts a move to Standard Algebraic Notation (SAN) based on the current board state.*
 
 ## 📦 module Evaluation
 ---
@@ -360,6 +345,8 @@
 
 ## 📦 module Perft
 ---
+- **fn** `toSan`
+    - *Converts a move to Standard Algebraic Notation (SAN) based on the current board state.*
 - **fn** `countNodes`
     - *Counts the number of leaf nodes at a given depth from the current board state.*
 - **fn** `divide`
