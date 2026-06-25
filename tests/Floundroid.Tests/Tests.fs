@@ -1571,46 +1571,6 @@ module MoveGenTests =
 
         Assert.Equal(400, total2)
 
-
-
-
-
-
-
-
-
-
-
-
-module PerftTests =
-
-    [<Fact>]
-    let ``Initial position depth 1 is 20`` () =
-        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let nodes = Perft.countNodes 1 b
-        Assert.Equal(20uL, nodes)
-
-    [<Fact>]
-    let ``Initial position depth 2 is 400`` () =
-        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let nodes = Perft.countNodes 2 b
-        Assert.Equal(400uL, nodes)
-
-    [<Fact>]
-    let ``Kiwipete depth 1 is 48`` () =
-        // Kiwipete is a famous perft test position with many captures and castling
-        let b =
-            Board.fromFen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-
-        let nodes = Perft.countNodes 1 b
-        Assert.Equal(48uL, nodes)
-
-    [<Fact>]
-    let ``Perft Position 3 Depth 3 is 2812`` () =
-        // This position tests specific pawn/rook interactions
-        let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
-        Assert.Equal(2812uL, Perft.countNodes 3 b)
-
 module EvaluationTests =
 
     [<Fact>]
@@ -1792,6 +1752,40 @@ module EvaluationTests =
 
     //    Assert.True(scoreN > scoreQ)
 
+    [<Fact>]
+    let ``Evaluation is antisymmetric under colour swap`` () =
+        let fen = "rnbq1rk1/pppp1ppp/5n2/4p3/3PP3/2N2N2/PPP2PPP/R1BQ1RK1 w - - 0 1"
+        let bWhite = Board.fromFen fen
+
+        // crude colour swap: just flip perspective via FEN
+        let fenBlack =
+            "r1bq1rk1/ppp2ppp/2n2n2/3pp3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b - - 0 1"
+        let bBlack = Board.fromFen fenBlack
+
+        let sWhite = Evaluation.evaluate bWhite
+        let sBlack = Evaluation.evaluate bBlack
+
+        Assert.Equal(sWhite, -sBlack)
+
+    [<Fact>]
+    let ``Short-castled king with full shield scores better than uncastled king`` () =
+        let uncastled =
+            Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let castled =
+            Board.fromFen "rnbq1rk1/pppppppp/8/8/8/8/PPPPPPPP/RNBQ1RK1 w - - 0 1"
+
+        let sUn = Evaluation.evaluate uncastled
+        let sCast = Evaluation.evaluate castled
+
+        Assert.True(sCast > sUn)
+
+
+
+
+
+
+
 
 module SearchTests =
 
@@ -1881,9 +1875,6 @@ module SearchTests =
         
         Assert.Equal(scoreWithout, scoreWith)
 
-
-module MoveOrderingTests =
-
     [<Fact>]
     let ``MVV-LVA prefers Pawn takes Queen over Queen takes Pawn`` () =
         // Setup: White Pawn on e4, White Queen on d1. Black Queen on d5, Black Pawn on f3.
@@ -1915,8 +1906,6 @@ module MoveOrderingTests =
         // (e4xd5 is 10,000 + 9000 - 100 = 18900. Correct!)
         Assert.True(getScore bestMove > getScore secondBest)
 
-module InsufficientMaterialTests =
-
     [<Theory>]
     [<InlineData("8/8/8/8/8/8/8/k6K w - - 0 1")>] // K vs K
     [<InlineData("8/8/8/8/3N4/8/8/k6K w - - 0 1")>] // KN vs K
@@ -1941,42 +1930,6 @@ module InsufficientMaterialTests =
         let score, _ = Search.negamax b 1 0 -Search.INF Search.INF [] System.Threading.CancellationToken.None
         Assert.Equal(0, score)
 
-module UciParsingTests =
-
-    [<Fact>]
-    let ``Position startpos moves e2e4 results in correct board`` () =
-        let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let mutable board = Board.fromFen startFen
-        let moves = [ "e2e4" ]
-
-        for mStr in moves do
-            let legals = MoveGen.getLegalMoves board
-            let m = legals |> Array.find (fun x -> Move.toUci x = mStr)
-            board <- Board.applyMove m board
-
-        Assert.Equal(Colour.Black, board.SideToMove)
-        Assert.True(Board.isOccupied board (Square.fromString "e4"))
-        Assert.False(Board.isOccupied board (Square.fromString "e2"))
-
-
-
-    [<Fact>]
-    let ``Go time target includes white increment when white is to move`` () =
-        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
-
-        let targetTime = UciLoop.calculateTargetTime Colour.White args
-
-        Assert.Equal(4000, targetTime)
-
-    [<Fact>]
-    let ``Go time target includes black increment when black is to move`` () =
-        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
-
-        let targetTime = UciLoop.calculateTargetTime Colour.Black args
-
-        Assert.Equal(2250, targetTime)
-
-module RepetitionTests =
     [<Fact>]
     let ``Negamax returns 0 immediately if current position is a repetition`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -1992,7 +1945,6 @@ module RepetitionTests =
         Assert.True(Search.isRepetition hash history)
         Assert.False(Search.isRepetition 999uL history)
 
-module FiftyMoveRuleTests =
     [<Fact>]
     let ``Negamax returns 0 if halfmove clock is 100`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 100 1"
@@ -2010,3 +1962,66 @@ module FiftyMoveRuleTests =
         
         let score, _ = Search.negamax nextB 1 1 -Search.INF Search.INF [] System.Threading.CancellationToken.None
         Assert.Equal(0, score)
+
+module PerftTests =
+
+    [<Fact>]
+    let ``Initial position depth 1 is 20`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let nodes = Perft.countNodes 1 b
+        Assert.Equal(20uL, nodes)
+
+    [<Fact>]
+    let ``Initial position depth 2 is 400`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let nodes = Perft.countNodes 2 b
+        Assert.Equal(400uL, nodes)
+
+    [<Fact>]
+    let ``Kiwipete depth 1 is 48`` () =
+        // Kiwipete is a famous perft test position with many captures and castling
+        let b =
+            Board.fromFen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+
+        let nodes = Perft.countNodes 1 b
+        Assert.Equal(48uL, nodes)
+
+    [<Fact>]
+    let ``Perft Position 3 Depth 3 is 2812`` () =
+        // This position tests specific pawn/rook interactions
+        let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
+        Assert.Equal(2812uL, Perft.countNodes 3 b)
+
+module UciTests =
+
+    [<Fact>]
+    let ``Position startpos moves e2e4 results in correct board`` () =
+        let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let mutable board = Board.fromFen startFen
+        let moves = [ "e2e4" ]
+
+        for mStr in moves do
+            let legals = MoveGen.getLegalMoves board
+            let m = legals |> Array.find (fun x -> Move.toUci x = mStr)
+            board <- Board.applyMove m board
+
+        Assert.Equal(Colour.Black, board.SideToMove)
+        Assert.True(Board.isOccupied board (Square.fromString "e4"))
+        Assert.False(Board.isOccupied board (Square.fromString "e2"))
+
+    [<Fact>]
+    let ``Go time target includes white increment when white is to move`` () =
+        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
+
+        let targetTime = UciLoop.calculateTargetTime Colour.White args
+
+        Assert.Equal(4000, targetTime)
+
+    [<Fact>]
+    let ``Go time target includes black increment when black is to move`` () =
+        let args = [ "wtime"; "60000"; "btime"; "40000"; "winc"; "2000"; "binc"; "500" ]
+
+        let targetTime = UciLoop.calculateTargetTime Colour.Black args
+
+        Assert.Equal(2250, targetTime)
+

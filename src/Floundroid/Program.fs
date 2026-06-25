@@ -1399,80 +1399,6 @@ module MoveGen =
 
         moves.ToArray()
 
-module San =
-    /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
-    let toSan (b: Board) (m: Move) =
-        match Move.kind m with
-        | 3 -> "O-O"
-        | 4 -> "O-O-O"
-        | _ ->
-            // Use Board.tryGetPiece instead of b.Pieces.Value
-            let piece = (Board.tryGetPiece b (Move.fromSq m)).Value
-
-            let isCapture =
-                match Move.kind m with
-                | 1
-                | 2 -> true
-                // Use Board.isOccupied instead of b.Pieces.ContainsKey
-                | _ -> Board.isOccupied b (Move.toSq m)
-
-            let nextBoard = Board.applyMove m b
-            let isCheck = Board.isInCheck nextBoard
-            let isMate = isCheck && (MoveGen.getLegalMoves nextBoard).Length = 0
-
-            let moveStr =
-                if Piece.kind piece = PieceType.Pawn then
-                    let prefix =
-                        if isCapture then
-                            sprintf "%cx" (File.toChar (Square.file (Move.fromSq m)))
-                        else
-                            ""
-
-                    let prom =
-                        match Move.kind m with
-                        | 5 -> sprintf "=%c" (Char.ToUpper(PieceType.toChar (enum<PieceType>(Move.promo m))))
-                        | _ -> ""
-
-                    sprintf "%s%s%s" prefix (Square.toString (Move.toSq m)) prom
-                else
-                    let pChar = Char.ToUpper(PieceType.toChar (Piece.kind piece))
-
-                    let others =
-                        MoveGen.getLegalMoves b
-                        |> Array.filter (fun alt ->
-                            // Use Board.tryGetPiece to identify the piece on the alternative square
-                            match Board.tryGetPiece b (Move.fromSq alt) with
-                            | Some altPiece ->
-                                (Move.fromSq alt) <> (Move.fromSq m) && (Move.toSq alt) = (Move.toSq m) && Piece.kind altPiece = Piece.kind piece
-                            | None -> false)
-
-                    let disambiguator =
-                        if others.Length = 0 then
-                            ""
-                        else
-                            let sameFile =
-                                others |> Array.exists (fun alt -> Square.file (Move.fromSq alt) = Square.file (Move.fromSq m))
-
-                            let sameRank =
-                                others |> Array.exists (fun alt -> Square.rank (Move.fromSq alt) = Square.rank (Move.fromSq m))
-
-                            if not sameFile then
-                                sprintf "%c" (File.toChar (Square.file (Move.fromSq m)))
-                            elif not sameRank then
-                                sprintf "%c" (Rank.toChar (Square.rank (Move.fromSq m)))
-                            else
-                                Square.toString (Move.fromSq m)
-
-                    let cap = if isCapture then "x" else ""
-                    sprintf "%c%s%s%s" pChar disambiguator cap (Square.toString (Move.toSq m))
-
-            let suffix =
-                if isMate then "#"
-                elif isCheck then "+"
-                else ""
-
-            moveStr + suffix
-
 module Evaluation =
 
     /// Assigns a base value to each piece type for evaluation purposes.
@@ -2054,6 +1980,79 @@ type PerftSuiteItem =
       Expected: uint64 list }
 
 module Perft =
+    /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
+    let toSan (b: Board) (m: Move) =
+        match Move.kind m with
+        | 3 -> "O-O"
+        | 4 -> "O-O-O"
+        | _ ->
+            // Use Board.tryGetPiece instead of b.Pieces.Value
+            let piece = (Board.tryGetPiece b (Move.fromSq m)).Value
+
+            let isCapture =
+                match Move.kind m with
+                | 1
+                | 2 -> true
+                // Use Board.isOccupied instead of b.Pieces.ContainsKey
+                | _ -> Board.isOccupied b (Move.toSq m)
+
+            let nextBoard = Board.applyMove m b
+            let isCheck = Board.isInCheck nextBoard
+            let isMate = isCheck && (MoveGen.getLegalMoves nextBoard).Length = 0
+
+            let moveStr =
+                if Piece.kind piece = PieceType.Pawn then
+                    let prefix =
+                        if isCapture then
+                            sprintf "%cx" (File.toChar (Square.file (Move.fromSq m)))
+                        else
+                            ""
+
+                    let prom =
+                        match Move.kind m with
+                        | 5 -> sprintf "=%c" (Char.ToUpper(PieceType.toChar (enum<PieceType>(Move.promo m))))
+                        | _ -> ""
+
+                    sprintf "%s%s%s" prefix (Square.toString (Move.toSq m)) prom
+                else
+                    let pChar = Char.ToUpper(PieceType.toChar (Piece.kind piece))
+
+                    let others =
+                        MoveGen.getLegalMoves b
+                        |> Array.filter (fun alt ->
+                            // Use Board.tryGetPiece to identify the piece on the alternative square
+                            match Board.tryGetPiece b (Move.fromSq alt) with
+                            | Some altPiece ->
+                                (Move.fromSq alt) <> (Move.fromSq m) && (Move.toSq alt) = (Move.toSq m) && Piece.kind altPiece = Piece.kind piece
+                            | None -> false)
+
+                    let disambiguator =
+                        if others.Length = 0 then
+                            ""
+                        else
+                            let sameFile =
+                                others |> Array.exists (fun alt -> Square.file (Move.fromSq alt) = Square.file (Move.fromSq m))
+
+                            let sameRank =
+                                others |> Array.exists (fun alt -> Square.rank (Move.fromSq alt) = Square.rank (Move.fromSq m))
+
+                            if not sameFile then
+                                sprintf "%c" (File.toChar (Square.file (Move.fromSq m)))
+                            elif not sameRank then
+                                sprintf "%c" (Rank.toChar (Square.rank (Move.fromSq m)))
+                            else
+                                Square.toString (Move.fromSq m)
+
+                    let cap = if isCapture then "x" else ""
+                    sprintf "%c%s%s%s" pChar disambiguator cap (Square.toString (Move.toSq m))
+
+            let suffix =
+                if isMate then "#"
+                elif isCheck then "+"
+                else ""
+
+            moveStr + suffix
+
     /// Counts the number of leaf nodes at a given depth from the current board state.
     let rec countNodes depth b =
         if depth = 0 then
@@ -2082,7 +2081,7 @@ module Perft =
         for m in moves do
             let n = countNodes (depth - 1) (Board.applyMove m b)
             // Use the San module we just built!
-            printfn "%s (%s): %d" (Move.toUci m) (San.toSan b m) n
+            printfn "%s (%s): %d" (Move.toUci m) (toSan b m) n
             total <- total + n
 
         sw.Stop()
@@ -2144,7 +2143,7 @@ module Debug =
 
         let formatted =
             moves
-            |> Array.map (fun m -> sprintf "%s (%s)" (Move.toUci m) (San.toSan b m))
+            |> Array.map (fun m -> sprintf "%s (%s)" (Move.toUci m) (Perft.toSan b m))
             |> String.concat ", "
 
         printfn "%s" formatted
