@@ -5,12 +5,10 @@ open System.Text
 open System.Threading
 
 /// Colour is represented as an integer 0–1, where 0 = White and 1 = Black.
-[<RequireQualifiedAccess>]
 type Colour =
     | White = 0
     | Black = 1
 
-[<RequireQualifiedAccess>]
 module Colour =
 
     /// Converts a Colour to its character representation ('w' or 'b').
@@ -28,7 +26,6 @@ module Colour =
     let inline opposite (c: Colour) =
         if c = Colour.White then Colour.Black else Colour.White
 
-[<RequireQualifiedAccess>]
 type File =
     | A = 0
     | B = 1
@@ -39,7 +36,6 @@ type File =
     | G = 6
     | H = 7
 
-[<RequireQualifiedAccess>]
 module File =
 
     let firstChar = int 'a'
@@ -63,7 +59,6 @@ module File =
         if uint i <= 7u then enum<File> i
         else invalidArg "c" $"Invalid file char: {c}"
 
-[<RequireQualifiedAccess>]
 type Rank =
     | R1 = 0
     | R2 = 1
@@ -74,7 +69,6 @@ type Rank =
     | R7 = 6
     | R8 = 7
 
-[<RequireQualifiedAccess>]
 module Rank =
 
     // Must NOT be private if inline functions use it
@@ -102,7 +96,6 @@ module Rank =
 /// Squares are represented as integers 0–63, where 0 = a1 and 63 = h8.
 type Square = int
 
-[<RequireQualifiedAccess>]
 module Square =
 
     /// Converts a File and Rank to a Square.
@@ -138,7 +131,6 @@ module Square =
     let inline isOnBoard (f: int) (r: int) =
         uint f <= 7u && uint r <= 7u
 
-[<RequireQualifiedAccess>]
 type PieceType =
     | Pawn   = 0
     | Knight = 1
@@ -147,7 +139,6 @@ type PieceType =
     | Queen  = 4
     | King   = 5
 
-[<RequireQualifiedAccess>]
 module PieceType =
 
     // Precomputed char table for speed
@@ -174,7 +165,6 @@ type Piece =
     new (colour: Colour, kind: PieceType) =
         { data = byte ((int colour <<< 3) ||| int kind) }
 
-[<RequireQualifiedAccess>]
 module Piece =
 
     let inline colour (p: Piece) : Colour =
@@ -200,7 +190,6 @@ type CastlingRights =
     | BK   = 0b0100
     | BQ   = 0b1000
 
-[<RequireQualifiedAccess>]
 module CastlingRights =
 
     let inline fromString (s: string) =
@@ -232,7 +221,6 @@ type Move =
             ||| (uint32 kind <<< 12)
             ||| (uint32 promo <<< 16) }
 
-[<RequireQualifiedAccess>]
 module Move =
 
     let inline fromSq (m: Move) =
