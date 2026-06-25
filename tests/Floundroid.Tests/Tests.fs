@@ -2040,11 +2040,6 @@ module SearchTests =
 
         Assert.True(score > Search.MATE_VALUE - 10, $"Score was {score}")
 
-
-
-
-
-
 module PerftTests =
 
     [<Fact>]
@@ -2073,6 +2068,124 @@ module PerftTests =
         // This position tests specific pawn/rook interactions
         let b = Board.fromFen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"
         Assert.Equal(2812uL, Perft.countNodes 3 b)
+
+    [<Fact>]
+    let ``Initial position depth 3 is 8902`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        Assert.Equal(8902uL, Perft.countNodes 3 b)
+
+    [<Fact>]
+    let ``Initial position perft divide depth 2 e2e4 is 20`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        Assert.Equal(20uL, Perft.countNodes 1 (Board.applyMove m b))
+
+    [<Fact>]
+    let ``SAN for e2e4 is e4`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        Assert.Equal("e4", Perft.toSan b m)
+
+module DebugTests =
+
+    [<Fact>]
+    let ``Debug.verify accepts a legal starting position`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.verify b
+            let output = sw.ToString()
+            Assert.Contains("consistent", output)
+        finally
+            Console.SetOut(originalOut)
+
+    [<Fact>]
+    let ``Debug verify detects two white kings`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK1KR w KQkq - 0 1"
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.verify b
+            let output = sw.ToString()
+            Assert.Contains("Invalid White King count", output)
+        finally
+            Console.SetOut(originalOut)
+
+    [<Fact>]
+    let ``Debug verify detects pawn on illegal rank`` () =
+        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/8/P7 w KQkq - 0 1"
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.verify b
+            let output = sw.ToString()
+            Assert.Contains("Pawn on illegal rank", output)
+        finally
+            Console.SetOut(originalOut)
+
+    [<Fact>]
+    let ``Debug verify detects illegal check on side not to move`` () =
+        // Black king is in check but it's WHITE to move → illegal
+        let b = Board.fromFen "4k3/8/8/8/8/8/4Q3/4K3 w - - 0 1"
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.verify b
+            let output = sw.ToString()
+            Assert.Contains("Side NOT to move is in check", output)
+        finally
+            Console.SetOut(originalOut)
+
+    [<Fact>]
+    let ``Debug displayMoves prints legal moves with SAN`` () =
+        let b = Board.fromFen "8/8/8/8/8/8/8/K6R w - - 0 1"
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.displayMoves b
+            let output = sw.ToString()
+            Assert.Contains("Legal Moves", output)
+            Assert.Contains("h1h8", output)   // UCI
+            Assert.Contains("Rh8", output)    // SAN
+        finally
+            Console.SetOut(originalOut)
+
+    [<Fact>]
+    let ``Debug displayAttackMap shows rook attack pattern`` () =
+        let b = Board.fromFen "8/8/8/8/8/8/8/R6K w - - 0 1"
+        let originalOut = Console.Out
+        use sw = new System.IO.StringWriter()
+        Console.SetOut(sw)
+
+        try
+            Debug.displayAttackMap b Colour.White
+            let output = sw.ToString()
+            // Rook on a1 attacks a2..a8 and b1..h1
+            Assert.Contains("x . . . . . . .", output)  // rank 1
+            Assert.Contains("x . . . . . . .", output)  // rank 2
+        finally
+            Console.SetOut(originalOut)
+
+
+
+
+
+
+
+
+
 
 module UciTests =
 
