@@ -1281,15 +1281,20 @@ module BoardTests =
         let b = Board.fromFen "8/8/8/8/8/8/8/Kb4Bk w - - 0 1"
         Assert.False(Board.hasInsufficientMaterial b)
 
+    [<Fact>]
+    let ``White is in check from rook`` () =
+        let b = Board.fromFen "4k3/8/8/8/8/8/4R3/4K3 b - - 0 1"
+        Assert.True(Board.isInCheck b)
 
+    [<Fact>]
+    let ``White is not in check`` () =
+        let b = Board.fromFen "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
+        Assert.False(Board.isInCheck b)
 
-
-
-
-
-
-
-
+    [<Fact>]
+    let ``Black is in check from knight`` () =
+        let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
+        Assert.True(Board.isInCheck b)
 
 module MoveGenTests =
 
@@ -1440,8 +1445,6 @@ module MoveGenTests =
         // This will likely FAIL in your current version and return 'Quiet'.
         Assert.Equal(3, Move.kind selectedMove)
 
-module PromotionTests =
-
     [<Fact>]
     let ``White pawn generates 4 quiet promotion moves`` () =
         let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
@@ -1486,25 +1489,6 @@ module PromotionTests =
 
         Assert.Equal(4, promos.Length)
 
-module CheckDetectionTests =
-
-    [<Fact>]
-    let ``White is in check from rook`` () =
-        let b = Board.fromFen "4k3/8/8/8/8/8/4R3/4K3 b - - 0 1"
-        Assert.True(Board.isInCheck b)
-
-    [<Fact>]
-    let ``White is not in check`` () =
-        let b = Board.fromFen "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
-        Assert.False(Board.isInCheck b)
-
-    [<Fact>]
-    let ``Black is in check from knight`` () =
-        let b = Board.fromFen "4k3/8/3N4/8/8/8/8/4K3 b - - 0 1"
-        Assert.True(Board.isInCheck b)
-
-module LegalMoveFilteringTests =
-
     [<Fact>]
     let ``Pinned knight has no legal moves`` () =
         let b = Board.fromFen "4r3/8/8/8/8/8/4N3/4K3 w - - 0 1"
@@ -1530,6 +1514,73 @@ module LegalMoveFilteringTests =
         let moves = MoveGen.getLegalMoves b
 
         Assert.DoesNotContain(moves, fun m -> Move.kind m = 3)
+
+    [<Fact>]
+    let ``All legal moves are a subset of pseudo-legal moves`` () =
+        let fens = 
+            [ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+              "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+              "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1" ]
+
+        for fen in fens do
+            let b = Board.fromFen fen
+            let pseudo = MoveGen.getPseudoLegalMoves b |> Set.ofArray
+            let legal = MoveGen.getLegalMoves b |> Set.ofArray
+            Assert.True(Set.isSubset legal pseudo, $"Legal not subset of pseudo for FEN: {fen}")
+
+    [<Fact>]
+    let ``Checkmated side has no legal moves`` () =
+        // Fool's mate
+        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 0 3"
+        let b = Board.fromFen fen
+        Assert.True(Board.isInCheck b)
+        let moves = MoveGen.getLegalMoves b
+        Assert.Empty(moves)
+
+    [<Fact>]
+    let ``Stalemated side has no legal moves and is not in check`` () =
+        let fen = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
+        let b = Board.fromFen fen
+        Assert.False(Board.isInCheck b)
+        let moves = MoveGen.getLegalMoves b
+        Assert.Empty(moves)
+
+    [<Fact>]
+    let ``getCaptureMoves only returns legal captures`` () =
+        let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+        let b = Board.fromFen fen
+        let legal = MoveGen.getLegalMoves b |> Set.ofArray
+        let caps = MoveGen.getCaptureMoves b
+
+        // All capture moves must be legal
+        for m in caps do
+            Assert.True(Set.contains m legal, $"Illegal capture in QS: {Move.toUci m}")
+            Assert.True(Move.kind m = 1 || Move.kind m = 2 || Move.kind m = 5)
+
+    [<Fact>]
+    let ``Starting position perft(1) and perft(2) via getLegalMoves`` () =
+        let b0 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        let moves1 = MoveGen.getLegalMoves b0
+        Assert.Equal(20, moves1.Length)
+
+        let mutable total2 = 0
+        for m in moves1 do
+            let b1 = Board.applyMove m b0
+            total2 <- total2 + (MoveGen.getLegalMoves b1).Length
+
+        Assert.Equal(400, total2)
+
+
+
+
+
+
+
+
+
+
+
 
 module PerftTests =
 
