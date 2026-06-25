@@ -247,7 +247,6 @@ module Move =
         | _ ->
             baseStr
 
-
 /// Bitboards are 64-bit unsigned integers where each bit represents a square.
 /// Bit 0 is a1, Bit 7 is h1, Bit 63 is h8.
 type Bitboard = uint64
@@ -327,85 +326,6 @@ module BitboardSet =
           WhiteTotal = 0uL
           BlackTotal = 0uL
           Occupancy = 0uL }
-
-    /// Converts a Piece Map into a BitboardSet.
-    let fromMap (pieces: Map<Square, Piece>) =
-        let mutable bbs = empty
-
-        for (KeyValue(sq, p)) in pieces do
-            let bit = 1uL <<< sq
-
-            match Piece.colour p, Piece.kind p with
-            | Colour.White, PieceType.Pawn ->
-                bbs <-
-                    { bbs with
-                        WhitePawns = bbs.WhitePawns ||| bit }
-            | Colour.White, PieceType.Knight ->
-                bbs <-
-                    { bbs with
-                        WhiteKnights = bbs.WhiteKnights ||| bit }
-            | Colour.White, PieceType.Bishop ->
-                bbs <-
-                    { bbs with
-                        WhiteBishops = bbs.WhiteBishops ||| bit }
-            | Colour.White, PieceType.Rook ->
-                bbs <-
-                    { bbs with
-                        WhiteRooks = bbs.WhiteRooks ||| bit }
-            | Colour.White, PieceType.Queen ->
-                bbs <-
-                    { bbs with
-                        WhiteQueens = bbs.WhiteQueens ||| bit }
-            | Colour.White, PieceType.King ->
-                bbs <-
-                    { bbs with
-                        WhiteKings = bbs.WhiteKings ||| bit }
-            | Colour.Black, PieceType.Pawn ->
-                bbs <-
-                    { bbs with
-                        BlackPawns = bbs.BlackPawns ||| bit }
-            | Colour.Black, PieceType.Knight ->
-                bbs <-
-                    { bbs with
-                        BlackKnights = bbs.BlackKnights ||| bit }
-            | Colour.Black, PieceType.Bishop ->
-                bbs <-
-                    { bbs with
-                        BlackBishops = bbs.BlackBishops ||| bit }
-            | Colour.Black, PieceType.Rook ->
-                bbs <-
-                    { bbs with
-                        BlackRooks = bbs.BlackRooks ||| bit }
-            | Colour.Black, PieceType.Queen ->
-                bbs <-
-                    { bbs with
-                        BlackQueens = bbs.BlackQueens ||| bit }
-            | Colour.Black, PieceType.King ->
-                bbs <-
-                    { bbs with
-                        BlackKings = bbs.BlackKings ||| bit }
-            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
- 
-        let whiteTotal =
-            bbs.WhitePawns
-            ||| bbs.WhiteKnights
-            ||| bbs.WhiteBishops
-            ||| bbs.WhiteRooks
-            ||| bbs.WhiteQueens
-            ||| bbs.WhiteKings
-
-        let blackTotal =
-            bbs.BlackPawns
-            ||| bbs.BlackKnights
-            ||| bbs.BlackBishops
-            ||| bbs.BlackRooks
-            ||| bbs.BlackQueens
-            ||| bbs.BlackKings
-
-        { bbs with
-            WhiteTotal = whiteTotal
-            BlackTotal = blackTotal
-            Occupancy = whiteTotal ||| blackTotal }
 
     /// Identifies the piece (if any) at a specific square using bitboards.
     let getPieceAt (sq: Square) (bbs: BitboardSet) : Piece option =
@@ -507,7 +427,7 @@ module BitboardSet =
                 yield (sq, getPieceAt sq bbs |> Option.get)
         }
 
-module SlidingAttackGen =
+module Magic =
     /// Generates a bitboard of all squares a Bishop attacks from a given square, 
     /// accounting for blockers. This is the "slow" version used for table init.
     let bishopAttacks (sq: Square) (blockers: Bitboard) =
@@ -575,7 +495,6 @@ module SlidingAttackGen =
         for nf in f - 1 .. -1 .. 1 do mask <- mask ||| (1uL <<< (r * 8 + nf))
         mask
 
-module Magic =
     /// Represents a magic entry for a square, containing the mask and the offset into the attack table.
     type MagicEntry = { Mask: Bitboard; Offset: int }
 
@@ -616,22 +535,22 @@ module Magic =
         printfn "info string Initializing Sliding Attack Tables..."
         for sq in 0 .. 63 do
             // Bishops
-            let bMask = SlidingAttackGen.bishopMask sq
+            let bMask = bishopMask sq
             let bBits = Bitboard.count bMask
             bishopEntries.[sq] <- { Mask = bMask; Offset = sq * 4096 }
             for i in 0 .. (1 <<< bBits) - 1 do
                 let blockers = getBlockers i bMask
                 let tableIdx = (sq * 4096) + i
-                bishopTable.[tableIdx] <- SlidingAttackGen.bishopAttacks sq blockers
+                bishopTable.[tableIdx] <- bishopAttacks sq blockers
 
             // Rooks
-            let rMask = SlidingAttackGen.rookMask sq
+            let rMask = rookMask sq
             let rBits = Bitboard.count rMask
             rookEntries.[sq] <- { Mask = rMask; Offset = sq * 4096 }
             for i in 0 .. (1 <<< rBits) - 1 do
                 let blockers = getBlockers i rMask
                 let tableIdx = (sq * 4096) + i
-                rookTable.[tableIdx] <- SlidingAttackGen.rookAttacks sq blockers
+                rookTable.[tableIdx] <- rookAttacks sq blockers
         printfn "info string Sliding Attack Tables initialized."
 
 module BitboardGen =
