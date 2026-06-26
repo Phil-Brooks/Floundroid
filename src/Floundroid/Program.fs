@@ -1406,90 +1406,39 @@ module Evaluation =
     let wtKingSafety    = 0
 
     /// Assigns a base value to each piece type for evaluation purposes.
-    let matScore =
-        function
-        | PieceType.Pawn -> 100
-        | PieceType.Knight -> 320
-        | PieceType.Bishop -> 330
-        | PieceType.Rook -> 500
-        | PieceType.Queen -> 900
-        | PieceType.King -> 20000
-        | _ -> invalidArg "PieceType" "Invalid PieceType value"
+    let mats = [| 100; 320; 330; 500; 900; 20000 |]
+    
+    let psts =
+        [|
+          [|0; 0; 0; 0; 0; 0; 0; 0; 5; 10; 10; -20; -20; 10; 10; 5; 5; -5; -10; 0; 0;
+            -10; -5; 5; 0; 0; 0; 20; 20; 0; 0; 0; 5; 5; 10; 25; 25; 10; 5; 5; 10; 10;
+            20; 30; 30; 20; 10; 10; 50; 50; 50; 50; 50; 50; 50; 50; 0; 0; 0; 0; 0; 0;
+            0; 0|]
 
-    // All PSTs are written as they appear on a board (Rank 8 top, Rank 1 bottom)
-    // and then reversed so that index 0 = a1.
+          [|-50; -40; -30; -30; -30; -30; -40; -50; -40; -20; 0; 0; 0; 0; -20; -40;
+            -30; 0; 10; 15; 15; 10; 0; -30; -30; 5; 15; 20; 20; 15; 5; -30; -30; 0; 15;
+            20; 20; 15; 0; -30; -30; 5; 10; 15; 15; 10; 5; -30; -40; -20; 0; 5; 5; 0;
+            -20; -40; -50; -40; -30; -30; -30; -30; -40; -50|]
 
-    /// The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let pawnPst =
-        Array.rev
-            [| 0; 0; 0; 0; 0; 0; 0; 0
-               50; 50; 50; 50; 50; 50; 50; 50
-               10; 10; 20; 30; 30; 20; 10; 10
-               5; 5; 10; 25; 25; 10; 5; 5
-               0; 0; 0; 20; 20; 0; 0; 0
-               5; -5; -10; 0; 0; -10; -5; 5
-               5; 10; 10; -20; -20; 10; 10; 5
-               0; 0; 0; 0; 0; 0; 0; 0 |]
+          [|-20; -10; -10; -10; -10; -10; -10; -20; -10; 5; 0; 0; 0; 0; 5; -10; -10;
+            10; 10; 10; 10; 10; 10; -10; -10; 0; 10; 10; 10; 10; 0; -10; -10; 5; 5; 10;
+            10; 5; 5; -10; -10; 0; 5; 10; 10; 5; 0; -10; -10; 0; 0; 0; 0; 0; 0; -10;
+            -20; -10; -10; -10; -10; -10; -10; -20|]
+ 
+          [|0; 0; 0; 5; 5; 0; 0; 0; -5; 0; 0; 0; 0; 0; 0; -5; -5; 0; 0; 0; 0; 0; 0; -5;
+            -5; 0; 0; 0; 0; 0; 0; -5; -5; 0; 0; 0; 0; 0; 0; -5; -5; 0; 0; 0; 0; 0; 0;
+            -5; 5; 10; 10; 10; 10; 10; 10; 5; 0; 0; 0; 0; 0; 0; 0; 0|]
 
-    /// The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let knightPst =
-        Array.rev
-            [| -50; -40; -30; -30; -30; -30; -40; -50
-               -40; -20; 0; 5; 5; 0; -20; -40
-               -30; 5; 10; 15; 15; 10; 5; -30
-               -30; 0; 15; 20; 20; 15; 0; -30
-               -30; 5; 15; 20; 20; 15; 5; -30
-               -30; 0; 10; 15; 15; 10; 0; -30
-               -40; -20; 0; 0; 0; 0; -20; -40
-               -50; -40; -30; -30; -30; -30; -40; -50 |]
+          [|-20; -10; -10; -5; -5; -10; -10; -20; -10; 0; 0; 0; 0; 5; 0; -10; -10; 0;
+            5; 5; 5; 5; 5; -10; -5; 0; 5; 5; 5; 5; 0; 0; -5; 0; 5; 5; 5; 5; 0; -5; -10;
+            0; 5; 5; 5; 5; 0; -10; -10; 0; 0; 0; 0; 0; 0; -10; -20; -10; -10; -5; -5;
+            -10; -10; -20|]
 
-    /// The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let bishopPst =
-        Array.rev
-            [| -20; -10; -10; -10; -10; -10; -10; -20
-               -10; 0; 0; 0; 0; 0; 0; -10
-               -10; 0; 5; 10; 10; 5; 0; -10
-               -10; 5; 5; 10; 10; 5; 5; -10
-               -10; 0; 10; 10; 10; 10; 0; -10
-               -10; 10; 10; 10; 10; 10; 10; -10
-               -10; 5; 0; 0; 0; 0; 5; -10
-               -20; -10; -10; -10; -10; -10; -10; -20 |]
-
-    /// The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let rookPst =
-        Array.rev
-            [| 0; 0; 0; 0; 0; 0; 0; 0
-               5; 10; 10; 10; 10; 10; 10; 5
-               -5; 0; 0; 0; 0; 0; 0; -5
-               -5; 0; 0; 0; 0; 0; 0; -5
-               -5; 0; 0; 0; 0; 0; 0; -5
-               -5; 0; 0; 0; 0; 0; 0; -5
-               -5; 0; 0; 0; 0; 0; 0; -5
-               0; 0; 0; 5; 5; 0; 0; 0 |]
-
-    /// The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let queenPst =
-        Array.rev
-            [| -20; -10; -10; -5; -5; -10; -10; -20
-               -10; 0; 0; 0; 0; 0; 0; -10
-               -10; 0; 5; 5; 5; 5; 0; -10
-               -5; 0; 5; 5; 5; 5; 0; -5
-               0; 0; 5; 5; 5; 5; 0; -5
-               -10; 5; 5; 5; 5; 5; 0; -10
-               -10; 0; 5; 0; 0; 0; 0; -10
-               -20; -10; -10; -5; -5; -10; -10; -20 |]
-
-    /// The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.
-    let kingPst =
-        Array.rev
-            [| -30; -40; -40; -50; -50; -40; -40; -30
-               -30; -40; -40; -50; -50; -40; -40; -30
-               -30; -40; -40; -50; -50; -40; -40; -30
-               -30; -40; -40; -50; -50; -40; -40; -30
-               -20; -30; -30; -40; -40; -30; -30; -20
-               -10; -20; -20; -20; -20; -20; -20; -10
-               20; 20; 0; 0; 0; 0; 20; 20
-               20; 30; 10; 0; 0; 10; 30; 20 |]
+          [|20; 30; 10; 0; 0; 10; 30; 20; 20; 20; 0; 0; 0; 0; 20; 20; -10; -20; -20;
+            -20; -20; -20; -20; -10; -20; -30; -30; -40; -40; -30; -30; -20; -30; -40;
+            -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30; -30;
+            -40; -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30|]
+            |]
 
     /// Assigns a positional score to a piece based on its square using Piece-Square Tables (PSTs).
     let pstScore piece sq =
@@ -1497,16 +1446,8 @@ module Evaluation =
         let idx =
             if Piece.colour piece = Colour.White then sq
             else sq ^^^ 56
-
-        match Piece.kind piece with
-        | PieceType.Pawn -> pawnPst.[idx]
-        | PieceType.Knight -> knightPst.[idx]
-        | PieceType.Bishop -> bishopPst.[idx]
-        | PieceType.Rook -> rookPst.[idx]
-        | PieceType.Queen -> queenPst.[idx]
-        | PieceType.King -> kingPst.[idx]
-        | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind piece}"
-    
+        psts[int (Piece.kind piece)].[idx]
+   
     let private pawnFileCounts (pawns: Bitboard) =
         let counts = Array.zeroCreate 8
         let mutable remaining = pawns
@@ -1685,7 +1626,7 @@ module Evaluation =
             // We know a piece exists here, so we call getPieceAt
             let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
             
-            let baseVal = matScore (Piece.kind p)
+            let baseVal = mats[int (Piece.kind p)]
             let pstBonus = pstScore p sq
 
             if Piece.colour p = Colour.White then score <- score + baseVal + pstBonus
@@ -1739,11 +1680,11 @@ module Search =
                     let m = moves.[i]
                     let victimVal = 
                         match Board.tryGetPiece b (Move.toSq m) with 
-                        | Some p -> Evaluation.matScore (Piece.kind p) 
+                        | Some p -> Evaluation.mats[int (Piece.kind p)] 
                         | None -> 100 // En Passant
                     let attackerVal = 
                         match Board.tryGetPiece b (Move.fromSq m) with 
-                        | Some p -> Evaluation.matScore (Piece.kind p) 
+                        | Some p -> Evaluation.mats[int (Piece.kind p)] 
                         | None -> 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
@@ -1851,12 +1792,12 @@ module Search =
                                 | 1 | 2 ->
                                     let victimVal = 
                                         if Board.isOccupied b (Move.toSq m) then 
-                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matScore (Piece.kind p) | None -> 0) 
+                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.mats[int (Piece.kind p)] | None -> 0) 
                                         else 100 // En Passant
                                     let attackerVal = 
-                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matScore (Piece.kind p) | None -> 0
+                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.mats[int (Piece.kind p)] | None -> 0
                                     10000 + (victimVal * 10) - attackerVal
-                                | 5 -> 9000 + Evaluation.matScore (enum<PieceType>(Move.promo m))
+                                | 5 -> 9000 + Evaluation.mats[int (enum<PieceType>(Move.promo m))]
                                 | _ -> 
                                     if Some m = killerMoves.[0, ply] then 8000
                                     elif Some m = killerMoves.[1, ply] then 7000
