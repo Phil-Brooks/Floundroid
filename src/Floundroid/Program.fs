@@ -1609,24 +1609,29 @@ module Evaluation =
                 
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
-        let mutable score = pawnStructureScore b
+        let mutable mat = 0
+        let mutable pst = 0
+
         let mutable occ = b.Bitboards.Occupancy
-        
-        // NEW: tiny king-safety term
-        //score <- score + kingSafety b Colour.White
-        //score <- score - kingSafety b Colour.Black
-        
         while occ <> 0uL do
             let sq = Bitboard.popLsb &occ
             // We know a piece exists here, so we call getPieceAt
             let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
             
-            let baseVal = mats[int (Piece.kind p)]
-            let pstBonus = pstScore p sq
+            let v = mats[int (Piece.kind p)]
+            let pv = pstScore p sq
 
-            if Piece.colour p = Colour.White then score <- score + baseVal + pstBonus
-            else score <- score - (baseVal + pstBonus)
-        score    
+            if Piece.colour p = Colour.White 
+            then 
+                mat <- mat + v
+                pst <- pst + pv
+            else 
+                mat <- mat - v
+                pst <- pst - pv
+
+        let ps = pawnStructureScore b
+        //let ks = kingSafety b Colour.White - kingSafety b Colour.Black
+        mat * wtMaterial + pst * wtPst + ps * wtPawnStructure //+ ks * wtKingSafety
 
 module Search =
     let mutable nodes = 0uL
