@@ -568,7 +568,6 @@ module BitboardGen =
     let kingAttacks = Array.zeroCreate<Bitboard> 64
     /// Pawn attacks: [Colour index 0=White, 1=Black, Square 0-63]
     let pawnAttacks = Array2D.zeroCreate<Bitboard> 2 64
-
     let private initializeLeapers () =
         for sq in 0..63 do
             let f, r = sq % 8, sq / 8
@@ -628,10 +627,37 @@ module BitboardGen =
 
             pawnAttacks.[1, sq] <- bPawnAttacks
 
+    let passedPawnMasks = Array2D.create 2 64 0uL
+    let passedPawnBonusTable = Array2D.create 2 64 0
+
+    let pp_init () =
+        let bonuses = [| 0; 0; 6; 12; 20; 35; 55; 0 |]
+
+        for sq in 0..63 do
+            let file = sq % 8
+            let rank = sq / 8
+            
+            // 1. Calculate Masks
+            let mutable whiteMask = 0uL
+            let mutable blackMask = 0uL
+            
+            for f in Math.Max(0, file - 1) .. Math.Min(7, file + 1) do
+                for r in 0..7 do
+                    let targetSq = r * 8 + f
+                    if r > rank then whiteMask <- whiteMask ||| (1uL <<< targetSq)
+                    if r < rank then blackMask <- blackMask ||| (1uL <<< targetSq)
+            
+            passedPawnMasks.[0, sq] <- whiteMask // White (0)
+            passedPawnMasks.[1, sq] <- blackMask // Black (1)
+
+            // 2. Calculate Bonus Table (pre-indexed by square for speed)
+            passedPawnBonusTable.[0, sq] <- bonuses.[rank]
+            passedPawnBonusTable.[1, sq] <- bonuses.[7 - rank]
 
     // Initialize the tables immediately
     do 
         initializeLeapers ()
+        pp_init()
         Magic.init ()
 
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
@@ -1449,59 +1475,44 @@ module Evaluation =
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
-        let pawnFileCounts (pawns: Bitboard) =
-            let counts = Array.zeroCreate 8
-            let mutable remaining = pawns
 
-            while remaining <> 0uL do
-                let sq = Bitboard.popLsb &remaining
-                counts.[sq % 8] <- counts.[sq % 8] + 1
-            counts
-        let isPassedPawn (colour: Colour) (sq: Square) (enemyPawns: Bitboard) =
-            let file = sq % 8
-            let rank = sq / 8
-            let mutable blocked = false
-
-            for targetFile in Math.Max(0, file - 1) .. Math.Min(7, file + 1) do
-                if colour = Colour.White then
-                    for targetRank in rank + 1 .. 7 do
-                        if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
-                            blocked <- true
-                else
-                    for targetRank in rank - 1 .. -1 .. 0 do
-                        if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
-                            blocked <- true
-
-            not blocked
-        let passedPawnBonus (colour: Colour) (sq: Square) =
-            let rank = sq / 8
-            let progress = if colour = Colour.White then rank else 7 - rank
-            [| 0; 0; 6; 12; 20; 35; 55; 0 |].[progress]
         let evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
-            let fileCounts = pawnFileCounts friendlyPawns
             let mutable score = 0
+            let cIdx = if colour = Colour.White then 0 else 1
+
+            // 1. Generate 8-bit mask of occupied files (A-H)
+            let mutable fileMapping = friendlyPawns
+            fileMapping <- fileMapping ||| (fileMapping >>> 32)
+            fileMapping <- fileMapping ||| (fileMapping >>> 16)
+            fileMapping <- fileMapping ||| (fileMapping >>> 8)
+            let filesWithPawns = uint32 (fileMapping &&& 0xFFuL)
+
+            // 2. Doubled Pawn Penalty
+            let totalPawnCount = Bitboard.count friendlyPawns
+            let occupiedFilesCount = System.Numerics.BitOperations.PopCount(filesWithPawns)
+            score <- score - ((totalPawnCount - occupiedFilesCount) * 6)
+
+            // 3. Process Pawns
             let mutable remaining = friendlyPawns
-
-            for file in 0..7 do
-                if fileCounts.[file] > 1 then
-                    score <- score - ((fileCounts.[file] - 1) * 6)
-
             while remaining <> 0uL do
                 let sq = Bitboard.popLsb &remaining
                 let file = sq % 8
 
-                let hasLeftPawn = file > 0 && fileCounts.[file - 1] > 0
-                let hasRightPawn = file < 7 && fileCounts.[file + 1] > 0
+                // Isolation / Connection check (Bitwise on the 8-bit mask)
+                let leftNeighbor  = if file > 0 then (filesWithPawns &&& (1u <<< (file - 1))) <> 0u else false
+                let rightNeighbor = if file < 7 then (filesWithPawns &&& (1u <<< (file + 1))) <> 0u else false
 
-                if not hasLeftPawn && not hasRightPawn then
+                if not leftNeighbor && not rightNeighbor then
                     score <- score - 5
                 else
                     score <- score + 2
 
-                if isPassedPawn colour sq enemyPawns then
-                    score <- score + passedPawnBonus colour sq
+                // FAST Passed Pawn Check: No loops!
+                if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
+                    score <- score + BitboardGen.passedPawnBonusTable.[cIdx, sq]
 
             score
+
 
         let bbs = b.Bitboards
         let whiteScore = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
