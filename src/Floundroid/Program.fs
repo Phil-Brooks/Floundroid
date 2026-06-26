@@ -630,6 +630,17 @@ module BitboardGen =
     let passedPawnMasks = Array2D.create 2 64 0uL
     let passedPawnBonusTable = Array2D.create 2 64 0
 
+    let FileMasks = Array.init 8 (fun f ->
+        let mutable mask = 0uL
+        for r in 0..7 do mask <- mask ||| (1uL <<< (r * 8 + f))
+        mask)
+
+    let AdjacentFileMasks = Array.init 8 (fun f ->
+        let mutable mask = 0uL
+        if f > 0 then mask <- mask ||| FileMasks.[f - 1]
+        if f < 7 then mask <- mask ||| FileMasks.[f + 1]
+        mask)
+
     let pp_init () =
         let bonuses = [| 0; 0; 6; 12; 20; 35; 55; 0 |]
 
@@ -1475,44 +1486,50 @@ module Evaluation =
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
-
         let evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
             let mutable score = 0
             let cIdx = if colour = Colour.White then 0 else 1
 
-            // 1. Generate 8-bit mask of occupied files (A-H)
+            // --- 1. Doubled Pawns (Set-wise) ---
+            // A pawn is doubled if there's another friendly pawn "north" of it.
+            let doubled = 
+                if colour = Colour.White then friendlyPawns &&& (friendlyPawns <<< 8)
+                else friendlyPawns &&& (friendlyPawns >>> 8)
+            // Your logic: score -6 for every "extra" pawn on a file.
+            score <- score - (Bitboard.count doubled * 6)
+
+            // --- 2. Isolated Pawns (Set-wise) ---
+            // A pawn is isolated if (FriendlyPawns AND AdjacentFileMask) is empty.
+            // We identify which files have pawns, then find files with no neighbors.
             let mutable fileMapping = friendlyPawns
             fileMapping <- fileMapping ||| (fileMapping >>> 32)
             fileMapping <- fileMapping ||| (fileMapping >>> 16)
             fileMapping <- fileMapping ||| (fileMapping >>> 8)
             let filesWithPawns = uint32 (fileMapping &&& 0xFFuL)
 
-            // 2. Doubled Pawn Penalty
-            let totalPawnCount = Bitboard.count friendlyPawns
-            let occupiedFilesCount = System.Numerics.BitOperations.PopCount(filesWithPawns)
-            score <- score - ((totalPawnCount - occupiedFilesCount) * 6)
+            let neighborFiles = ((filesWithPawns <<< 1) ||| (filesWithPawns >>> 1)) &&& 0xFFu
+            let isolatedFilesMask = filesWithPawns &&& ~~~neighborFiles
 
-            // 3. Process Pawns
+            // Count how many pawns are on isolated files
+            let mutable isolatedPawnCount = 0
+            let mutable tempIsoFiles = isolatedFilesMask
+            while tempIsoFiles <> 0u do
+                let file = System.Numerics.BitOperations.TrailingZeroCount(tempIsoFiles)
+                tempIsoFiles <- tempIsoFiles &&& (tempIsoFiles - 1u)
+                isolatedPawnCount <- isolatedPawnCount + Bitboard.count (friendlyPawns &&& BitboardGen.FileMasks.[file])
+
+            let totalPawns = Bitboard.count friendlyPawns
+            score <- score + (totalPawns * 2) - (isolatedPawnCount * 7)
+
+            // --- 3. Passed Pawns (The only remaining loop) ---
+            // We only loop through pawns to check for passers.
             let mutable remaining = friendlyPawns
             while remaining <> 0uL do
                 let sq = Bitboard.popLsb &remaining
-                let file = sq % 8
-
-                // Isolation / Connection check (Bitwise on the 8-bit mask)
-                let leftNeighbor  = if file > 0 then (filesWithPawns &&& (1u <<< (file - 1))) <> 0u else false
-                let rightNeighbor = if file < 7 then (filesWithPawns &&& (1u <<< (file + 1))) <> 0u else false
-
-                if not leftNeighbor && not rightNeighbor then
-                    score <- score - 5
-                else
-                    score <- score + 2
-
-                // FAST Passed Pawn Check: No loops!
                 if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
                     score <- score + BitboardGen.passedPawnBonusTable.[cIdx, sq]
 
             score
-
 
         let bbs = b.Bitboards
         let whiteScore = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
