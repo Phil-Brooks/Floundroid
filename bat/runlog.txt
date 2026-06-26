@@ -1,35 +1,35 @@
 Started game 1 of 100 (Floundroid vs Cinnamon)
-Started game 2 of 100 (Cinnamon vs Floundroid)
 Started game 3 of 100 (Floundroid vs Cinnamon)
+Started game 2 of 100 (Cinnamon vs Floundroid)
 Started game 4 of 100 (Cinnamon vs Floundroid)
-Finished game 1 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 1 - 0 - 0  [1.000] 1
-Started game 5 of 100 (Floundroid vs Cinnamon)
-Finished game 3 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 1 - 1 - 0  [0.500] 2
-Started game 6 of 100 (Cinnamon vs Floundroid)
-Finished game 4 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 1 - 2 - 0  [0.333] 3
-Started game 7 of 100 (Floundroid vs Cinnamon)
 Finished game 2 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 1 - 3 - 0  [0.250] 4
+Score of Floundroid vs Cinnamon: 0 - 1 - 0  [0.000] 1
+Started game 5 of 100 (Floundroid vs Cinnamon)
+Finished game 3 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 0 - 1 - 1  [0.250] 2
+Started game 6 of 100 (Cinnamon vs Floundroid)
+Finished game 1 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 0 - 2 - 1  [0.167] 3
+Started game 7 of 100 (Floundroid vs Cinnamon)
+Finished game 4 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 0 - 3 - 1  [0.125] 4
 Started game 8 of 100 (Cinnamon vs Floundroid)
-Finished game 6 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 1 - 4 - 0  [0.200] 5
-Started game 9 of 100 (Floundroid vs Cinnamon)
 Finished game 5 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 1 - 5 - 0  [0.167] 6
+Score of Floundroid vs Cinnamon: 0 - 4 - 1  [0.100] 5
+Started game 9 of 100 (Floundroid vs Cinnamon)
+Finished game 6 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 0 - 5 - 1  [0.083] 6
 Started game 10 of 100 (Cinnamon vs Floundroid)
-Finished game 7 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 1 - 6 - 0  [0.143] 7
+Finished game 8 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 0 - 6 - 1  [0.071] 7
 Started game 11 of 100 (Floundroid vs Cinnamon)
-Finished game 8 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Cinnamon: 1 - 6 - 1  [0.188] 8
+Finished game 7 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 0 - 7 - 1  [0.063] 8
 Started game 12 of 100 (Cinnamon vs Floundroid)
 Finished game 9 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 1 - 7 - 1  [0.167] 9
+Score of Floundroid vs Cinnamon: 0 - 8 - 1  [0.056] 9
 Started game 13 of 100 (Floundroid vs Cinnamon)
-Finished game 10 (Cinnamon vs Floundroid): 1-0 {White mates}
+Finished game 10 (Cinnamon vs Floundroid): 0-1 {Black mates}
 Score of Floundroid vs Cinnamon: 1 - 8 - 1  [0.150] 10
 Started game 14 of 100 (Cinnamon vs Floundroid)
 Finished game 11 (Floundroid vs Cinnamon): 0-1 {Black mates}
@@ -38,290 +38,292 @@ Started game 15 of 100 (Floundroid vs Cinnamon)
 Finished game 12 (Cinnamon vs Floundroid): 1-0 {White mates}
 Score of Floundroid vs Cinnamon: 1 - 10 - 1  [0.125] 12
 Started game 16 of 100 (Cinnamon vs Floundroid)
-Finished game 13 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 10 - 1  [0.192] 13
+Finished game 13 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 1 - 11 - 1  [0.115] 13
 Started game 17 of 100 (Floundroid vs Cinnamon)
-Finished game 15 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 2 - 10 - 2  [0.214] 14
+Finished game 16 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 1 - 12 - 1  [0.107] 14
 Started game 18 of 100 (Cinnamon vs Floundroid)
 Finished game 14 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 11 - 2  [0.200] 15
+Score of Floundroid vs Cinnamon: 1 - 13 - 1  [0.100] 15
 Started game 19 of 100 (Floundroid vs Cinnamon)
-Finished game 16 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 12 - 2  [0.188] 16
+Finished game 15 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Cinnamon: 1 - 13 - 2  [0.125] 16
 Started game 20 of 100 (Cinnamon vs Floundroid)
-Finished game 17 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 2 - 13 - 2  [0.176] 17
+Finished game 20 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 1 - 13 - 3  [0.147] 17
 Started game 21 of 100 (Floundroid vs Cinnamon)
-Finished game 18 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 14 - 2  [0.167] 18
+Finished game 17 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 1 - 14 - 3  [0.139] 18
 Started game 22 of 100 (Cinnamon vs Floundroid)
-Finished game 19 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 2 - 15 - 2  [0.158] 19
+Finished game 18 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 1 - 14 - 4  [0.158] 19
 Started game 23 of 100 (Floundroid vs Cinnamon)
-Finished game 20 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 16 - 2  [0.150] 20
+Finished game 19 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 1 - 15 - 4  [0.150] 20
 Started game 24 of 100 (Cinnamon vs Floundroid)
 Finished game 21 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 2 - 17 - 2  [0.143] 21
+Score of Floundroid vs Cinnamon: 1 - 16 - 4  [0.143] 21
 Started game 25 of 100 (Floundroid vs Cinnamon)
-Finished game 22 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 18 - 2  [0.136] 22
+Finished game 22 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 1 - 16 - 5  [0.159] 22
 Started game 26 of 100 (Cinnamon vs Floundroid)
-Finished game 23 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 2 - 19 - 2  [0.130] 23
+Finished game 24 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 1 - 17 - 5  [0.152] 23
 Started game 27 of 100 (Floundroid vs Cinnamon)
-Finished game 24 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 2 - 19 - 3  [0.146] 24
+Finished game 23 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 1 - 18 - 5  [0.146] 24
 Started game 28 of 100 (Cinnamon vs Floundroid)
 Finished game 25 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 2 - 20 - 3  [0.140] 25
+Score of Floundroid vs Cinnamon: 1 - 19 - 5  [0.140] 25
 Started game 29 of 100 (Floundroid vs Cinnamon)
-Finished game 26 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 21 - 3  [0.135] 26
+Finished game 27 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 1 - 20 - 5  [0.135] 26
 Started game 30 of 100 (Cinnamon vs Floundroid)
-Finished game 28 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 2 - 22 - 3  [0.130] 27
+Finished game 26 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 1 - 21 - 5  [0.130] 27
 Started game 31 of 100 (Floundroid vs Cinnamon)
-Finished game 27 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 22 - 3  [0.161] 28
+Finished game 28 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 1 - 22 - 5  [0.125] 28
 Started game 32 of 100 (Cinnamon vs Floundroid)
-Finished game 30 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 23 - 3  [0.155] 29
+Finished game 31 (Floundroid vs Cinnamon): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 2 - 22 - 5  [0.155] 29
 Started game 33 of 100 (Floundroid vs Cinnamon)
-Finished game 31 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 3 - 23 - 4  [0.167] 30
+Finished game 29 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 23 - 5  [0.150] 30
 Started game 34 of 100 (Cinnamon vs Floundroid)
-Finished game 29 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Cinnamon: 3 - 23 - 5  [0.177] 31
+Finished game 30 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 2 - 24 - 5  [0.145] 31
 Started game 35 of 100 (Floundroid vs Cinnamon)
 Finished game 32 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 24 - 5  [0.172] 32
+Score of Floundroid vs Cinnamon: 2 - 25 - 5  [0.141] 32
 Started game 36 of 100 (Cinnamon vs Floundroid)
 Finished game 33 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 25 - 5  [0.167] 33
+Score of Floundroid vs Cinnamon: 2 - 26 - 5  [0.136] 33
 Started game 37 of 100 (Floundroid vs Cinnamon)
-Finished game 34 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 26 - 5  [0.162] 34
-Started game 38 of 100 (Cinnamon vs Floundroid)
-Finished game 35 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Cinnamon: 3 - 26 - 6  [0.171] 35
-Started game 39 of 100 (Floundroid vs Cinnamon)
 Finished game 36 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 27 - 6  [0.167] 36
+Score of Floundroid vs Cinnamon: 2 - 27 - 5  [0.132] 34
+Started game 38 of 100 (Cinnamon vs Floundroid)
+Finished game 34 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 2 - 28 - 5  [0.129] 35
+Started game 39 of 100 (Floundroid vs Cinnamon)
+Finished game 35 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 2 - 28 - 6  [0.139] 36
 Started game 40 of 100 (Cinnamon vs Floundroid)
-Finished game 37 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 28 - 6  [0.162] 37
-Started game 41 of 100 (Floundroid vs Cinnamon)
-Finished game 38 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 29 - 6  [0.158] 38
-Started game 42 of 100 (Cinnamon vs Floundroid)
 Finished game 40 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 30 - 6  [0.154] 39
+Score of Floundroid vs Cinnamon: 2 - 29 - 6  [0.135] 37
+Started game 41 of 100 (Floundroid vs Cinnamon)
+Finished game 37 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 30 - 6  [0.132] 38
+Started game 42 of 100 (Cinnamon vs Floundroid)
+Finished game 38 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 2 - 31 - 6  [0.128] 39
 Started game 43 of 100 (Floundroid vs Cinnamon)
 Finished game 39 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 31 - 6  [0.150] 40
+Score of Floundroid vs Cinnamon: 2 - 32 - 6  [0.125] 40
 Started game 44 of 100 (Cinnamon vs Floundroid)
 Finished game 41 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 32 - 6  [0.146] 41
+Score of Floundroid vs Cinnamon: 2 - 33 - 6  [0.122] 41
 Started game 45 of 100 (Floundroid vs Cinnamon)
-Finished game 42 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 33 - 6  [0.143] 42
-Started game 46 of 100 (Cinnamon vs Floundroid)
 Finished game 43 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 34 - 6  [0.140] 43
+Score of Floundroid vs Cinnamon: 2 - 34 - 6  [0.119] 42
+Started game 46 of 100 (Cinnamon vs Floundroid)
+Finished game 42 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 2 - 34 - 7  [0.128] 43
 Started game 47 of 100 (Floundroid vs Cinnamon)
-Finished game 44 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 35 - 6  [0.136] 44
+Finished game 44 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Cinnamon: 2 - 34 - 8  [0.136] 44
 Started game 48 of 100 (Cinnamon vs Floundroid)
 Finished game 45 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 36 - 6  [0.133] 45
+Score of Floundroid vs Cinnamon: 2 - 35 - 8  [0.133] 45
 Started game 49 of 100 (Floundroid vs Cinnamon)
 Finished game 46 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 3 - 37 - 6  [0.130] 46
+Score of Floundroid vs Cinnamon: 2 - 36 - 8  [0.130] 46
 Started game 50 of 100 (Cinnamon vs Floundroid)
-Finished game 49 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 3 - 38 - 6  [0.128] 47
-Started game 51 of 100 (Floundroid vs Cinnamon)
-Finished game 47 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 38 - 6  [0.146] 48
-Started game 52 of 100 (Cinnamon vs Floundroid)
 Finished game 48 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 39 - 6  [0.143] 49
+Score of Floundroid vs Cinnamon: 2 - 37 - 8  [0.128] 47
+Started game 51 of 100 (Floundroid vs Cinnamon)
+Finished game 47 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 38 - 8  [0.125] 48
+Started game 52 of 100 (Cinnamon vs Floundroid)
+Finished game 49 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 39 - 8  [0.122] 49
 Started game 53 of 100 (Floundroid vs Cinnamon)
-Finished game 50 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 40 - 6  [0.140] 50
-Started game 54 of 100 (Cinnamon vs Floundroid)
-Finished game 53 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 41 - 6  [0.137] 51
-Started game 55 of 100 (Floundroid vs Cinnamon)
 Finished game 52 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 42 - 6  [0.135] 52
-Started game 56 of 100 (Cinnamon vs Floundroid)
+Score of Floundroid vs Cinnamon: 2 - 40 - 8  [0.120] 50
+Started game 54 of 100 (Cinnamon vs Floundroid)
 Finished game 51 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 43 - 6  [0.132] 53
+Score of Floundroid vs Cinnamon: 2 - 41 - 8  [0.118] 51
+Started game 55 of 100 (Floundroid vs Cinnamon)
+Finished game 50 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 2 - 42 - 8  [0.115] 52
+Started game 56 of 100 (Cinnamon vs Floundroid)
+Finished game 53 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 43 - 8  [0.113] 53
 Started game 57 of 100 (Floundroid vs Cinnamon)
 Finished game 54 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 44 - 6  [0.130] 54
+Score of Floundroid vs Cinnamon: 2 - 44 - 8  [0.111] 54
 Started game 58 of 100 (Cinnamon vs Floundroid)
-Finished game 55 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 4 - 44 - 7  [0.136] 55
+Finished game 55 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 2 - 45 - 8  [0.109] 55
 Started game 59 of 100 (Floundroid vs Cinnamon)
-Finished game 56 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 45 - 7  [0.134] 56
+Finished game 56 (Cinnamon vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 3 - 45 - 8  [0.125] 56
 Started game 60 of 100 (Cinnamon vs Floundroid)
-Finished game 57 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 46 - 7  [0.132] 57
+Finished game 57 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 3 - 45 - 9  [0.132] 57
 Started game 61 of 100 (Floundroid vs Cinnamon)
-Finished game 58 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 47 - 7  [0.129] 58
-Started game 62 of 100 (Cinnamon vs Floundroid)
 Finished game 59 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 48 - 7  [0.127] 59
+Score of Floundroid vs Cinnamon: 3 - 46 - 9  [0.129] 58
+Started game 62 of 100 (Cinnamon vs Floundroid)
+Finished game 58 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 3 - 47 - 9  [0.127] 59
 Started game 63 of 100 (Floundroid vs Cinnamon)
-Finished game 60 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 49 - 7  [0.125] 60
+Finished game 60 (Cinnamon vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 4 - 47 - 9  [0.142] 60
 Started game 64 of 100 (Cinnamon vs Floundroid)
-Finished game 61 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 4 - 49 - 8  [0.131] 61
+Finished game 61 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Cinnamon: 4 - 47 - 10  [0.148] 61
 Started game 65 of 100 (Floundroid vs Cinnamon)
-Finished game 62 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 4 - 49 - 9  [0.137] 62
-Started game 66 of 100 (Cinnamon vs Floundroid)
-Finished game 63 (Floundroid vs Cinnamon): 0-1 {White loses on time}
-Score of Floundroid vs Cinnamon: 4 - 50 - 9  [0.135] 63
-Started game 67 of 100 (Floundroid vs Cinnamon)
 Finished game 64 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 51 - 9  [0.133] 64
+Score of Floundroid vs Cinnamon: 4 - 48 - 10  [0.145] 62
+Started game 66 of 100 (Cinnamon vs Floundroid)
+Finished game 63 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 4 - 49 - 10  [0.143] 63
+Started game 67 of 100 (Floundroid vs Cinnamon)
+Finished game 62 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Cinnamon: 4 - 49 - 11  [0.148] 64
 Started game 68 of 100 (Cinnamon vs Floundroid)
 Finished game 65 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 52 - 9  [0.131] 65
+Score of Floundroid vs Cinnamon: 4 - 50 - 11  [0.146] 65
 Started game 69 of 100 (Floundroid vs Cinnamon)
-Finished game 66 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 4 - 53 - 9  [0.129] 66
+Finished game 68 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 4 - 51 - 11  [0.144] 66
 Started game 70 of 100 (Cinnamon vs Floundroid)
-Finished game 68 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Cinnamon: 4 - 53 - 10  [0.134] 67
-Started game 71 of 100 (Floundroid vs Cinnamon)
 Finished game 67 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 4 - 54 - 10  [0.132] 68
+Score of Floundroid vs Cinnamon: 4 - 52 - 11  [0.142] 67
+Started game 71 of 100 (Floundroid vs Cinnamon)
+Finished game 66 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by timeout}
+Score of Floundroid vs Cinnamon: 4 - 52 - 12  [0.147] 68
 Started game 72 of 100 (Cinnamon vs Floundroid)
-Finished game 69 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 54 - 10  [0.145] 69
+Finished game 69 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 4 - 53 - 12  [0.145] 69
 Started game 73 of 100 (Floundroid vs Cinnamon)
-Finished game 70 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 55 - 10  [0.143] 70
-Started game 74 of 100 (Cinnamon vs Floundroid)
-Finished game 72 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 56 - 10  [0.141] 71
-Started game 75 of 100 (Floundroid vs Cinnamon)
 Finished game 71 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 5 - 57 - 10  [0.139] 72
+Score of Floundroid vs Cinnamon: 4 - 54 - 12  [0.143] 70
+Started game 74 of 100 (Cinnamon vs Floundroid)
+Finished game 70 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 4 - 55 - 12  [0.141] 71
+Started game 75 of 100 (Floundroid vs Cinnamon)
+Finished game 72 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 4 - 56 - 12  [0.139] 72
 Started game 76 of 100 (Cinnamon vs Floundroid)
-Finished game 73 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 5 - 58 - 10  [0.137] 73
+Finished game 73 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Cinnamon: 4 - 56 - 13  [0.144] 73
 Started game 77 of 100 (Floundroid vs Cinnamon)
-Finished game 74 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 59 - 10  [0.135] 74
+Finished game 74 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 4 - 56 - 14  [0.149] 74
 Started game 78 of 100 (Cinnamon vs Floundroid)
-Finished game 75 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Cinnamon: 5 - 59 - 11  [0.140] 75
+Finished game 75 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 4 - 57 - 14  [0.147] 75
 Started game 79 of 100 (Floundroid vs Cinnamon)
-Finished game 76 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 60 - 11  [0.138] 76
+Finished game 76 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 4 - 57 - 15  [0.151] 76
 Started game 80 of 100 (Cinnamon vs Floundroid)
-Finished game 77 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by timeout}
-Score of Floundroid vs Cinnamon: 5 - 60 - 12  [0.143] 77
+Finished game 77 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 4 - 58 - 15  [0.149] 77
 Started game 81 of 100 (Floundroid vs Cinnamon)
-Finished game 78 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 5 - 61 - 12  [0.141] 78
+Finished game 79 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 4 - 58 - 16  [0.154] 78
 Started game 82 of 100 (Cinnamon vs Floundroid)
-Finished game 79 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 61 - 12  [0.152] 79
+Finished game 78 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 4 - 58 - 17  [0.158] 79
 Started game 83 of 100 (Floundroid vs Cinnamon)
 Finished game 80 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 62 - 12  [0.150] 80
+Score of Floundroid vs Cinnamon: 4 - 59 - 17  [0.156] 80
 Started game 84 of 100 (Cinnamon vs Floundroid)
 Finished game 81 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 6 - 63 - 12  [0.148] 81
+Score of Floundroid vs Cinnamon: 4 - 60 - 17  [0.154] 81
 Started game 85 of 100 (Floundroid vs Cinnamon)
 Finished game 82 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 64 - 12  [0.146] 82
+Score of Floundroid vs Cinnamon: 4 - 61 - 17  [0.152] 82
 Started game 86 of 100 (Cinnamon vs Floundroid)
-Finished game 83 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 6 - 65 - 12  [0.145] 83
+Finished game 83 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 4 - 61 - 18  [0.157] 83
 Started game 87 of 100 (Floundroid vs Cinnamon)
 Finished game 84 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 66 - 12  [0.143] 84
+Score of Floundroid vs Cinnamon: 4 - 62 - 18  [0.155] 84
 Started game 88 of 100 (Cinnamon vs Floundroid)
 Finished game 85 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 6 - 67 - 12  [0.141] 85
+Score of Floundroid vs Cinnamon: 4 - 63 - 18  [0.153] 85
 Started game 89 of 100 (Floundroid vs Cinnamon)
-Finished game 86 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 68 - 12  [0.140] 86
+Finished game 86 (Cinnamon vs Floundroid): 0-1 {White makes an illegal move: e5f5}
+Score of Floundroid vs Cinnamon: 5 - 63 - 18  [0.163] 86
 Started game 90 of 100 (Cinnamon vs Floundroid)
-Finished game 87 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 6 - 69 - 12  [0.138] 87
+Finished game 87 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Cinnamon: 5 - 63 - 19  [0.167] 87
 Started game 91 of 100 (Floundroid vs Cinnamon)
 Finished game 88 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 6 - 70 - 12  [0.136] 88
+Score of Floundroid vs Cinnamon: 5 - 64 - 19  [0.165] 88
 Started game 92 of 100 (Cinnamon vs Floundroid)
-Finished game 89 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 6 - 71 - 12  [0.135] 89
+Finished game 89 (Floundroid vs Cinnamon): 0-1 {White loses on time}
+Score of Floundroid vs Cinnamon: 5 - 65 - 19  [0.163] 89
 Started game 93 of 100 (Floundroid vs Cinnamon)
-Finished game 90 (Cinnamon vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 7 - 71 - 12  [0.144] 90
+Finished game 90 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 5 - 66 - 19  [0.161] 90
 Started game 94 of 100 (Cinnamon vs Floundroid)
-Finished game 91 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 7 - 72 - 12  [0.143] 91
+Finished game 91 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Cinnamon: 5 - 66 - 20  [0.165] 91
 Started game 95 of 100 (Floundroid vs Cinnamon)
-Finished game 92 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 7 - 73 - 12  [0.141] 92
+Finished game 92 (Cinnamon vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 6 - 66 - 20  [0.174] 92
 Started game 96 of 100 (Cinnamon vs Floundroid)
-Finished game 94 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 7 - 74 - 12  [0.140] 93
+Finished game 93 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 6 - 66 - 21  [0.177] 93
 Started game 97 of 100 (Floundroid vs Cinnamon)
-Finished game 93 (Floundroid vs Cinnamon): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 8 - 74 - 12  [0.149] 94
-Started game 98 of 100 (Cinnamon vs Floundroid)
-Finished game 95 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 8 - 75 - 12  [0.147] 95
-Started game 99 of 100 (Floundroid vs Cinnamon)
 Finished game 96 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 8 - 76 - 12  [0.146] 96
+Score of Floundroid vs Cinnamon: 6 - 67 - 21  [0.176] 94
+Started game 98 of 100 (Cinnamon vs Floundroid)
+Finished game 94 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 6 - 68 - 21  [0.174] 95
+Started game 99 of 100 (Floundroid vs Cinnamon)
+Finished game 95 (Floundroid vs Cinnamon): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 6 - 69 - 21  [0.172] 96
 Started game 100 of 100 (Cinnamon vs Floundroid)
-Finished game 97 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Cinnamon: 8 - 76 - 13  [0.149] 97
-Finished game 98 (Cinnamon vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Cinnamon: 8 - 76 - 14  [0.153] 98
-Finished game 100 (Cinnamon vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Cinnamon: 8 - 77 - 14  [0.152] 99
+Finished game 98 (Cinnamon vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Cinnamon: 6 - 70 - 21  [0.170] 97
+Finished game 97 (Floundroid vs Cinnamon): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Cinnamon: 6 - 70 - 22  [0.173] 98
 Finished game 99 (Floundroid vs Cinnamon): 0-1 {Black mates}
-Score of Floundroid vs Cinnamon: 8 - 78 - 14  [0.150] 100
-...      Floundroid playing White: 7 - 34 - 9  [0.230] 50
-...      Floundroid playing Black: 1 - 44 - 5  [0.070] 50
-...      White vs Black: 51 - 35 - 14  [0.580] 100
-Elo difference: -301.3 +/- 85.1, LOS: 0.0 %, DrawRatio: 14.0 %
+Score of Floundroid vs Cinnamon: 6 - 71 - 22  [0.172] 99
+Finished game 100 (Cinnamon vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Cinnamon: 7 - 71 - 22  [0.180] 100
+...      Floundroid playing White: 1 - 37 - 12  [0.140] 50
+...      Floundroid playing Black: 6 - 34 - 10  [0.220] 50
+...      White vs Black: 35 - 43 - 22  [0.460] 100
+Elo difference: -263.4 +/- 72.4, LOS: 0.0 %, DrawRatio: 22.0 %
 SPRT: llr 0 (0.0%), lbound -inf, ubound inf
 
 Player: Floundroid
-   "Draw by 3-fold repetition": 7
-   "Draw by fifty moves rule": 2
-   "Draw by insufficient mating material": 4
+   "Draw by 3-fold repetition": 14
+   "Draw by fifty moves rule": 5
+   "Draw by insufficient mating material": 2
    "Draw by timeout": 1
-   "Loss: Black mates": 33
+   "Loss: Black mates": 36
    "Loss: White loses on time": 1
-   "Loss: White mates": 44
-   "Win: Black mates": 1
-   "Win: White mates": 7
+   "Loss: White mates": 34
+   "Win: Black mates": 5
+   "Win: White makes an illegal move: e5f5": 1
+   "Win: White mates": 1
 Player: Cinnamon
-   "Draw by 3-fold repetition": 7
-   "Draw by fifty moves rule": 2
-   "Draw by insufficient mating material": 4
+   "Draw by 3-fold repetition": 14
+   "Draw by fifty moves rule": 5
+   "Draw by insufficient mating material": 2
    "Draw by timeout": 1
-   "Loss: Black mates": 1
-   "Loss: White mates": 7
-   "Win: Black mates": 33
+   "Loss: Black mates": 5
+   "Loss: White makes an illegal move: e5f5": 1
+   "Loss: White mates": 1
+   "Win: Black mates": 36
    "Win: White loses on time": 1
-   "Win: White mates": 44
+   "Win: White mates": 34
 Finished match

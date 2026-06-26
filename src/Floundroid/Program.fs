@@ -1491,6 +1491,22 @@ module Evaluation =
                20; 20; 0; 0; 0; 0; 20; 20
                20; 30; 10; 0; 0; 10; 30; 20 |]
 
+    /// Assigns a positional score to a piece based on its square using Piece-Square Tables (PSTs).
+    let pstScore piece sq =
+
+        let idx =
+            if Piece.colour piece = Colour.White then sq
+            else sq ^^^ 56
+
+        match Piece.kind piece with
+        | PieceType.Pawn -> pawnPst.[idx]
+        | PieceType.Knight -> knightPst.[idx]
+        | PieceType.Bishop -> bishopPst.[idx]
+        | PieceType.Rook -> rookPst.[idx]
+        | PieceType.Queen -> queenPst.[idx]
+        | PieceType.King -> kingPst.[idx]
+        | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind piece}"
+    
     let private pawnFileCounts (pawns: Bitboard) =
         let counts = Array.zeroCreate 8
         let mutable remaining = pawns
@@ -1670,16 +1686,7 @@ module Evaluation =
             let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
             
             let baseVal = matScore (Piece.kind p)
-            let pstIndex = if Piece.colour p = Colour.White then sq else sq ^^^ 56
-            let pstBonus = 
-                match Piece.kind p with
-                | PieceType.Pawn -> pawnPst.[pstIndex]
-                | PieceType.Knight -> knightPst.[pstIndex]
-                | PieceType.Bishop -> bishopPst.[pstIndex]
-                | PieceType.Rook -> rookPst.[pstIndex]
-                | PieceType.Queen -> queenPst.[pstIndex]
-                | PieceType.King -> kingPst.[pstIndex]
-                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
+            let pstBonus = pstScore p sq
 
             if Piece.colour p = Colour.White then score <- score + baseVal + pstBonus
             else score <- score - (baseVal + pstBonus)
