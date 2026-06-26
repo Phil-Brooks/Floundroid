@@ -1442,72 +1442,67 @@ module Evaluation =
 
     /// Assigns a positional score to a piece based on its square using Piece-Square Tables (PSTs).
     let pstScore piece sq =
-
         let idx =
             if Piece.colour piece = Colour.White then sq
             else sq ^^^ 56
         psts[int (Piece.kind piece)].[idx]
-   
-    let private pawnFileCounts (pawns: Bitboard) =
-        let counts = Array.zeroCreate 8
-        let mutable remaining = pawns
-
-        while remaining <> 0uL do
-            let sq = Bitboard.popLsb &remaining
-            counts.[sq % 8] <- counts.[sq % 8] + 1
-
-        counts
-
-    let private isPassedPawn (colour: Colour) (sq: Square) (enemyPawns: Bitboard) =
-        let file = sq % 8
-        let rank = sq / 8
-        let mutable blocked = false
-
-        for targetFile in Math.Max(0, file - 1) .. Math.Min(7, file + 1) do
-            if colour = Colour.White then
-                for targetRank in rank + 1 .. 7 do
-                    if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
-                        blocked <- true
-            else
-                for targetRank in rank - 1 .. -1 .. 0 do
-                    if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
-                        blocked <- true
-
-        not blocked
-
-    let private passedPawnBonus (colour: Colour) (sq: Square) =
-        let rank = sq / 8
-        let progress = if colour = Colour.White then rank else 7 - rank
-        [| 0; 0; 6; 12; 20; 35; 55; 0 |].[progress]
-
-    let private evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
-        let fileCounts = pawnFileCounts friendlyPawns
-        let mutable score = 0
-        let mutable remaining = friendlyPawns
-
-        for file in 0..7 do
-            if fileCounts.[file] > 1 then
-                score <- score - ((fileCounts.[file] - 1) * 6)
-
-        while remaining <> 0uL do
-            let sq = Bitboard.popLsb &remaining
-            let file = sq % 8
-
-            let hasLeftPawn = file > 0 && fileCounts.[file - 1] > 0
-            let hasRightPawn = file < 7 && fileCounts.[file + 1] > 0
-
-            if not hasLeftPawn && not hasRightPawn then
-                score <- score - 5
-            else
-                score <- score + 2
-
-            if isPassedPawn colour sq enemyPawns then
-                score <- score + passedPawnBonus colour sq
-
-        score
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
+        let pawnFileCounts (pawns: Bitboard) =
+            let counts = Array.zeroCreate 8
+            let mutable remaining = pawns
+
+            while remaining <> 0uL do
+                let sq = Bitboard.popLsb &remaining
+                counts.[sq % 8] <- counts.[sq % 8] + 1
+            counts
+        let isPassedPawn (colour: Colour) (sq: Square) (enemyPawns: Bitboard) =
+            let file = sq % 8
+            let rank = sq / 8
+            let mutable blocked = false
+
+            for targetFile in Math.Max(0, file - 1) .. Math.Min(7, file + 1) do
+                if colour = Colour.White then
+                    for targetRank in rank + 1 .. 7 do
+                        if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
+                            blocked <- true
+                else
+                    for targetRank in rank - 1 .. -1 .. 0 do
+                        if Bitboard.contains (targetRank * 8 + targetFile) enemyPawns then
+                            blocked <- true
+
+            not blocked
+        let passedPawnBonus (colour: Colour) (sq: Square) =
+            let rank = sq / 8
+            let progress = if colour = Colour.White then rank else 7 - rank
+            [| 0; 0; 6; 12; 20; 35; 55; 0 |].[progress]
+        let evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
+            let fileCounts = pawnFileCounts friendlyPawns
+            let mutable score = 0
+            let mutable remaining = friendlyPawns
+
+            for file in 0..7 do
+                if fileCounts.[file] > 1 then
+                    score <- score - ((fileCounts.[file] - 1) * 6)
+
+            while remaining <> 0uL do
+                let sq = Bitboard.popLsb &remaining
+                let file = sq % 8
+
+                let hasLeftPawn = file > 0 && fileCounts.[file - 1] > 0
+                let hasRightPawn = file < 7 && fileCounts.[file + 1] > 0
+
+                if not hasLeftPawn && not hasRightPawn then
+                    score <- score - 5
+                else
+                    score <- score + 2
+
+                if isPassedPawn colour sq enemyPawns then
+                    score <- score + passedPawnBonus colour sq
+
+            score
+
         let bbs = b.Bitboards
         let whiteScore = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
         let blackScore = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
