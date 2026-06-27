@@ -1454,7 +1454,7 @@ module Evaluation =
     let matsMG = [| 100; 320; 330; 500; 900; 0 |]
     let matsEG = [| 120; 310; 320; 550; 950; 0 |]
     
-    let psts =
+    let pstsMG =
         [|
           [|0; 0; 0; 0; 0; 0; 0; 0; 5; 10; 10; -20; -20; 10; 10; 5; 5; -5; -10; 0; 0;
             -10; -5; 5; 0; 0; 0; 20; 20; 0; 0; 0; 5; 5; 10; 25; 25; 10; 5; 5; 10; 10;
@@ -1485,7 +1485,69 @@ module Evaluation =
             -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30; -30;
             -40; -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30|]
             |]
+    let pstsEG =
+        [|
+          // 0. Pawn: Focus on advancing. High rewards for 6th and 7th ranks.
+          [| 0;  0;  0;  0;  0;  0;  0;  0;
+             0;  0;  0;  0;  0;  0;  0;  0;
+            10; 10; 10; 10; 10; 10; 10; 10;
+            20; 20; 20; 20; 20; 20; 20; 20;
+            40; 40; 40; 40; 40; 40; 40; 40;
+            60; 60; 60; 60; 60; 60; 60; 60;
+            90; 90; 90; 90; 90; 90; 90; 90;
+             0;  0;  0;  0;  0;  0;  0;  0 |]
 
+          // 1. Knight: Centralization is still key, but less fear of the rim than MG.
+          [|-50;-40;-30;-30;-30;-30;-40;-50;
+            -30;-20;-10;  0;  0;-10;-20;-30;
+            -30;-10; 10; 15; 15; 10;-10;-30;
+            -30;-10; 15; 20; 20; 15;-10;-30;
+            -30;-10; 15; 20; 20; 15;-10;-30;
+            -30;-10; 10; 15; 15; 10;-10;-30;
+            -40;-20;-10;  0;  0;-10;-20;-40;
+            -50;-40;-30;-30;-30;-30;-40;-50 |]
+
+          // 2. Bishop: Stay active, avoid corners.
+          [|-20;-10;-10;-10;-10;-10;-10;-20;
+            -10;  0;  0;  0;  0;  0;  0;-10;
+            -10;  0;  5; 10; 10;  5;  0;-10;
+            -10;  5; 10; 15; 15; 10;  5;-10;
+            -10;  5; 10; 15; 15; 10;  5;-10;
+            -10;  0;  5; 10; 10;  5;  0;-10;
+            -10;  0;  0;  0;  0;  0;  0;-10;
+            -20;-10;-10;-10;-10;-10;-10;-20 |]
+
+          // 3. Rook: 7th rank bonus and general activity.
+          [| 0;  0;  0;  0;  0;  0;  0;  0;
+             5; 10; 10; 10; 10; 10; 10;  5;
+            -5;  0;  0;  0;  0;  0;  0; -5;
+            -5;  0;  0;  0;  0;  0;  0; -5;
+            -5;  0;  0;  0;  0;  0;  0; -5;
+            -5;  0;  0;  0;  0;  0;  0; -5;
+             0;  0;  0;  5;  5;  0;  0;  0;
+             0;  0;  0;  0;  0;  0;  0;  0 |]
+
+          // 4. Queen: Centralization.
+          [|-20;-10;-10; -5; -5;-10;-10;-20;
+            -10;  0;  5;  5;  5;  5;  0;-10;
+            -10;  5;  5;  5;  5;  5;  5;-10;
+             -5;  5;  5;  5;  5;  5;  5; -5;
+              0;  5;  5;  5;  5;  5;  5; -5;
+            -10;  0;  5;  5;  5;  5;  0;-10;
+            -10;  0;  0;  0;  0;  0;  0;-10;
+            -20;-10;-10; -5; -5;-10;-10;-20 |]
+
+          // 5. King: EXTREMELY IMPORTANT. The King must come to the center in EG.
+          [|-50;-40;-30;-20;-20;-30;-40;-50;
+            -30;-20;-10;  0;  0;-10;-20;-30;
+            -30;-10; 20; 30; 30; 20;-10;-30;
+            -30;-10; 30; 40; 40; 30;-10;-30;
+            -30;-10; 30; 40; 40; 30;-10;-30;
+            -30;-10; 20; 30; 30; 20;-10;-30;
+            -30;-30;  0;  0;  0;  0;-30;-30;
+            -50;-40;-30;-20;-20;-30;-40;-50 |]
+        |]
+    
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
         let evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
@@ -1590,18 +1652,19 @@ module Evaluation =
             let kIdx = (int kind) 
             let usTotal = if isWhite then bbs.WhiteTotal else bbs.BlackTotal
             let enemyKingZone = if isWhite then blackKingZone else whiteKingZone
-            let pstTable = psts.[kIdx]
+            let tableMG = pstsMG.[kIdx]
+            let tableEG = pstsEG.[kIdx]
             
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
                 let pstIdx = if isWhite then sq else sq ^^^ 56
                 
                 if isWhite then
-                    mg <- mg + matsMG.[kIdx] + pstTable.[pstIdx]
-                    eg <- eg + matsEG.[kIdx] + pstTable.[pstIdx]
+                    mg <- mg + matsMG.[kIdx] + tableMG.[pstIdx]
+                    eg <- eg + matsEG.[kIdx] + tableEG.[pstIdx]
                 else
-                    mg <- mg - matsMG.[kIdx] - pstTable.[pstIdx]
-                    eg <- eg - matsEG.[kIdx] - pstTable.[pstIdx]
+                    mg <- mg - matsMG.[kIdx] - tableMG.[pstIdx]
+                    eg <- eg - matsEG.[kIdx] - tableEG.[pstIdx]
 
                 if kind <> PieceType.Pawn && kind <> PieceType.King then
                     let attacks = getAttackBitboard sq kind occ

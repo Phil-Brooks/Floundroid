@@ -15,13 +15,13 @@
 
 # Stage 4 — Strength Phase 🏗️
 
-## 4.1 Evaluation Overhaul (v0.5.0 Implemented)
+## 4.1 Evaluation Overhaul
 - [x] **Direct Bitboard Iteration:** 12-layer loop for cache-friendly evaluation.
 - [x] **Mobility:** PopCount-based piece activity scoring.
 - [x] **Tapered Eval:** Phase-based interpolation between MG and EG.
 - [x] **King Safety (Offense):** Attacker scaling based on proximity to enemy King.
 - [ ] **Pawn Shield:** (Deferred - Requires tuning as v0.4.3 implementation was unsuccessful).
-- [ ] **Tapered PSTs:** Implement distinct MG and EG tables (High Priority).
+- [x] **Tapered PSTs:** Implement distinct MG and EG tables (High Priority).
 - [ ] **Rook Bonuses:** Open and half-open file detection.
 - [ ] **Passed Pawns:** Advanced scoring for passers.
 
