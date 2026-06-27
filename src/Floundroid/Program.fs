@@ -268,6 +268,10 @@ module Bitboard =
     let count (bb: Bitboard) : int =
         System.Numerics.BitOperations.PopCount(bb)
 
+    /// Returns 64 if the bitboard is empty (standard for TrailingZeroCount).
+    let lsb (bb: Bitboard) : int =
+        System.Numerics.BitOperations.TrailingZeroCount(bb)
+    
     /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
     /// This is a high-performance way to iterate through pieces.
     let popLsb (bb: byref<Bitboard>) : Square =
@@ -540,7 +544,7 @@ module Magic =
 
     /// Initializes the sliding attack tables for bishops and rooks.
     let init () =
-        printfn "info string Initializing Sliding Attack Tables..."
+        //printfn "info string Initializing Sliding Attack Tables..."
         for sq in 0 .. 63 do
             // Bishops
             let bMask = bishopMask sq
@@ -559,7 +563,7 @@ module Magic =
                 let blockers = getBlockers i rMask
                 let tableIdx = (sq * 4096) + i
                 rookTable.[tableIdx] <- rookAttacks sq blockers
-        printfn "info string Sliding Attack Tables initialized."
+        //printfn "info string Sliding Attack Tables initialized."
 
 module BitboardGen =
     /// Pre-calculated knight attacks for every square
@@ -1437,13 +1441,18 @@ module MoveGen =
         moves.ToArray()
 
 module Evaluation =
-    let wtMaterial      = 1
-    let wtPst           = 1
-    let wtPawnStructure = 1
-    let wtKingSafety    = 0
+    // --- Weights & Phase Constants ---
+    let MaxPhase = 24 // 4 knights (1), 4 bishops (1), 4 rooks (2), 2 queens (4)
+    
+    /// Weights for each square of mobility (tuning values)
+    let mobWeights = [| 0; 4; 4; 3; 2; 1; 0 |] // Index matches PieceType (Knight=1, Bishop=2, etc.)
+    // King Attack weights: How scary is each piece near the king?
+    let kingAttackWeights = [| 0; 2; 2; 3; 5; 0 |] 
 
-    /// Assigns a base value to each piece type for evaluation purposes.
-    let mats = [| 100; 320; 330; 500; 900; 20000 |]
+    // Tapered Material: (Middlegame, Endgame)
+    // Note: Pawns/Rooks are usually worth more in the endgame
+    let matsMG = [| 100; 320; 330; 500; 900; 0 |]
+    let matsEG = [| 120; 310; 320; 550; 950; 0 |]
     
     let psts =
         [|
@@ -1476,13 +1485,6 @@ module Evaluation =
             -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30; -30;
             -40; -40; -50; -50; -40; -40; -30; -30; -40; -40; -50; -50; -40; -40; -30|]
             |]
-
-    /// Assigns a positional score to a piece based on its square using Piece-Square Tables (PSTs).
-    let pstScore piece sq =
-        let idx =
-            if Piece.colour piece = Colour.White then sq
-            else sq ^^^ 56
-        psts[int (Piece.kind piece)].[idx]
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
@@ -1536,131 +1538,120 @@ module Evaluation =
         let blackScore = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
         whiteScore - blackScore
     
-    /// Very small king-safety heuristic: penalise missing pawn shield for short-castled kings.
-    let kingSafety (b: Board) (side: Colour) =
-        let kingSq = Board.findKing side b
-        if kingSq = -1 then
-            0 // No king found, probably an illegal position
-        else
-        
-            let file = Square.file kingSq
-            let rank = Square.rank kingSq
-
-            // Only handle short castling (king on f/g1 or f/g8)
-            let isShortCastled =
-                match side, file, rank with
-                | Colour.White, File.F, Rank.R1
-                | Colour.White, File.G, Rank.R1
-                | Colour.Black, File.F, Rank.R8
-                | Colour.Black, File.G, Rank.R8 -> true
-                | _ -> false
-
-            if not isShortCastled then
-                0
-            else
-                // f, g, h files
-                let files = [ File.F; File.G; File.H ]
-                let homeRank = if side = Colour.White then Rank.R2 else Rank.R7
-
-                let mutable penalty = 0
-
-                for f in files do
-                    let sq = Square.ofFileRank f homeRank
-                    match Board.tryGetPiece b sq with
-                    | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = side -> ()
-                    | _ -> penalty <- penalty + 10
-
-                // --- Step 2: open / half-open file danger near king ---
-                let openFilePenalty =
-                    let mutable p = 0
-
-                    // Files adjacent to king: g and h
-                    let dangerFiles =
-                        match file with
-                        | File.F -> [ File.G; File.H ]   // king on f-file
-                        | File.G -> [ File.G; File.H ]   // king on g-file
-                        | _ -> []         // shouldn't happen for short castling
-
-                    for df in dangerFiles do
-                        let mutable whitePawn = false
-                        let mutable blackPawn = false
-
-                        // Scan the whole file for pawns
-                        for r in [ Rank.R1; Rank.R2; Rank.R3; Rank.R4; Rank.R5; Rank.R6; Rank.R7; Rank.R8 ] do
-                            let sq = Square.ofFileRank df r
-                            match Board.tryGetPiece b sq with
-                            | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = Colour.White -> whitePawn <- true
-                            | Some p when Piece.kind p = PieceType.Pawn && Piece.colour p = Colour.Black -> blackPawn <- true
-                            | _ -> ()
-
-                        match whitePawn, blackPawn with
-                        | false, false -> p <- p + 20   // fully open file
-                        | true, false when side = Colour.Black -> p <- p + 10  // half-open against Black
-                        | false, true when side = Colour.White -> p <- p + 10  // half-open against White
-                        | _ -> ()
-
-                    p
-                
-                // --- Step 3: enemy piece proximity ---
-                let proximityPenalty =
-                    let mutable p = 0
-
-                    // squares within Chebyshev distance <= 2
-                    let kingFile = file
-                    let kingRank = rank
-
-                    for df in [ -2 .. 2 ] do
-                        for dr in [ -2 .. 2 ] do
-                            if not (df = 0 && dr = 0) then
-                                let fInt = File.toInt kingFile + df
-                                let rInt = Rank.toInt kingRank + dr
-
-                                if Square.isOnBoard fInt rInt then
-                                    let f = File.fromInt fInt
-                                    let r = Rank.fromInt rInt
-                                    let sq = Square.ofFileRank f r
-
-                                    match Board.tryGetPiece b sq with
-                                    | Some pc when Piece.colour pc = Colour.opposite side ->
-                                        match Piece.kind pc with
-                                        | PieceType.Knight -> p <- p + 5
-                                        | PieceType.Bishop -> p <- p + 5
-                                        | PieceType.Rook   -> p <- p + 8
-                                        | PieceType.Queen  -> p <- p + 12
-                                        | _ -> ()
-                                    | _ -> ()
-
-                    p
-                
-                let totalPenalty = penalty + openFilePenalty + proximityPenalty
-                if side = Colour.White then -totalPenalty else totalPenalty
-                
+    let getAttackBitboard (sq: int) (kind: PieceType) (occ: Bitboard) =
+        match kind with
+        | PieceType.Knight -> 
+            BitboardGen.knightAttacks.[sq]
+        | PieceType.Bishop ->
+            let e = Magic.bishopEntries.[sq]
+            Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+        | PieceType.Rook ->
+            let e = Magic.rookEntries.[sq]
+            Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+        | PieceType.Queen ->
+            let be = Magic.bishopEntries.[sq]
+            let re = Magic.rookEntries.[sq]
+            Magic.bishopTable.[be.Offset + Magic.getIndex occ be.Mask] ||| 
+            Magic.rookTable.[re.Offset + Magic.getIndex occ re.Mask]
+        | PieceType.King ->
+            BitboardGen.kingAttacks.[sq]
+        | _ -> 0uL // Pawns are usually handled via pawn-specific structure logic    
+    
     /// Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.
     let evaluate (b: Board) =
-        let mutable mat = 0
-        let mutable pst = 0
+        let bbs = b.Bitboards
+        let occ = bbs.Occupancy
+        
+        // 1. Calculate Phase (0 = Endgame, 24 = Opening)
+        let phase = 
+            (Bitboard.count (bbs.WhiteKnights ||| bbs.BlackKnights) * 1) +
+            (Bitboard.count (bbs.WhiteBishops ||| bbs.BlackBishops) * 1) +
+            (Bitboard.count (bbs.WhiteRooks ||| bbs.BlackRooks) * 2) +
+            (Bitboard.count (bbs.WhiteQueens ||| bbs.BlackQueens) * 4)
+        let p = if phase > MaxPhase then MaxPhase else phase
 
-        let mutable occ = b.Bitboards.Occupancy
-        while occ <> 0uL do
-            let sq = Bitboard.popLsb &occ
-            // We know a piece exists here, so we call getPieceAt
-            let p = (BitboardSet.getPieceAt sq b.Bitboards).Value
+        let mutable mg = 0
+        let mutable eg = 0
+
+        // King Safety setup
+        let whiteKingSq = Bitboard.lsb bbs.WhiteKings
+        let blackKingSq = Bitboard.lsb bbs.BlackKings
+        let whiteKingZone = if whiteKingSq < 64 then BitboardGen.kingAttacks.[whiteKingSq] else 0uL
+        let blackKingZone = if blackKingSq < 64 then BitboardGen.kingAttacks.[blackKingSq] else 0uL
+        
+        let mutable whiteKingAttacksCount = 0
+        let mutable whiteKingAttackWeight = 0
+        let mutable blackKingAttacksCount = 0
+        let mutable blackKingAttackWeight = 0
+
+        let inline evalLayer (bb: Bitboard) (kind: PieceType) (isWhite: bool) =
+            let mutable tempBb = bb
+            // Ensure kIdx is 0-5. Adjust if your PieceType enum is different.
+            let kIdx = (int kind) 
+            let usTotal = if isWhite then bbs.WhiteTotal else bbs.BlackTotal
+            let enemyKingZone = if isWhite then blackKingZone else whiteKingZone
+            let pstTable = psts.[kIdx]
             
-            let v = mats[int (Piece.kind p)]
-            let pv = pstScore p sq
+            while tempBb <> 0uL do
+                let sq = Bitboard.popLsb &tempBb
+                let pstIdx = if isWhite then sq else sq ^^^ 56
+                
+                if isWhite then
+                    mg <- mg + matsMG.[kIdx] + pstTable.[pstIdx]
+                    eg <- eg + matsEG.[kIdx] + pstTable.[pstIdx]
+                else
+                    mg <- mg - matsMG.[kIdx] - pstTable.[pstIdx]
+                    eg <- eg - matsEG.[kIdx] - pstTable.[pstIdx]
 
-            if Piece.colour p = Colour.White 
-            then 
-                mat <- mat + v
-                pst <- pst + pv
-            else 
-                mat <- mat - v
-                pst <- pst - pv
+                if kind <> PieceType.Pawn && kind <> PieceType.King then
+                    let attacks = getAttackBitboard sq kind occ
+                    let mob = Bitboard.count (attacks &&& ~~~usTotal)
+                    
+                    if isWhite then 
+                        mg <- mg + (mob * mobWeights.[kIdx])
+                        eg <- eg + (mob * mobWeights.[kIdx])
+                    else 
+                        mg <- mg - (mob * mobWeights.[kIdx])
+                        eg <- eg - (mob * mobWeights.[kIdx])
+
+                    let attacksOnZone = attacks &&& enemyKingZone
+                    if attacksOnZone <> 0uL then
+                        if isWhite then
+                            blackKingAttacksCount <- blackKingAttacksCount + 1
+                            blackKingAttackWeight <- blackKingAttackWeight + kingAttackWeights.[kIdx]
+                        else
+                            whiteKingAttacksCount <- whiteKingAttacksCount + 1
+                            whiteKingAttackWeight <- whiteKingAttackWeight + kingAttackWeights.[kIdx]
+
+        // --- THE 12 LAYERS (Must include all) ---
+        evalLayer bbs.WhitePawns   PieceType.Pawn   true
+        evalLayer bbs.WhiteKnights  PieceType.Knight true
+        evalLayer bbs.WhiteBishops  PieceType.Bishop true
+        evalLayer bbs.WhiteRooks    PieceType.Rook   true
+        evalLayer bbs.WhiteQueens   PieceType.Queen  true
+        evalLayer bbs.WhiteKings    PieceType.King   true
+
+        evalLayer bbs.BlackPawns   PieceType.Pawn   false
+        evalLayer bbs.BlackKnights  PieceType.Knight false
+        evalLayer bbs.BlackBishops  PieceType.Bishop false
+        evalLayer bbs.BlackRooks    PieceType.Rook   false
+        evalLayer bbs.BlackQueens   PieceType.Queen  false
+        evalLayer bbs.BlackKings    PieceType.King   false
+
+        // King Safety Calculation
+        let whiteSafetyPenalty = (whiteKingAttacksCount * whiteKingAttackWeight)
+        let blackSafetyPenalty = (blackKingAttacksCount * blackKingAttackWeight)
+        mg <- mg + (blackSafetyPenalty - whiteSafetyPenalty)
 
         let ps = pawnStructureScore b
-        //let ks = kingSafety b Colour.White - kingSafety b Colour.Black
-        mat * wtMaterial + pst * wtPst + ps * wtPawnStructure //+ ks * wtKingSafety
+        mg <- mg + ps
+        eg <- eg + ps
 
+        // Tapered Result (White's perspective)
+        let score = ((mg * p) + (eg * (MaxPhase - p))) / MaxPhase
+        score
+   
+    
 module Search =
     let mutable nodes = 0uL
     let MATE_VALUE = 30000
@@ -1708,11 +1699,11 @@ module Search =
                     let m = moves.[i]
                     let victimVal = 
                         match Board.tryGetPiece b (Move.toSq m) with 
-                        | Some p -> Evaluation.mats[int (Piece.kind p)] 
+                        | Some p -> Evaluation.matsMG[int (Piece.kind p)] 
                         | None -> 100 // En Passant
                     let attackerVal = 
                         match Board.tryGetPiece b (Move.fromSq m) with 
-                        | Some p -> Evaluation.mats[int (Piece.kind p)] 
+                        | Some p -> Evaluation.matsMG[int (Piece.kind p)] 
                         | None -> 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
@@ -1820,12 +1811,12 @@ module Search =
                                 | 1 | 2 ->
                                     let victimVal = 
                                         if Board.isOccupied b (Move.toSq m) then 
-                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.mats[int (Piece.kind p)] | None -> 0) 
+                                            (match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0) 
                                         else 100 // En Passant
                                     let attackerVal = 
-                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.mats[int (Piece.kind p)] | None -> 0
+                                        match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0
                                     10000 + (victimVal * 10) - attackerVal
-                                | 5 -> 9000 + Evaluation.mats[int (enum<PieceType>(Move.promo m))]
+                                | 5 -> 9000 + Evaluation.matsMG[int (enum<PieceType>(Move.promo m))]
                                 | _ -> 
                                     if Some m = killerMoves.[0, ply] then 8000
                                     elif Some m = killerMoves.[1, ply] then 7000

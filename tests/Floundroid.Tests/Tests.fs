@@ -1881,8 +1881,8 @@ module SearchTests =
         let getScore (m: Move) =
             match Move.kind m with
             | 1 -> 
-                let v = Board.tryGetPiece b (Move.toSq m) |> Option.map (fun p -> Evaluation.mats[int (Piece.kind p)]) |> Option.defaultValue 100
-                let a = Board.tryGetPiece b (Move.fromSq m) |> Option.map (fun p -> Evaluation.mats[int (Piece.kind p)]) |> Option.defaultValue 0
+                let v = Board.tryGetPiece b (Move.toSq m) |> Option.map (fun p -> Evaluation.matsMG[int (Piece.kind p)]) |> Option.defaultValue 100
+                let a = Board.tryGetPiece b (Move.fromSq m) |> Option.map (fun p -> Evaluation.matsMG[int (Piece.kind p)]) |> Option.defaultValue 0
                 10000 + (v * 10) - a
             | _ -> 0
 
