@@ -27,7 +27,8 @@
 
 ## 4.2 Search Enhancements
 - [x] Null‑move pruning
-- [ ] Late Move Reductions (LMR)
+- [x] Late Move Reductions (LMR)
+- [x] Principal Variation Search (PVS): Null-window searches for non-PV nodes.
 - [ ] Aspiration windows
 - [ ] Reverse Futility Pruning
 - [ ] Singular extensions
