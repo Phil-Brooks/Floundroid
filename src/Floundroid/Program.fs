@@ -1584,7 +1584,7 @@ module Evaluation =
         let mutable blackKingAttacksCount = 0
         let mutable blackKingAttackWeight = 0
 
-        let inline evalLayer (bb: Bitboard) (kind: PieceType) (isWhite: bool) =
+        let evalLayer (bb: Bitboard) (kind: PieceType) (isWhite: bool) =
             let mutable tempBb = bb
             // Ensure kIdx is 0-5. Adjust if your PieceType enum is different.
             let kIdx = (int kind) 
@@ -1642,6 +1642,15 @@ module Evaluation =
         let whiteSafetyPenalty = (whiteKingAttacksCount * whiteKingAttackWeight)
         let blackSafetyPenalty = (blackKingAttacksCount * blackKingAttackWeight)
         mg <- mg + (blackSafetyPenalty - whiteSafetyPenalty)
+
+        // --- King Pawn Shield Bonus (Defenders) ---
+        //if whiteKingSq < 64 then
+        //    let shield = BitboardGen.kingAttacks.[whiteKingSq] &&& bbs.WhitePawns
+        //    mg <- mg + (System.Numerics.BitOperations.PopCount(shield) * 15)
+
+        //if blackKingSq < 64 then
+        //    let shield = BitboardGen.kingAttacks.[blackKingSq] &&& bbs.BlackPawns
+        //    mg <- mg - (System.Numerics.BitOperations.PopCount(shield) * 15)
 
         let ps = pawnStructureScore b
         mg <- mg + ps
