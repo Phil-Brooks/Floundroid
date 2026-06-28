@@ -20,17 +20,24 @@
 - [x] **Mobility:** PopCount-based piece activity scoring.
 - [x] **Tapered Eval:** Phase-based interpolation between MG and EG.
 - [x] **King Safety (Offense):** Attacker scaling based on proximity to enemy King.
-- [ ] **Pawn Shield:** (Deferred - Requires tuning as v0.4.3 implementation was unsuccessful).
-- [x] **Tapered PSTs:** Implement distinct MG and EG tables (High Priority).
-- [ ] **Rook Bonuses:** Open and half-open file detection. (not sure as probably already covered by mobility)
+- [x] **Tapered PSTs:** Distinct MG and EG tables.
+- [x] **Passed Pawns:** Basic detection and rank-based bonuses.
+- [ ] **Pawn Shield:** (Deferred - Requires tuning).
+- [ ] **Rook Bonuses:** Open and half-open file detection. (Likely covered by mobility).
 
-## 4.2 Search Enhancements
-- [x] Null‑move pruning
-- [x] Late Move Reductions (LMR)
-- [x] Principal Variation Search (PVS): Null-window searches for non-PV nodes.
-- [ ] Aspiration windows
-- [x] Reverse Futility Pruning
-- [ ] Singular extensions
+## 4.2 Search Enhancements (The "Big Five") ✅
+- [x] **Null‑move pruning (NMP)**
+- [x] **Late Move Reductions (LMR)**
+- [x] **Principal Variation Search (PVS)**
+- [x] **Reverse Futility Pruning (RFP)**
+- [x] **Aspiration Windows** (v0.4.4)
+- [ ] **Singular extensions** (Advanced - Save for Stage 5)
+- [ ] **Static Exchange Evaluation (SEE)** (Deferred - Stability priority)
+
+## 4.3 Strength Tuning 🔵 *In Progress*
+- [ ] **Parameter Calibration:** Tune material values (matsMG/EG) against test suites.
+- [ ] **PST Optimization:** Refine piece-square tables for better positional play.
+- [ ] **Automated Tuning:** Explore Texel Tuning or SPSA framework.
 
 ---
 
@@ -44,3 +51,4 @@
 ## 5.2 Neural Evaluation
 - [ ] NNUE network architecture.
 - [ ] ONNX runtime integration for F#.
+

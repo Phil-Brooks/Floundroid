@@ -1961,27 +1961,47 @@ module Search =
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * Move option =
         negamaxInternal b depth ply alpha beta true history ct
 
-    /// Iterative Deepening
+    /// Iterative Deepening with Aspiration Windows
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
         async {
             do! Async.SwitchToThreadPool()
 
             nodes <- 0uL
             clearKillers()
-            clearHistory() // --- NEW: Added for Step 3.4 ---
+            clearHistory()
             
             let sw = Diagnostics.Stopwatch.StartNew()
-            // CHANGE: Initialize with a fallback immediately instead of None
-            // This guarantees a valid move is returned even if cancelled at Depth 1
             let legalMoves = MoveGen.getLegalMoves b
             let mutable absoluteBestMove = if legalMoves.Length > 0 then Some legalMoves.[0] else None
 
             let mutable d = 1
+            let mutable lastScore = 0
+            let window = 60 // Starting margin 
 
             while d <= maxDepth && not ct.IsCancellationRequested do
-                let score, moveOpt = negamax b d 0 -INF INF history ct
+                let mutable alpha = -INF
+                let mutable beta = INF
 
+                // 1. Set Aspiration Window
+                // Only use windows after depth as early depths are too volatile
+                if d >= 5 then
+                    alpha <- lastScore - window
+                    beta <- lastScore + window
+
+                let mutable (score, moveOpt) = negamax b d 0 alpha beta history ct
+
+                // 2. Check for Window Failure
+                // If the score is outside our window, we must re-search with full bounds
+                if not ct.IsCancellationRequested && d >= 3 && (score <= alpha || score >= beta) then
+                    alpha <- -INF
+                    beta <- INF
+                    let (rescore, remove) = negamax b d 0 alpha beta history ct
+                    score <- rescore
+                    moveOpt <- remove
+
+                // 3. Process Results
                 if not ct.IsCancellationRequested then
+                    lastScore <- score
                     let elapsed = sw.Elapsed.TotalSeconds
                     let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
                     match moveOpt with
@@ -1990,24 +2010,19 @@ module Search =
                         printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
                     | None -> ()
 
-                // --- SIMPLIFIED TIMER ---
+                // 4. Timer check
                 let totalElapsed = sw.ElapsedMilliseconds
-                
-                // Only stop if we've used 80% of our target. 
-                // We remove the 50ms buffer to ensure we don't bail out at Depth 1.
                 if totalElapsed > int64 (targetTimeMs * 6 / 10) then
                     d <- maxDepth + 1 
                 else
                     d <- d + 1
 
-            // --- STEP 2 FIX: FALLBACK ---
-            if absoluteBestMove.IsNone then
-                let legalMoves = MoveGen.getLegalMoves b
-                if legalMoves.Length > 0 then
-                    absoluteBestMove <- Some legalMoves.[0]
+            // Fallback for safety
+            if absoluteBestMove.IsNone && legalMoves.Length > 0 then
+                absoluteBestMove <- Some legalMoves.[0]
 
             return absoluteBestMove
-        }    
+        }
      
 /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
 type PerftSuiteItem =

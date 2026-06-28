@@ -141,6 +141,8 @@
     - *Checks if a square is set.*
 - **fn** `count`
     - *Returns the number of set bits (population count).*
+- **fn** `lsb`
+    - *Returns 64 if the bitboard is empty (standard for TrailingZeroCount).*
 - **fn** `popLsb`
     - *Returns the index of the least significant bit (0-63) and clears it from the bitboard.*
     - *This is a high-performance way to iterate through pieces.*
@@ -198,6 +200,11 @@
 - **fn** `pawnAttacks`
     - *Pawn attacks: [Colour index 0=White, 1=Black, Square 0-63]*
 - **fn** `private`
+- **fn** `passedPawnMasks`
+- **fn** `passedPawnBonusTable`
+- **fn** `FileMasks`
+- **fn** `AdjacentFileMasks`
+- **fn** `pp_init`
 
 #### 🧩 `type Board`
 > The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
@@ -297,28 +304,17 @@
 
 ## 📦 module Evaluation
 ---
-- **fn** `pieceValue`
-    - *Assigns a base value to each piece type for evaluation purposes.*
-- **fn** `pawnPst`
-    - *The pawn PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `knightPst`
-    - *The knight PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `bishopPst`
-    - *The bishop PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `rookPst`
-    - *The rook PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `queenPst`
-    - *The queen PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `kingPst`
-    - *The king PST is designed for the middle game. In a more complete engine, we would switch to a different PST in the endgame.*
-- **fn** `private`
-- **fn** `private`
-- **fn** `private`
-- **fn** `private`
+- **fn** `MaxPhase`
+- **fn** `mobWeights`
+    - *Weights for each square of mobility (tuning values)*
+- **fn** `kingAttackWeights`
+- **fn** `matsMG`
+- **fn** `matsEG`
+- **fn** `pstsMG`
+- **fn** `pstsEG`
 - **fn** `pawnStructureScore`
     - *Evaluates the pawn structure of the board, returning a score from White's perspective.*
-- **fn** `kingSafety`
-    - *Very small king-safety heuristic: penalise missing pawn shield for short-castled kings.*
+- **fn** `getAttackBitboard`
 - **fn** `evaluate`
     - *Evaluates the board position from White's perspective. Positive scores favor White, negative scores favor Black.*
 
@@ -338,7 +334,7 @@
 - **fn** `negamax`
     - *Negamax search with alpha-beta pruning and Transposition Table integration.*
 - **fn** `findBestMove`
-    - *Iterative Deepening*
+    - *Iterative Deepening with Aspiration Windows*
 
 #### 🧩 `type PerftSuiteItem`
 > Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.

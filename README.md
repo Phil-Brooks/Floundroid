@@ -15,41 +15,38 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.4.3 (The Bitboard Eval Update)
+## 🚀 Latest Stable Release: v0.4.4 (The Search Sophistication Update)
 
-This release delivers a major increase in playing strength by transitioning the evaluation core to a high-performance bitboard architecture. By eliminating legacy lookups and optimizing for CPU instruction caches, Floundroid now searches more efficiently and demonstrates better positional awareness.
+This release marks a major milestone: **Floundroid has officially surpassed Cinnamon 2.0 in playing strength.** By implementing a "Big Five" search architecture, Floundroid now searches significantly deeper and more efficiently, allowing its positional evaluation to shine.
 
-### **Key Improvements in v0.4.3**
-- **Refactored Evaluation Core**
-  - Implemented 12-layer bitboard iteration to eliminate `getPieceAt` lookups.
-  - Optimized for Instruction Cache (I-Cache) efficiency by avoiding over-inlining.
-- **Tapered Evaluation Framework**
-  - Added Middlegame (MG) and Endgame (EG) scoring accumulators.
-  - Smooth interpolation between game phases based on non-pawn material.
-- **Mobility Evaluation**
-  - Integrated hardware-accelerated `PopCount` for pseudo-legal move counting.
-  - Pieces now seek active squares with higher board influence.
-- **King Safety (Attacker Counting)**
-  - Implemented offensive safety scaling, penalizing the king based on the number and weight of enemy pieces attacking the "King Zone."
-- 👉 [**Download Floundroid.exe v0.5.0**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Improvements in v0.4.4**
+- **Aspiration Windows**
+  - Implemented stable, wide-window re-searches (±60cp) at higher depths.
+  - Reduced search time by narrowing the alpha-beta bounds based on previous depth results.
+- **Reverse Futility Pruning (RFP)**
+  - Also known as Static Null Move Pruning; allows the engine to "fail high" early if the static evaluation is significantly above beta.
+- **Search Stack Refinement**
+  - Fine-tuned **Late Move Reductions (LMR)** and **Principal Variation Search (PVS)** for better tactical stability.
+  - Improved Move Ordering using a combination of MVV-LVA, Killer Moves, and History Heuristics.
+- 👉 [**Download Floundroid.exe v0.4.4**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
-## 📊 Calibration & Rating (v0.4.3 vs Cinnamon 2.0)
+## 📊 Calibration & Rating (v0.4.4 vs Cinnamon 2.0)
 
-Floundroid v0.4.3 was tested against **Cinnamon 2.0** over 100 games at `tc=30`.
+Floundroid v0.4.4 was tested against **Cinnamon 2.0** over 100 games at `tc=30`.
 
 ### **Performance Comparison**
 
-| Metric | v0.4.2 (Baseline) | **v0.4.3 (Latest)** | Change |
+| Metric | v0.4.3 (Previous) | **v0.4.4 (Latest)** | Change |
 | :--- | :--- | :--- | :--- |
-| **Score vs Cinnamon** | 11.5% | **27.0%** | **+15.5%** |
-| **Elo Difference** | –354 | **–172** | **+182 Elo** |
-| **Wins** | 8 | **20** | **+12 Wins** |
-| **Draw Ratio** | 7% | **14%** | **+7%** |
+| **Score vs Cinnamon** | 27.0% | **52.0%** | **+25.0%** |
+| **Elo Difference** | –172 | **+14** | **+186 Elo** |
+| **Wins** | 20 | **45** | **+25 Wins** |
+| **Draw Ratio** | 14% | **14%** | **0%** |
 
 ### **Interpretation**
-The **+182 Elo increase** is a direct result of improved evaluation speed and the introduction of piece mobility. The engine is now significantly more competitive, doubling both its win and draw rates against a established opponent.
+The **+186 Elo increase** is a direct result of search efficiency. By reaching higher depths in the same amount of time, the engine identifies tactical threats and positional advantages much earlier. Surpassing Cinnamon 2.0 establishes Floundroid as a competitive amateur-level engine.
 
 ---
 
@@ -59,15 +56,17 @@ The **+182 Elo increase** is a direct result of improved evaluation speed and th
 ### **Stage 2 — UCI Engine Interface** ✅  
 ### **Stage 3 — Mechanical Brain** ✅  
 
-### **Stage 4 — Strength Phase** 🔵 *In Progress*  
-- [x] Pawn structure evaluation  
-- [x] Null-move pruning  
-- [x] Types refactor & UCI correctness (v0.4.2)  
-- [x] **Mobility evaluation** (v0.4.3)
-- [x] **King safety (Attacker weighting)** (v0.4.3)
-- [x] **Tapered evaluation framework** (v0.4.3)
-- [ ] Late Move Reductions (LMR)  
-- [ ] Tapered PSTs (Middlegame vs Endgame tables)
-- [ ] Aspiration windows  
-- [ ] Passed pawn advancement bonuses  
+### **Stage 4 — Strength Phase** 🏗️ *In Progress*  
+- [x] Mobility & Tapered Evaluation (v0.4.3)
+- [x] **Reverse Futility Pruning** (v0.4.4)
+- [x] **Aspiration Windows** (v0.4.4)
+- [x] **Tapered PSTs** (Middlegame vs Endgame tables)
+- [x] Passed pawn advancement bonuses  
+- [ ] **Strength Tuning (SPSA/Texel)** 🔵 *Next Priority*
+- [ ] Pawn shield & King safety refinement 
+- [ ] Rook bonuses (Open/Half-open files)
 
+### **Stage 5 — Innovation & Optimization** ⚪ *Planned*
+- [ ] SIMD/BMI2 Bitboard Optimizations
+- [ ] Singular Extensions
+- [ ] NNUE Neural Evaluation core
