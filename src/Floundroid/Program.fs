@@ -1836,119 +1836,126 @@ module Search =
                 (quiesce b ply alpha beta ct, None)
             else
                 let inCheck = Board.isInCheck b
-                let mutable nmpCutoff = false
+                let sideMult = if b.SideToMove = Colour.White then 1 else -1
+                let staticEval = Evaluation.evaluate b * sideMult
 
-                // 3. Null-Move Pruning
-                if allowNull && depth >= 3 && not inCheck then
-                    let bbs = b.Bitboards
-                    let hasMaterial = 
-                        if b.SideToMove = Colour.White then
-                            bbs.WhiteKnights <> 0uL || bbs.WhiteBishops <> 0uL || bbs.WhiteRooks <> 0uL || bbs.WhiteQueens <> 0uL
-                        else
-                            bbs.BlackKnights <> 0uL || bbs.BlackBishops <> 0uL || bbs.BlackRooks <> 0uL || bbs.BlackQueens <> 0uL
-                    
-                    if hasMaterial then
-                        let R = if depth > 6 then 3 else 2
-                        let nullBoard = Board.applyNullMove b
-                        let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct
-                        if not ct.IsCancellationRequested && -nullValue >= beta then
-                            nmpCutoff <- true
-
-                if nmpCutoff then 
-                    (beta, None)
+                // --- Reverse Futility Pruning (RFP) ---
+                if not inCheck && depth <= 3 && abs beta < (MATE_VALUE - 100) && staticEval - (120 * depth) >= beta then
+                    (beta, None) // This is the "return" value for this branch
                 else
-                    // 4. Move Ordering
-                    let moves = MoveGen.getPseudoLegalMoves b
-                    let mutable bestScore = -INF
-                    let mutable bestMove = None
-                    let mutable currentAlpha = alpha
-                    let originalAlpha = alpha
-                    let mutable legalMovesFound = 0
-                    let sideIdx = if b.SideToMove = Colour.White then 0 else 1
+                    let mutable nmpCutoff = false
 
-                    let scores = Array.zeroCreate moves.Length
-                    for i in 0 .. moves.Length - 1 do
-                        let m = moves.[i]
-                        let score = 
-                            if Some m = ttMove then 1000000 
+                    // 3. Null-Move Pruning
+                    if allowNull && depth >= 3 && not inCheck then
+                        let bbs = b.Bitboards
+                        let hasMaterial = 
+                            if b.SideToMove = Colour.White then
+                                bbs.WhiteKnights <> 0uL || bbs.WhiteBishops <> 0uL || bbs.WhiteRooks <> 0uL || bbs.WhiteQueens <> 0uL
                             else
-                                match Move.kind m with
-                                | 1 | 2 -> 
-                                    let victimVal = match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 100
-                                    let attackerVal = match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0
-                                    10000 + (victimVal * 10) - attackerVal
-                                | 5 -> 9000 + Evaluation.matsMG[int (enum<PieceType>(Move.promo m))]
-                                | _ -> 
-                                    if Some m = killerMoves.[0, ply] then 8000
-                                    elif Some m = killerMoves.[1, ply] then 7000
-                                    else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], 6000)
-                        scores.[i] <- -score 
-
-                    System.Array.Sort(scores, moves)
-
-                    // 5. Search Loop
-                    let mutable i = 0
-                    let mutable cutoffFound = false
+                                bbs.BlackKnights <> 0uL || bbs.BlackBishops <> 0uL || bbs.BlackRooks <> 0uL || bbs.BlackQueens <> 0uL
                     
-                    while i < moves.Length && not cutoffFound do
-                        let m = moves.[i]
-                        let isIllegalCastle = 
-                            match Move.kind m with
-                            | 3 | 4 -> inCheck || 
-                                       let rnk = if b.SideToMove = Colour.White then Rank.R1 else Rank.R8
-                                       let midFile = if Move.kind m = 3 then File.F else File.D
-                                       Board.isSquareAttacked b (Square.ofFileRank midFile rnk) (Colour.opposite b.SideToMove)
-                            | _ -> false
+                        if hasMaterial then
+                            let R = if depth > 6 then 3 else 2
+                            let nullBoard = Board.applyNullMove b
+                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct
+                            if not ct.IsCancellationRequested && -nullValue >= beta then
+                                nmpCutoff <- true
 
-                        if isIllegalCastle then
-                            i <- i + 1
-                        else
-                            let nextB = Board.applyMove m b
-                            if Board.isInCheckFor b.SideToMove nextB then
+                    if nmpCutoff then 
+                        (beta, None)
+                    else
+                        // 4. Move Ordering
+                        let moves = MoveGen.getPseudoLegalMoves b
+                        let mutable bestScore = -INF
+                        let mutable bestMove = None
+                        let mutable currentAlpha = alpha
+                        let originalAlpha = alpha
+                        let mutable legalMovesFound = 0
+                        let sideIdx = if b.SideToMove = Colour.White then 0 else 1
+
+                        let scores = Array.zeroCreate moves.Length
+                        for i in 0 .. moves.Length - 1 do
+                            let m = moves.[i]
+                            let score = 
+                                if Some m = ttMove then 1000000 
+                                else
+                                    match Move.kind m with
+                                    | 1 | 2 -> 
+                                        let victimVal = match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 100
+                                        let attackerVal = match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0
+                                        10000 + (victimVal * 10) - attackerVal
+                                    | 5 -> 9000 + Evaluation.matsMG[int (enum<PieceType>(Move.promo m))]
+                                    | _ -> 
+                                        if Some m = killerMoves.[0, ply] then 8000
+                                        elif Some m = killerMoves.[1, ply] then 7000
+                                        else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], 6000)
+                            scores.[i] <- -score 
+
+                        System.Array.Sort(scores, moves)
+
+                        // 5. Search Loop
+                        let mutable i = 0
+                        let mutable cutoffFound = false
+                    
+                        while i < moves.Length && not cutoffFound do
+                            let m = moves.[i]
+                            let isIllegalCastle = 
+                                match Move.kind m with
+                                | 3 | 4 -> inCheck || 
+                                           let rnk = if b.SideToMove = Colour.White then Rank.R1 else Rank.R8
+                                           let midFile = if Move.kind m = 3 then File.F else File.D
+                                           Board.isSquareAttacked b (Square.ofFileRank midFile rnk) (Colour.opposite b.SideToMove)
+                                | _ -> false
+
+                            if isIllegalCastle then
                                 i <- i + 1
                             else
-                                legalMovesFound <- legalMovesFound + 1
-                                let mutable moveScore = -INF
-
-                                // LMR and PVS
-                                if depth >= 3 && legalMovesFound > 4 && not inCheck && (Move.kind m = 0) then
-                                    let reduction = if legalMovesFound > 12 then 2 else 1
-                                    let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                    moveScore <- -sLMR
-                                    if moveScore > currentAlpha then
-                                        let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                        moveScore <- -sFull
-                                elif legalMovesFound > 1 then
-                                    let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                    moveScore <- -sPVS
-                                
-                                if moveScore > currentAlpha || legalMovesFound = 1 then
-                                    let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct
-                                    moveScore <- -sFullWindow
-
-                                if moveScore > bestScore then
-                                    bestScore <- moveScore
-                                    bestMove <- Some m
-                                    if moveScore > currentAlpha then currentAlpha <- moveScore
-
-                                if currentAlpha >= beta then
-                                    if Move.kind m = 0 || Move.kind m = 3 || Move.kind m = 4 then
-                                        if killerMoves.[0, ply] <> Some m then
-                                            killerMoves.[1, ply] <- killerMoves.[0, ply]
-                                            killerMoves.[0, ply] <- Some m
-                                        historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + (depth * depth)
-                                    cutoffFound <- true
+                                let nextB = Board.applyMove m b
+                                if Board.isInCheckFor b.SideToMove nextB then
+                                    i <- i + 1
                                 else
-                                    i <- i + 1           
+                                    legalMovesFound <- legalMovesFound + 1
+                                    let mutable moveScore = -INF
 
-                    // 6. Final Result Scoring
-                    if legalMovesFound = 0 then
-                        if inCheck then (-MATE_VALUE + ply, None) else (0, None)
-                    else
-                        if not ct.IsCancellationRequested then
-                            let flag = if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha elif bestScore >= beta then TranspositionTable.NodeFlag.Beta else TranspositionTable.NodeFlag.Exact
-                            TranspositionTable.store b.Hash depth ply flag bestScore bestMove
-                        (bestScore, bestMove)
+                                    // LMR and PVS
+                                    if depth >= 3 && legalMovesFound > 4 && not inCheck && (Move.kind m = 0) then
+                                        let reduction = if legalMovesFound > 12 then 2 else 1
+                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                        moveScore <- -sLMR
+                                        if moveScore > currentAlpha then
+                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                            moveScore <- -sFull
+                                    elif legalMovesFound > 1 then
+                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                        moveScore <- -sPVS
+                                
+                                    if moveScore > currentAlpha || legalMovesFound = 1 then
+                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct
+                                        moveScore <- -sFullWindow
+
+                                    if moveScore > bestScore then
+                                        bestScore <- moveScore
+                                        bestMove <- Some m
+                                        if moveScore > currentAlpha then currentAlpha <- moveScore
+
+                                    if currentAlpha >= beta then
+                                        if Move.kind m = 0 || Move.kind m = 3 || Move.kind m = 4 then
+                                            if killerMoves.[0, ply] <> Some m then
+                                                killerMoves.[1, ply] <- killerMoves.[0, ply]
+                                                killerMoves.[0, ply] <- Some m
+                                            historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + (depth * depth)
+                                        cutoffFound <- true
+                                    else
+                                        i <- i + 1           
+
+                        // 6. Final Result Scoring
+                        if legalMovesFound = 0 then
+                            if inCheck then (-MATE_VALUE + ply, None) else (0, None)
+                        else
+                            if not ct.IsCancellationRequested then
+                                let flag = if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha elif bestScore >= beta then TranspositionTable.NodeFlag.Beta else TranspositionTable.NodeFlag.Exact
+                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+                            (bestScore, bestMove)
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * Move option =

@@ -22,15 +22,14 @@
 - [x] **King Safety (Offense):** Attacker scaling based on proximity to enemy King.
 - [ ] **Pawn Shield:** (Deferred - Requires tuning as v0.4.3 implementation was unsuccessful).
 - [x] **Tapered PSTs:** Implement distinct MG and EG tables (High Priority).
-- [ ] **Rook Bonuses:** Open and half-open file detection.
-- [ ] **Passed Pawns:** Advanced scoring for passers.
+- [ ] **Rook Bonuses:** Open and half-open file detection. (not sure as probably already covered by mobility)
 
 ## 4.2 Search Enhancements
 - [x] Null‑move pruning
 - [x] Late Move Reductions (LMR)
 - [x] Principal Variation Search (PVS): Null-window searches for non-PV nodes.
 - [ ] Aspiration windows
-- [ ] Reverse Futility Pruning
+- [x] Reverse Futility Pruning
 - [ ] Singular extensions
 
 ---
