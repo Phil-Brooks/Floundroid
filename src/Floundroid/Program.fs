@@ -122,28 +122,34 @@ module PieceType =
         | 'k' | 'K' -> King
         | _ -> invalidArg "c" $"Invalid piece type char: {c}"
 
-[<Struct>]
-type Piece =
-    val data: byte
-    new (colour: int, kind: int) =
-        { data = byte ((colour <<< 3) ||| kind) }
-
 module Piece =
+    let [<Literal>] WPawn = 0
+    let [<Literal>] WKnight = 1
+    let [<Literal>] WBishop = 2
+    let [<Literal>] WRook = 3
+    let [<Literal>] WQueen = 4
+    let [<Literal>] WKing = 5
+    let [<Literal>] BPawn = 8
+    let [<Literal>] BKnight = 9
+    let [<Literal>] BBishop = 10
+    let [<Literal>] BRook = 12
+    let [<Literal>] BQueen = 12
+    let [<Literal>] BKing = 13
 
-    let colour (p: Piece) : int =
-        int p.data >>> 3
+    let colour (p: int) : int =
+        int p >>> 3
 
-    let kind (p: Piece) : int =
-        int p.data &&& 0b111
+    let kind (p: int) : int =
+        int p &&& 0b111
 
-    let toChar (p: Piece) : char =
+    let toChar (p: int) : char =
         let c = PieceType.toChar (kind p)
         if colour p = Colour.White then Char.ToUpper c else c
 
-    let fromChar (c: char) : Piece =
+    let fromChar (c: char) : int =
         let col = if Char.IsUpper c then Colour.White else Colour.Black
         let kind = PieceType.fromChar c
-        Piece(col, kind)
+        (col <<< 3) ||| kind
 
 [<System.Flags>]
 type CastlingRights =
@@ -303,7 +309,7 @@ module BitboardSet =
           Occupancy = 0uL }
 
     /// Identifies the piece (if any) at a specific square using bitboards.
-    let getPieceAt (sq: int) (bbs: BitboardSet) : Piece option =
+    let getPieceAt (sq: int) (bbs: BitboardSet) : int option =
         let bit = 1uL <<< sq
 
         if (bbs.Occupancy &&& bit) = 0uL then
@@ -325,10 +331,10 @@ module BitboardSet =
                 else
                     PieceType.King
 
-            Some (Piece(color, kind))
+            Some ((color <<< 3) ||| kind)
 
     /// A helper to flip a piece on/off. Essential for incremental updates.
-    let togglePiece (p: Piece) (sq: int) (bbs: BitboardSet) =
+    let togglePiece (p: int) (sq: int) (bbs: BitboardSet) =
         let bit = 1uL <<< sq
 
         let newBbs =
@@ -683,7 +689,7 @@ module Zobrist =
     let Table = initializeTable()
 
     /// Gets the key for a specific piece on a square.
-    let getPieceKey (pc: Piece) (sq: int) =
+    let getPieceKey (pc: int) (sq: int) =
         Table.Pieces.[Piece.colour pc, Piece.kind pc, sq]
 
     /// Gets the key for a specific set of castling rights.
@@ -882,7 +888,7 @@ module Board =
         if bb = 0uL then -1 else Bitboard.popLsb &bb
 
     /// Sets a piece on a square and updates bitboards (Source of truth: Bitboards).
-    let setPiece (b: Board) (sq: int) (pOpt: Piece option) =
+    let setPiece (b: Board) (sq: int) (pOpt: int option) =
         let mutable newBbs = b.Bitboards
 
         // 1. If there's already a piece at this square, we must toggle it OFF first
@@ -1018,7 +1024,7 @@ module Board =
         match Move.kind m with
         | 2 ->   // EnPassant
             let epPawnSq = if b.SideToMove = Colour.White then (Move.toSq m) - 8 else (Move.toSq m) + 8
-            let victimPawn = Piece(opponent, PieceType.Pawn)
+            let victimPawn = (opponent <<< 3) ||| PieceType.Pawn
             newBitboards <- BitboardSet.togglePiece victimPawn epPawnSq newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
         | _ ->
@@ -1033,7 +1039,7 @@ module Board =
         match Move.kind m with
         | 5 ->   // Promotion
             let promoType = Move.promo m
-            let promotedPiece = Piece(b.SideToMove, promoType)
+            let promotedPiece = (b.SideToMove <<< 3) ||| promoType
 
             let toSq = Move.toSq m
             newBitboards <- BitboardSet.togglePiece promotedPiece toSq newBitboards
@@ -1048,13 +1054,13 @@ module Board =
         match Move.kind m with
         | 3 ->   // CastleKingSide        
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (7, 5) else (63, 61)
-            let rook = Piece(b.SideToMove, PieceType.Rook)
+            let rook = (b.SideToMove <<< 3) ||| PieceType.Rook
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
         | 4 ->   // CastleQueenSide ->
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (0, 3) else (56, 59)
-            let rook = Piece(b.SideToMove, PieceType.Rook)
+            let rook = (b.SideToMove <<< 3) ||| PieceType.Rook
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)

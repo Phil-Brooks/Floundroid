@@ -279,7 +279,7 @@ module BitboardSetTests =
         [ for c in [Colour.White; Colour.Black] do
             for k in [ PieceType.Pawn; PieceType.Knight; PieceType.Bishop
                        PieceType.Rook; PieceType.Queen; PieceType.King ] ->
-                Piece(c, k) ]
+                (c <<< 3) ||| k ]
 
     // ------------------------------------------------------------
     // Basic behaviour tests
@@ -293,7 +293,7 @@ module BitboardSetTests =
     [<Fact>]
     let ``togglePiece adds then removes piece`` () =
         let sq = 12
-        let p = Piece(Colour.White, PieceType.Knight)
+        let p = (Colour.White <<< 3) ||| PieceType.Knight
 
         let b1 = BitboardSet.togglePiece p sq BitboardSet.empty
         Assert.Equal(Some p, BitboardSet.getPieceAt sq b1)
@@ -304,7 +304,7 @@ module BitboardSetTests =
     [<Fact>]
     let ``togglePiece updates totals and occupancy`` () =
         let sq = 5
-        let p = Piece(Colour.Black, PieceType.Queen)
+        let p = (Colour.Black <<< 3) ||| PieceType.Queen
 
         let b1 = BitboardSet.togglePiece p sq BitboardSet.empty
 
@@ -329,7 +329,7 @@ module BitboardSetTests =
 
     [<Fact>]
     let ``getPieceAt returns None for untouched squares`` () =
-        let p = Piece(Colour.White, PieceType.Bishop)
+        let p = (Colour.White <<< 3) ||| PieceType.Bishop
         let sq = 30
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
 
@@ -343,19 +343,19 @@ module BitboardSetTests =
 
     [<Fact>]
     let ``allPieces returns exactly the toggled pieces`` () =
-        let placements: (int * Piece) list =
-            [ (0, Piece(Colour.White, PieceType.Pawn))
-              (7, Piece(Colour.Black, PieceType.Knight))
-              (55, Piece(Colour.White, PieceType.Queen)) ]
+        let placements: (int * int) list =
+            [ (0, (Colour.White <<< 3) ||| PieceType.Pawn)
+              (7, (Colour.Black <<< 3) ||| PieceType.Knight)
+              (55, (Colour.White <<< 3) ||| PieceType.Queen) ]
             |> List.sortBy fst
 
         let board =
             placements
             |> List.fold (fun b (sq, p) -> BitboardSet.togglePiece p sq b) BitboardSet.empty
 
-        let pieces: (int * Piece) list = BitboardSet.allPieces board |> Seq.toList|> List.sortBy fst
+        let pieces: (int * int) list = BitboardSet.allPieces board |> Seq.toList|> List.sortBy fst
 
-        Assert.Equal<(int * Piece) list>(placements, pieces)
+        Assert.Equal<(int * int) list>(placements, pieces)
 
     // ------------------------------------------------------------
     // Property-based tests
@@ -372,19 +372,19 @@ module BitboardSetTests =
             |> Arb.fromGen
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - toggle twice restores board`` (p: Piece) (sq: int) =
+    let ``prop - toggle twice restores board`` (p: int) (sq: int) =
         let b0 = BitboardSet.empty
         let b1 = BitboardSet.togglePiece p sq b0
         let b2 = BitboardSet.togglePiece p sq b1
         b2 = b0
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - getPieceAt after toggle returns piece`` (p: Piece) (sq: int) =
+    let ``prop - getPieceAt after toggle returns piece`` (p: int) (sq: int) =
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
         BitboardSet.getPieceAt sq b = Some p
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - allPieces contains toggled piece`` (p: Piece) (sq: int) =
+    let ``prop - allPieces contains toggled piece`` (p: int) (sq: int) =
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
         BitboardSet.allPieces b |> Seq.exists (fun (s, pc) -> s = sq && pc = p)
 
@@ -721,7 +721,7 @@ module ZobristTests =
 
     [<Fact>]
     let ``Keys are unique for different pieces and squares`` () =
-        let p1 = Piece(Colour.White, PieceType.Pawn)
+        let p1 = (Colour.White <<< 3) ||| PieceType.Pawn
         let k1 = Zobrist.getPieceKey p1 0 // a1
         let k2 = Zobrist.getPieceKey p1 1 // b1
         Assert.NotEqual(k1, k2)
@@ -746,7 +746,7 @@ module ZobristTests =
             [ for c in [Colour.White; Colour.Black] do
                 for pt in [PieceType.Pawn; PieceType.Knight; PieceType.Bishop; PieceType.Rook; PieceType.Queen; PieceType.King] do
                     for sq in 0..63 do
-                        yield Zobrist.getPieceKey (Piece(c, pt)) sq ]
+                        yield Zobrist.getPieceKey ((c <<< 3) ||| pt) sq ]
 
         let distinct = keys |> List.distinct
         Assert.Equal(keys.Length, distinct.Length)
@@ -779,7 +779,7 @@ module ZobristTests =
 
     [<Fact>]
     let ``Piece key XORing twice cancels out`` () =
-        let p = Piece(Colour.White, PieceType.Knight)
+        let p = (Colour.White <<< 3) ||| PieceType.Knight
         let sq = 42
         let key = Zobrist.getPieceKey p sq
 
