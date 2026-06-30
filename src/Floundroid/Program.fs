@@ -151,33 +151,33 @@ module Piece =
         let kind = PieceType.fromChar c
         (col <<< 3) ||| kind
 
-[<System.Flags>]
-type CastlingRights =
-    | None = 0b0000
-    | WK   = 0b0001
-    | WQ   = 0b0010
-    | BK   = 0b0100
-    | BQ   = 0b1000
-
 module CastlingRights =
+    let [<Literal>] None = 0b0000
+    let [<Literal>] WK   = 0b0001
+    let [<Literal>] WQ   = 0b0010
+    let [<Literal>] BK   = 0b0100
+    let [<Literal>] BQ   = 0b1000
+    
+    let [<Literal>] White = 0b0011 // (WK | WQ)
+    let [<Literal>] Black = 0b1100 // (BK | BQ)
+    let [<Literal>] All   = 0b1111
 
     let fromString (s: string) =
-        if s = "-" then CastlingRights.None
+        if s = "-" then None
         else
-            (if s.Contains "K" then CastlingRights.WK else CastlingRights.None)
-            ||| (if s.Contains "Q" then CastlingRights.WQ else CastlingRights.None)
-            ||| (if s.Contains "k" then CastlingRights.BK else CastlingRights.None)
-            ||| (if s.Contains "q" then CastlingRights.BQ else CastlingRights.None)
+            (if s.Contains "K" then WK else None)
+            ||| (if s.Contains "Q" then WQ else None)
+            ||| (if s.Contains "k" then BK else None)
+            ||| (if s.Contains "q" then BQ else None)
 
-    let toString (cr: CastlingRights) =
-        let sb = System.Text.StringBuilder()
-
-        if cr.HasFlag CastlingRights.WK then sb.Append('K') |> ignore
-        if cr.HasFlag CastlingRights.WQ then sb.Append('Q') |> ignore
-        if cr.HasFlag CastlingRights.BK then sb.Append('k') |> ignore
-        if cr.HasFlag CastlingRights.BQ then sb.Append('q') |> ignore
-
-        if sb.Length = 0 then "-" else sb.ToString()
+    let toString (rights: int) =
+        if rights = None then "-"
+        else
+            let k = if rights &&& WK <> 0 then "K" else ""
+            let q = if rights &&& WQ <> 0 then "Q" else ""
+            let bk = if rights &&& BK <> 0 then "k" else ""
+            let bq = if rights &&& BQ <> 0 then "q" else ""
+            k + q + bk + bq
 
 [<Struct>]
 type Move =
@@ -648,7 +648,7 @@ module BitboardGen =
 type Board =
     { Bitboards: BitboardSet // The new performance core
       SideToMove: int
-      CastlingRights: CastlingRights
+      CastlingRights: int
       EnPassantSquare: int option
       HalfmoveClock: int
       FullmoveNumber: int
@@ -693,12 +693,12 @@ module Zobrist =
         Table.Pieces.[Piece.colour pc, Piece.kind pc, sq]
 
     /// Gets the key for a specific set of castling rights.
-    let getCastlingKey (cr: CastlingRights) =
+    let getCastlingKey (cr: int) =
         let mutable index = 0
-        if (int cr &&& int CastlingRights.WK) <> 0  then index <- index ||| 1
-        if (int cr &&& int CastlingRights.WQ) <> 0 then index <- index ||| 2
-        if (int cr &&& int CastlingRights.BK) <> 0  then index <- index ||| 4
-        if (int cr &&& int CastlingRights.BQ) <> 0 then index <- index ||| 8
+        if (cr &&& CastlingRights.WK) <> 0  then index <- index ||| 1
+        if (cr &&& CastlingRights.WQ) <> 0 then index <- index ||| 2
+        if (cr &&& CastlingRights.BK) <> 0  then index <- index ||| 4
+        if (cr &&& CastlingRights.BQ) <> 0 then index <- index ||| 8
         Table.Castling.[index]
 
     /// Gets the key for an En Passant file (0-7).

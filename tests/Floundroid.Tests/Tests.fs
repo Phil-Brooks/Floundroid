@@ -755,7 +755,7 @@ module ZobristTests =
     let ``All 16 castling Zobrist keys are unique`` () =
         let keys =
             [ for i in 0..15 ->
-                Zobrist.getCastlingKey (enum<CastlingRights> i) ]
+                Zobrist.getCastlingKey i ]
 
         Assert.Equal(16, keys |> List.distinct |> List.length)
 
@@ -1111,17 +1111,17 @@ module BoardTests =
 
         let b2 = Board.applyMove m b
 
-        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WK)
+        Assert.False(b2.CastlingRights &&& CastlingRights.WK <> 0)
 
     [<Fact>]
     let ``Moving King removes all castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
         let m = Move(Square.fromString "e1", Square.fromString "e2", 0, 0)
         let b2 = Board.applyMove m b
-        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WK)
-        Assert.False(b2.CastlingRights.HasFlag CastlingRights.WQ)
-        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BK)
-        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BQ)
+        Assert.False(b2.CastlingRights &&& CastlingRights.WK <> 0)
+        Assert.False(b2.CastlingRights &&& CastlingRights.WQ <> 0)
+        Assert.True(b2.CastlingRights &&& CastlingRights.BK <> 0)
+        Assert.True(b2.CastlingRights &&& CastlingRights.BQ <> 0)
 
     [<Fact>]
     let ``Capturing opponent rook removes their castling rights`` () =
@@ -1129,8 +1129,8 @@ module BoardTests =
         // White Rook on a1 captures Black Rook on a8
         let m = Move(Square.fromString "a1", Square.fromString "a8", 1, 0)
         let b2 = Board.applyMove m b
-        Assert.False(b2.CastlingRights.HasFlag CastlingRights.BQ)
-        Assert.True(b2.CastlingRights.HasFlag CastlingRights.BK)
+        Assert.False(b2.CastlingRights &&& CastlingRights.BQ <> 0)
+        Assert.True(b2.CastlingRights &&& CastlingRights.BK <> 0)
 
     [<Fact>]
     let ``Pawn move resets halfmove clock`` () =
