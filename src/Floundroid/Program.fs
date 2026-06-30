@@ -4,7 +4,6 @@ open System
 open System.Text
 open System.Threading
 
-
 module Colour =
     let [<Literal>] White = 0
     let [<Literal>] Black = 1
@@ -23,38 +22,25 @@ module Colour =
     /// Returns the opposite colour.
     let opposite (c: int) =  c ^^^ 1
 
-type File =
-    | A = 0
-    | B = 1
-    | C = 2
-    | D = 3
-    | E = 4
-    | F = 5
-    | G = 6
-    | H = 7
-
 module File =
+    let [<Literal>] A = 0
+    let [<Literal>] B = 1
+    let [<Literal>] C = 2
+    let [<Literal>] D = 3
+    let [<Literal>] E = 4
+    let [<Literal>] F = 5
+    let [<Literal>] G = 6
+    let [<Literal>] H = 7
 
     let firstChar = int 'a'
     
-    /// Converts a File to its integer representation (0–7).
-    let toInt (f: File) : int =
-        int f
-
-    /// Converts an integer (0–7) to a File.
-    let fromInt (i: int) : File =
-        if uint i <= 7u then enum<File> i
-        else invalidArg "i" $"File index {i} out of range (0–7)"
-
     /// Converts a File to its character representation ('a'–'h').
-    let toChar (f: File) : char =
-        char (firstChar + int f)
+    let toChar (f: int) : char =
+        char (firstChar + f)
 
     /// Converts a character ('a'–'h') to a File.
-    let fromChar (c: char) : File =
-        let i = int c - firstChar
-        if uint i <= 7u then enum<File> i
-        else invalidArg "c" $"Invalid file char: {c}"
+    let fromChar (c: char) : int =
+        int c - firstChar
 
 type Rank =
     | R1 = 0
@@ -96,14 +82,13 @@ type Square = int
 module Square =
 
     /// Converts a File and Rank to a Square.
-    let ofFileRank (f: File) (r: Rank) : Square =
-        (Rank.toInt r <<< 3) + File.toInt f
+    let ofFileRank (f: int) (r: Rank) : Square =
+        (Rank.toInt r <<< 3) + f
         // same as r*8 + f, but uses bit shift
 
     /// Gets the File of a Square.
-    let file (sq: Square) : File =
-        File.fromInt (sq &&& 7)
-        // sq % 8 → sq & 7
+    let file (sq: Square) : int =
+        sq &&& 7
 
     /// Gets the Rank of a Square.
     let rank (sq: Square) : Rank =
@@ -967,7 +952,7 @@ module Board =
                 if Char.IsDigit char then
                     file.Value <- file.Value + (int char - int '0')
                 else
-                    let sq = Square.ofFileRank (File.fromInt file.Value) (Rank.fromInt rank)
+                    let sq = Square.ofFileRank (file.Value) (Rank.fromInt rank)
                     // Directly toggle the piece on the bitboard
                     bbs <- BitboardSet.togglePiece (Piece.fromChar char) sq bbs
                     file.Value <- file.Value + 1
@@ -988,7 +973,7 @@ module Board =
         for r in 7..-1..0 do
             let mutable emptyCount = 0
             for f in 0..7 do
-                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
+                let sq = Square.ofFileRank (f) (Rank.fromInt r)
                 match tryGetPiece b sq with // This now uses Bitboards!
                 | Some p ->
                     if emptyCount > 0 then sb.Append(emptyCount) |> ignore
@@ -1200,7 +1185,7 @@ module Board =
             printf "%d " (r + 1)
             for f in 0..7 do
                 // Use the bitboard-powered tryGetPiece
-                match tryGetPiece b (Square.ofFileRank (File.fromInt f) (Rank.fromInt r)) with
+                match tryGetPiece b (Square.ofFileRank (f) (Rank.fromInt r)) with
                 | Some p -> printf "%c " (Piece.toChar p)
                 | None -> printf ". "
             printfn ""
@@ -1223,7 +1208,7 @@ module MoveGen =
         // Use the bitboard iterator to find all our pieces
         for (sq, p) in BitboardSet.allPieces b.Bitboards do
             if Piece.colour p = us then
-                let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
+                let f, r = Square.file sq, Square.rank sq |> Rank.toInt
 
                 match Piece.kind p with
                 | PieceType.Pawn ->
@@ -1232,7 +1217,7 @@ module MoveGen =
                     // 1. Single Push
                     let nr1 = r + d
                     if nr1 >= 0 && nr1 <= 7 then
-                        let p1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr1)
+                        let p1 = Square.ofFileRank (f) (Rank.fromInt nr1)
                         if not (Board.isOccupied b p1) then
                             // Promotion push
                             if nr1 = (if us = Colour.White then 7 else 0) then
@@ -1244,7 +1229,7 @@ module MoveGen =
                             // 2. Double push from starting rank
                             if r = (if us = Colour.White then 1 else 6) then
                                 let nr2 = r + 2 * d
-                                let p2 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr2)
+                                let p2 = Square.ofFileRank (f) (Rank.fromInt nr2)
                                 if not (Board.isOccupied b p2) then
                                     moves.Add(Move(sq, p2, 0, 0))
 
@@ -1252,7 +1237,7 @@ module MoveGen =
                     for df in [ -1; 1 ] do
                         let nf, nr = f + df, r + d
                         if Square.isOnBoard nf nr then
-                            let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                            let cap = Square.ofFileRank (nf) (Rank.fromInt nr)
                             match Board.tryGetPiece b cap with
                             | Some victim when Piece.colour victim = them ->
                                 if nr = (if us = Colour.White then 7 else 0) then
@@ -1265,7 +1250,7 @@ module MoveGen =
                     // 4. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
-                        if abs (File.toInt (Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
+                        if abs ((Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
                             moves.Add(Move(sq, ep, 2, 0))
                     | None -> ()
 
@@ -1365,7 +1350,7 @@ module MoveGen =
 
         for (sq, p) in BitboardSet.allPieces b.Bitboards do
             if Piece.colour p = us then
-                let f, r = Square.file sq |> File.toInt, Square.rank sq |> Rank.toInt
+                let f, r = Square.file sq, Square.rank sq |> Rank.toInt
 
                 match Piece.kind p with
                 | PieceType.Pawn ->
@@ -1376,7 +1361,7 @@ module MoveGen =
                     for df in [ -1; 1 ] do
                         let nf, nr = f + df, r + d
                         if Square.isOnBoard nf nr then
-                            let cap = Square.ofFileRank (File.fromInt nf) (Rank.fromInt nr)
+                            let cap = Square.ofFileRank nf (Rank.fromInt nr)
                             match Board.tryGetPiece b cap with
                             | Some victim when Piece.colour victim = them ->
                                 if nr = targetRank then
@@ -1389,14 +1374,14 @@ module MoveGen =
                     // 2. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
-                        if abs (File.toInt (Square.file ep) - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
+                        if abs (Square.file ep - f) = 1 && Rank.toInt (Square.rank ep) = r + d then
                             moves.Add(Move(sq, ep, 2, 0))
                     | None -> ()
                     
                     // 3. Quiet Promotions (important for QS)
                     let nr1 = r + d
                     if nr1 = targetRank then
-                        let p1 = Square.ofFileRank (File.fromInt f) (Rank.fromInt nr1)
+                        let p1 = Square.ofFileRank f (Rank.fromInt nr1)
                         if not (Board.isOccupied b p1) then
                             for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
                                 moves.Add(Move(sq, p1, 5, int pt))
@@ -2247,7 +2232,7 @@ module Debug =
             printf "%d " (r + 1)
 
             for f in 0..7 do
-                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
+                let sq = Square.ofFileRank f (Rank.fromInt r)
 
                 if Board.isSquareAttacked b sq attacker then
                     printf "x "

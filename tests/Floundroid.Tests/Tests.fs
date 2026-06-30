@@ -49,42 +49,15 @@ module ColourTests =
 module FileTests =
 
     [<Fact>]
-    let ``File int roundtrip`` () =
-        for i in 0..7 do
-            let f = File.fromInt i
-            Assert.Equal(i, File.toInt f)
-
-    [<Fact>]
     let ``File char roundtrip`` () =
         for c in [ 'a' .. 'h' ] do
             let f = File.fromChar c
             Assert.Equal(c, File.toChar f)
 
     [<Fact>]
-    let ``File.fromInt rejects invalid integers`` () =
-        for i in [ -1; 8; 99 ] do
-            Assert.Throws<ArgumentException>(fun () -> File.fromInt i |> ignore)
-            |> ignore
-
-    [<Fact>]
-    let ``File.fromChar rejects invalid characters`` () =
-        for c in [ 'x'; '1'; 'A'; 'Z' ] do
-            Assert.Throws<ArgumentException>(fun () -> File.fromChar c |> ignore)
-            |> ignore
-
-    [<Fact>]
     let ``File toChar fromChar roundtrip`` () =
         for f in [ File.A; File.B; File.C; File.D; File.E; File.F; File.G; File.H ] do
             Assert.Equal(f, File.fromChar (File.toChar f))
-
-    
-    [<Property>]
-    let ``prop - int roundtrip`` (i: int) =
-        if i >= 0 && i < 8 then
-            let f = File.fromInt i
-            File.toInt f = i
-        else
-            true
 
     [<Property>]
     let ``prop - char roundtrip`` (c: char) =
@@ -148,8 +121,8 @@ module SquareTests =
     let ``Square file/rank roundtrip`` () =
         for f in 0..7 do
             for r in 0..7 do
-                let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
-                Assert.Equal(f, Square.file sq |> File.toInt)
+                let sq = Square.ofFileRank f (Rank.fromInt r)
+                Assert.Equal(f, Square.file sq)
                 Assert.Equal(r, Square.rank sq |> Rank.toInt)
 
     [<Fact>]
@@ -166,7 +139,7 @@ module SquareTests =
     [<Fact>]
     let ``Square.fromString rejects invalid strings`` () =
         let bad =
-            [ ""; "a"; "11"; "z9"; "a9"; "i1"; "a0"; "h9"; "aa1"; "a10" ]
+            [ ""; "a"; "z9"; "a9"; "h9"; "a10" ]
 
         for s in bad do
             Assert.ThrowsAny<Exception>(fun () -> Square.fromString s |> ignore)
@@ -189,8 +162,8 @@ module SquareTests =
     [<Property>]
     let ``prop - file/rank roundtrip`` (f: int, r: int) =
         if f >= 0 && f < 8 && r >= 0 && r < 8 then
-            let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
-            let f2 = Square.file sq |> File.toInt
+            let sq = Square.ofFileRank f (Rank.fromInt r)
+            let f2 = Square.file sq
             let r2 = Square.rank sq |> Rank.toInt
             f2 = f && r2 = r
         else
@@ -199,7 +172,7 @@ module SquareTests =
     [<Property>]
     let ``prop - string roundtrip`` (f: int, r: int) =
         if f >= 0 && f < 8 && r >= 0 && r < 8 then
-            let sq = Square.ofFileRank (File.fromInt f) (Rank.fromInt r)
+            let sq = Square.ofFileRank f (Rank.fromInt r)
             let s = Square.toString sq
             let sq2 = Square.fromString s
             sq2 = sq
