@@ -4,27 +4,24 @@ open System
 open System.Text
 open System.Threading
 
-/// Colour is represented as an integer 0–1, where 0 = White and 1 = Black.
-type Colour =
-    | White = 0
-    | Black = 1
 
 module Colour =
+    let [<Literal>] White = 0
+    let [<Literal>] Black = 1
 
     /// Converts a Colour to its character representation ('w' or 'b').
-    let toChar (c: Colour) =
-        if c = Colour.White then 'w' else 'b'
+    let toChar (c: int) =
+        if c = White then 'w' else 'b'
 
     /// Converts a character ('w' or 'b') to a Colour.
     let fromChar c =
         match c with
-        | 'w' | 'W' -> Colour.White
-        | 'b' | 'B' -> Colour.Black
+        | 'w' | 'W' -> White
+        | 'b' | 'B' -> Black
         | _ -> invalidArg "c" $"Invalid colour char: %c{c}"
 
     /// Returns the opposite colour.
-    let opposite (c: Colour) =
-        if c = Colour.White then Colour.Black else Colour.White
+    let opposite (c: int) =  c ^^^ 1
 
 type File =
     | A = 0
@@ -162,13 +159,13 @@ module PieceType =
 [<Struct>]
 type Piece =
     val data: byte
-    new (colour: Colour, kind: PieceType) =
-        { data = byte ((int colour <<< 3) ||| int kind) }
+    new (colour: int, kind: PieceType) =
+        { data = byte ((colour <<< 3) ||| int kind) }
 
 module Piece =
 
-    let colour (p: Piece) : Colour =
-        enum<Colour> (int p.data >>> 3)
+    let colour (p: Piece) : int =
+        int p.data >>> 3
 
     let kind (p: Piece) : PieceType =
         enum<PieceType> (int p.data &&& 0b111)
@@ -678,7 +675,7 @@ module BitboardGen =
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
     { Bitboards: BitboardSet // The new performance core
-      SideToMove: Colour
+      SideToMove: int
       CastlingRights: CastlingRights
       EnPassantSquare: Square option
       HalfmoveClock: int
@@ -702,9 +699,6 @@ module Zobrist =
     /// Maps PieceType to an index 0-5
     let pieceIdx (pt: PieceType) = int pt
 
-    /// Maps Colour to index 0-1
-    let colourIdx (c: Colour) = int c
-    
     /// Pre-calculates the table with a fixed seed for reproducibility.
     let private initializeTable () =
         let seed = 1010101 
@@ -727,7 +721,7 @@ module Zobrist =
 
     /// Gets the key for a specific piece on a square.
     let getPieceKey (pc: Piece) (sq: Square) =
-        Table.Pieces.[colourIdx (Piece.colour pc), pieceIdx (Piece.kind pc), sq]
+        Table.Pieces.[Piece.colour pc, pieceIdx (Piece.kind pc), sq]
 
     /// Gets the key for a specific set of castling rights.
     let getCastlingKey (cr: CastlingRights) =
@@ -827,7 +821,7 @@ module Board =
           FullmoveNumber = 1
           Hash = 0UL }
 
-    let isSquareAttacked (b: Board) (sq: Square) (attacker: Colour) =
+    let isSquareAttacked (b: Board) (sq: Square) (attacker: int) =
         let bbs = b.Bitboards
         let them = attacker
 
@@ -915,7 +909,7 @@ module Board =
         (b.Bitboards.Occupancy &&& (1uL <<< sq)) <> 0uL
 
     /// Find the king square (Needed for check detection).
-    let findKing (colour: Colour) (b: Board) =
+    let findKing (colour: int) (b: Board) =
         let mutable bb =
             if colour = Colour.White then
                 b.Bitboards.WhiteKings
@@ -1018,7 +1012,7 @@ module Board =
     /// <param name="colour">The colour of the player to check.</param>
     /// <param name="b">The current game state.</param>
     /// <returns>True if the player is in check, false otherwise.</returns>
-    let isInCheckFor (colour: Colour) (b: Board) =
+    let isInCheckFor (colour: int) (b: Board) =
         let kingSq = findKing colour b
         if kingSq = -1 then false
         else isSquareAttacked b kingSq (Colour.opposite colour)
@@ -1550,7 +1544,7 @@ module Evaluation =
     
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
-        let evaluatePawnSide (colour: Colour) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
+        let evaluatePawnSide (colour: int) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
             let mutable score = 0
             let cIdx = if colour = Colour.White then 0 else 1
 
@@ -2246,7 +2240,7 @@ module Debug =
                 printfn " - %s" err
 
     /// 1.5.3 - Attack map visualiser
-    let displayAttackMap (b: Board) (attacker: Colour) =
+    let displayAttackMap (b: Board) (attacker: int) =
         printfn "Attack Map for %A:" attacker
 
         for r in 7..-1..0 do
@@ -2283,7 +2277,7 @@ module UciLoop =
             else
                 None)
 
-    let calculateTargetTime (sideToMove: Colour) (args: string list) =
+    let calculateTargetTime (sideToMove: int) (args: string list) =
         let wtime = tryGetIntArg "wtime" args |> Option.defaultValue 100000
         let btime = tryGetIntArg "btime" args |> Option.defaultValue 100000
         let winc = tryGetIntArg "winc" args |> Option.defaultValue 0

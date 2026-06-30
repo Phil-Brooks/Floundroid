@@ -43,7 +43,7 @@ module ColourTests =
             |> ignore
 
     [<Property>]
-    let ``prop - opposite is involutive`` (c: Colour) =
+    let ``prop - opposite is involutive`` (c: int) =
         Colour.opposite (Colour.opposite c) = c
 
 module FileTests =

@@ -1,7 +1,4 @@
 <Solution>
-  <Configurations>
-    <Platform Name="Any CPU" />
-  </Configurations>
   <Folder Name="/bat/">
     <File Path="bat/cin_match.bat" />
     <File Path="bat/cin_match8.bat" />
@@ -24,8 +21,7 @@
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="src/Floundroid/Floundroid.fsproj">
-  </Project>
-  <Project Path="tests/Floundroid.Tests/Floundroid.Tests.fsproj">
-  </Project>
+  <Project Path="src/Benchmarks/Benchmarks/Benchmarks.fsproj" Id="e8c9aa14-6017-4426-b085-6f3480eb0554" />
+  <Project Path="src/Floundroid/Floundroid.fsproj" />
+  <Project Path="tests/Floundroid.Tests/Floundroid.Tests.fsproj" />
 </Solution>
