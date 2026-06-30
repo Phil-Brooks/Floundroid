@@ -96,47 +96,45 @@ module Square =
     let isOnBoard (f: int) (r: int) =
         uint f <= 7u && uint r <= 7u
 
-type PieceType =
-    | Pawn   = 0
-    | Knight = 1
-    | Bishop = 2
-    | Rook   = 3
-    | Queen  = 4
-    | King   = 5
-
 module PieceType =
+    let [<Literal>] Pawn = 0
+    let [<Literal>] Knight = 1
+    let [<Literal>] Bishop = 2
+    let [<Literal>] Rook = 3
+    let [<Literal>] Queen = 4
+    let [<Literal>] King = 5
 
     // Precomputed char table for speed
     let chars = [| 'p'; 'n'; 'b'; 'r'; 'q'; 'k' |]
 
     /// Converts a PieceType to its character representation ('p'..'k').
-    let toChar (pt: PieceType) : char =
-        chars[int pt]
+    let toChar (pt: int) : char =
+        chars[pt]
 
     /// Converts a character to a PieceType.
-    let fromChar (c: char) : PieceType =
+    let fromChar (c: char) : int =
         match c with
-        | 'p' | 'P' -> PieceType.Pawn
-        | 'n' | 'N' -> PieceType.Knight
-        | 'b' | 'B' -> PieceType.Bishop
-        | 'r' | 'R' -> PieceType.Rook
-        | 'q' | 'Q' -> PieceType.Queen
-        | 'k' | 'K' -> PieceType.King
+        | 'p' | 'P' -> Pawn
+        | 'n' | 'N' -> Knight
+        | 'b' | 'B' -> Bishop
+        | 'r' | 'R' -> Rook
+        | 'q' | 'Q' -> Queen
+        | 'k' | 'K' -> King
         | _ -> invalidArg "c" $"Invalid piece type char: {c}"
 
 [<Struct>]
 type Piece =
     val data: byte
-    new (colour: int, kind: PieceType) =
-        { data = byte ((colour <<< 3) ||| int kind) }
+    new (colour: int, kind: int) =
+        { data = byte ((colour <<< 3) ||| kind) }
 
 module Piece =
 
     let colour (p: Piece) : int =
         int p.data >>> 3
 
-    let kind (p: Piece) : PieceType =
-        enum<PieceType> (int p.data &&& 0b111)
+    let kind (p: Piece) : int =
+        int p.data &&& 0b111
 
     let toChar (p: Piece) : char =
         let c = PieceType.toChar (kind p)
@@ -207,7 +205,7 @@ module Move =
 
         match kind m with
         | 5 ->   // promotion
-            let pt = enum<PieceType> (promo m)
+            let pt = promo m
             baseStr + (PieceType.toChar pt |> Char.ToUpper |> string)
         | _ ->
             baseStr
@@ -664,9 +662,6 @@ module Zobrist =
         EnPassantFile: uint64[]
     }
 
-    /// Maps PieceType to an index 0-5
-    let pieceIdx (pt: PieceType) = int pt
-
     /// Pre-calculates the table with a fixed seed for reproducibility.
     let private initializeTable () =
         let seed = 1010101 
@@ -689,7 +684,7 @@ module Zobrist =
 
     /// Gets the key for a specific piece on a square.
     let getPieceKey (pc: Piece) (sq: int) =
-        Table.Pieces.[Piece.colour pc, pieceIdx (Piece.kind pc), sq]
+        Table.Pieces.[Piece.colour pc, Piece.kind pc, sq]
 
     /// Gets the key for a specific set of castling rights.
     let getCastlingKey (cr: CastlingRights) =
@@ -1037,7 +1032,7 @@ module Board =
         // 5. Place the piece at the destination
         match Move.kind m with
         | 5 ->   // Promotion
-            let promoType = Move.promo m |> enum<PieceType>
+            let promoType = Move.promo m
             let promotedPiece = Piece(b.SideToMove, promoType)
 
             let toSq = Move.toSq m
@@ -1562,7 +1557,7 @@ module Evaluation =
         let blackScore = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
         whiteScore - blackScore
     
-    let getAttackBitboard (sq: int) (kind: PieceType) (occ: Bitboard) =
+    let getAttackBitboard (sq: int) (kind: int) (occ: Bitboard) =
         match kind with
         | PieceType.Knight -> 
             BitboardGen.knightAttacks.[sq]
@@ -1608,7 +1603,7 @@ module Evaluation =
         let mutable blackKingAttacksCount = 0
         let mutable blackKingAttackWeight = 0
 
-        let evalLayer (bb: Bitboard) (kind: PieceType) (isWhite: bool) =
+        let evalLayer (bb: Bitboard) (kind: int) (isWhite: bool) =
             let mutable tempBb = bb
             // Ensure kIdx is 0-5. Adjust if your PieceType enum is different.
             let kIdx = (int kind) 
@@ -1846,7 +1841,7 @@ module Search =
                                         let victimVal = match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 100
                                         let attackerVal = match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0
                                         10000 + (victimVal * 10) - attackerVal
-                                    | 5 -> 9000 + Evaluation.matsMG[int (enum<PieceType>(Move.promo m))]
+                                    | 5 -> 9000 + Evaluation.matsMG[Move.promo m]
                                     | _ -> 
                                         if Some m = killerMoves.[0, ply] then 8000
                                         elif Some m = killerMoves.[1, ply] then 7000
@@ -2023,7 +2018,7 @@ module Perft =
 
                     let prom =
                         match Move.kind m with
-                        | 5 -> sprintf "=%c" (Char.ToUpper(PieceType.toChar (enum<PieceType>(Move.promo m))))
+                        | 5 -> sprintf "=%c" (Char.ToUpper(PieceType.toChar (Move.promo m)))
                         | _ -> ""
 
                     sprintf "%s%s%s" prefix (Square.toString (Move.toSq m)) prom
