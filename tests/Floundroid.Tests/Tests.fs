@@ -273,7 +273,7 @@ module BitboardTests =
 module BitboardSetTests =
 
     // Helpers
-    let allSquares:Square list = [0 .. 63]
+    let allSquares:int list = [0 .. 63]
 
     let allPieces =
         [ for c in [Colour.White; Colour.Black] do
@@ -343,7 +343,7 @@ module BitboardSetTests =
 
     [<Fact>]
     let ``allPieces returns exactly the toggled pieces`` () =
-        let placements: (Square * Piece) list =
+        let placements: (int * Piece) list =
             [ (0, Piece(Colour.White, PieceType.Pawn))
               (7, Piece(Colour.Black, PieceType.Knight))
               (55, Piece(Colour.White, PieceType.Queen)) ]
@@ -353,9 +353,9 @@ module BitboardSetTests =
             placements
             |> List.fold (fun b (sq, p) -> BitboardSet.togglePiece p sq b) BitboardSet.empty
 
-        let pieces: (Square * Piece) list = BitboardSet.allPieces board |> Seq.toList|> List.sortBy fst
+        let pieces: (int * Piece) list = BitboardSet.allPieces board |> Seq.toList|> List.sortBy fst
 
-        Assert.Equal<(Square * Piece) list>(placements, pieces)
+        Assert.Equal<(int * Piece) list>(placements, pieces)
 
     // ------------------------------------------------------------
     // Property-based tests
@@ -368,23 +368,23 @@ module BitboardSetTests =
     type SquareGen =
         static member Square() =
             Gen.choose(0, 63)
-            |> Gen.map (fun i -> i : Square)
+            |> Gen.map (fun i -> i : int)
             |> Arb.fromGen
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - toggle twice restores board`` (p: Piece) (sq: Square) =
+    let ``prop - toggle twice restores board`` (p: Piece) (sq: int) =
         let b0 = BitboardSet.empty
         let b1 = BitboardSet.togglePiece p sq b0
         let b2 = BitboardSet.togglePiece p sq b1
         b2 = b0
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - getPieceAt after toggle returns piece`` (p: Piece) (sq: Square) =
+    let ``prop - getPieceAt after toggle returns piece`` (p: Piece) (sq: int) =
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
         BitboardSet.getPieceAt sq b = Some p
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
-    let ``prop - allPieces contains toggled piece`` (p: Piece) (sq: Square) =
+    let ``prop - allPieces contains toggled piece`` (p: Piece) (sq: int) =
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
         BitboardSet.allPieces b |> Seq.exists (fun (s, pc) -> s = sq && pc = p)
 

@@ -63,32 +63,29 @@ module Rank =
     let fromChar (c: char) : int =
         int c - firstChar
 
-/// Squares are represented as integers 0–63, where 0 = a1 and 63 = h8.
-type Square = int
-
 module Square =
 
     /// Converts a File and Rank to a Square.
-    let ofFileRank (f: int) (r: int) : Square =
+    let ofFileRank (f: int) (r: int) : int =
         (r <<< 3) + f
         // same as r*8 + f, but uses bit shift
 
     /// Gets the File of a Square.
-    let file (sq: Square) : int =
+    let file (sq: int) : int =
         sq &&& 7
 
     /// Gets the Rank of a Square.
-    let rank (sq: Square) : int =
+    let rank (sq: int) : int =
         sq >>> 3
 
     /// Converts a Square to algebraic notation (e.g. "e4").
-    let toString (sq: Square) : string =
+    let toString (sq: int) : string =
         let f = file sq |> File.toChar
         let r = rank sq |> Rank.toChar
         string f + string r
 
     /// Converts algebraic notation (e.g. "d4") to a Square.
-    let fromString (s: string) : Square =
+    let fromString (s: string) : int =
         if s.Length <> 2 then
             invalidArg "s" $"Invalid square string: {s}"
         let f = File.fromChar s[0]
@@ -182,7 +179,7 @@ module CastlingRights =
 type Move =
     val data: uint32
 
-    new (fromSq: Square, toSq: Square, kind: int, promo: int) =
+    new (fromSq: int, toSq: int, kind: int, promo: int) =
         { data =
             uint32 fromSq
             ||| (uint32 toSq <<< 6)
@@ -224,13 +221,13 @@ module Bitboard =
     let all: Bitboard = 0xFFFFFFFFFFFFFFFFuL
 
     /// Sets the bit at the given square.
-    let set (sq: Square) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
+    let set (sq: int) (bb: Bitboard) : Bitboard = bb ||| (1uL <<< sq)
 
     /// Clears the bit at the given square.
-    let clear (sq: Square) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
+    let clear (sq: int) (bb: Bitboard) : Bitboard = bb &&& ~~~(1uL <<< sq)
 
     /// Checks if a square is set.
-    let contains (sq: Square) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
+    let contains (sq: int) (bb: Bitboard) : bool = (bb &&& (1uL <<< sq)) <> 0uL
 
     /// Returns the number of set bits (population count).
     let count (bb: Bitboard) : int =
@@ -242,12 +239,12 @@ module Bitboard =
     
     /// Returns the index of the least significant bit (0-63) and clears it from the bitboard.
     /// This is a high-performance way to iterate through pieces.
-    let popLsb (bb: byref<Bitboard>) : Square =
+    let popLsb (bb: byref<Bitboard>) : int =
         let lsb = System.Numerics.BitOperations.TrailingZeroCount(bb)
         bb <- bb &&& (bb - 1uL)
         lsb
 
-    let bits (bb: Bitboard) : seq<Square> =
+    let bits (bb: Bitboard) : seq<int> =
         seq {
             let mutable x = bb
             while x <> 0UL do
@@ -308,7 +305,7 @@ module BitboardSet =
           Occupancy = 0uL }
 
     /// Identifies the piece (if any) at a specific square using bitboards.
-    let getPieceAt (sq: Square) (bbs: BitboardSet) : Piece option =
+    let getPieceAt (sq: int) (bbs: BitboardSet) : Piece option =
         let bit = 1uL <<< sq
 
         if (bbs.Occupancy &&& bit) = 0uL then
@@ -333,7 +330,7 @@ module BitboardSet =
             Some (Piece(color, kind))
 
     /// A helper to flip a piece on/off. Essential for incremental updates.
-    let togglePiece (p: Piece) (sq: Square) (bbs: BitboardSet) =
+    let togglePiece (p: Piece) (sq: int) (bbs: BitboardSet) =
         let bit = 1uL <<< sq
 
         let newBbs =
@@ -410,7 +407,7 @@ module BitboardSet =
 module Magic =
     /// Generates a bitboard of all squares a Bishop attacks from a given square, 
     /// accounting for blockers. This is the "slow" version used for table init.
-    let bishopAttacks (sq: Square) (blockers: Bitboard) =
+    let bishopAttacks (sq: int) (blockers: Bitboard) =
         let mutable attacks = 0uL
         let r, f = sq / 8, sq % 8
         let directions = [| (1, 1); (1, -1); (-1, 1); (-1, -1) |]
@@ -430,7 +427,7 @@ module Magic =
 
     /// Generates a bitboard of all squares a Rook attacks from a given square, 
     /// accounting for blockers. This is the "slow" version used for table init.
-    let rookAttacks (sq: Square) (blockers: Bitboard) =
+    let rookAttacks (sq: int) (blockers: Bitboard) =
         let mutable attacks = 0uL
         let r, f = sq / 8, sq % 8
         let directions = [| (1, 0); (-1, 0); (0, 1); (0, -1) |]
@@ -451,7 +448,7 @@ module Magic =
     /// The "Mask" for Magic Bitboards: This excludes the very last square 
     /// on the edge of the board for every ray, because a blocker on the 
     /// edge doesn't change the attack bitboard.
-    let bishopMask (sq: Square) =
+    let bishopMask (sq: int) =
         let mutable mask = 0uL
         let r, f = sq / 8, sq % 8
         let directions = [| (1, 1); (1, -1); (-1, 1); (-1, -1) |]
@@ -464,7 +461,7 @@ module Magic =
                 nf <- nf + df
         mask
 
-    let rookMask (sq: Square) =
+    let rookMask (sq: int) =
         let mutable mask = 0uL
         let r, f = sq / 8, sq % 8
         // Vertical
@@ -648,7 +645,7 @@ type Board =
     { Bitboards: BitboardSet // The new performance core
       SideToMove: int
       CastlingRights: CastlingRights
-      EnPassantSquare: Square option
+      EnPassantSquare: int option
       HalfmoveClock: int
       FullmoveNumber: int
       Hash: uint64 }
@@ -691,7 +688,7 @@ module Zobrist =
     let Table = initializeTable()
 
     /// Gets the key for a specific piece on a square.
-    let getPieceKey (pc: Piece) (sq: Square) =
+    let getPieceKey (pc: Piece) (sq: int) =
         Table.Pieces.[Piece.colour pc, pieceIdx (Piece.kind pc), sq]
 
     /// Gets the key for a specific set of castling rights.
@@ -704,7 +701,7 @@ module Zobrist =
         Table.Castling.[index]
 
     /// Gets the key for an En Passant file (0-7).
-    let getEnPassantKey (sq: Square option) =
+    let getEnPassantKey (sq: int option) =
         match sq with
         | Some s -> Table.EnPassantFile.[s % 8]
         | None -> 0UL
@@ -792,7 +789,7 @@ module Board =
           FullmoveNumber = 1
           Hash = 0UL }
 
-    let isSquareAttacked (b: Board) (sq: Square) (attacker: int) =
+    let isSquareAttacked (b: Board) (sq: int) (attacker: int) =
         let bbs = b.Bitboards
         let them = attacker
 
@@ -873,10 +870,10 @@ module Board =
             Move(fromSq, toSq, 0, 0)
    
     /// Tries to get a piece from a square (Source of truth: Bitboards).
-    let tryGetPiece (b: Board) (sq: Square) = BitboardSet.getPieceAt sq b.Bitboards
+    let tryGetPiece (b: Board) (sq: int) = BitboardSet.getPieceAt sq b.Bitboards
 
     /// Checks if a square is occupied (Source of truth: Bitboards).
-    let isOccupied (b: Board) (sq: Square) =
+    let isOccupied (b: Board) (sq: int) =
         (b.Bitboards.Occupancy &&& (1uL <<< sq)) <> 0uL
 
     /// Find the king square (Needed for check detection).
@@ -890,7 +887,7 @@ module Board =
         if bb = 0uL then -1 else Bitboard.popLsb &bb
 
     /// Sets a piece on a square and updates bitboards (Source of truth: Bitboards).
-    let setPiece (b: Board) (sq: Square) (pOpt: Piece option) =
+    let setPiece (b: Board) (sq: int) (pOpt: Piece option) =
         let mutable newBbs = b.Bitboards
 
         // 1. If there's already a piece at this square, we must toggle it OFF first
