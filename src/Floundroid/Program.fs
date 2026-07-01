@@ -316,86 +316,74 @@ module BitboardSet =
             let color = if (bbs.WhiteTotal &&& bit) <> 0uL then Colour.White else Colour.Black
 
             let kind =
-                if (bbs.WhitePawns ||| bbs.BlackPawns) &&& bit <> 0uL then
-                    PieceType.Pawn
-                elif (bbs.WhiteKnights ||| bbs.BlackKnights) &&& bit <> 0uL then
-                    PieceType.Knight
-                elif (bbs.WhiteBishops ||| bbs.BlackBishops) &&& bit <> 0uL then
-                    PieceType.Bishop
-                elif (bbs.WhiteRooks ||| bbs.BlackRooks) &&& bit <> 0uL then
-                    PieceType.Rook
-                elif (bbs.WhiteQueens ||| bbs.BlackQueens) &&& bit <> 0uL then
-                    PieceType.Queen
+                if color = Colour.White then
+                    if (bbs.WhitePawns &&& bit) <> 0uL then PieceType.Pawn
+                    elif (bbs.WhiteKnights &&& bit) <> 0uL then PieceType.Knight
+                    elif (bbs.WhiteBishops &&& bit) <> 0uL then PieceType.Bishop
+                    elif (bbs.WhiteRooks &&& bit) <> 0uL then PieceType.Rook
+                    elif (bbs.WhiteQueens &&& bit) <> 0uL then PieceType.Queen
+                    else PieceType.King
                 else
-                    PieceType.King
+                    if (bbs.BlackPawns &&& bit) <> 0uL then PieceType.Pawn
+                    elif (bbs.BlackKnights &&& bit) <> 0uL then PieceType.Knight
+                    elif (bbs.BlackBishops &&& bit) <> 0uL then PieceType.Bishop
+                    elif (bbs.BlackRooks &&& bit) <> 0uL then PieceType.Rook
+                    elif (bbs.BlackQueens &&& bit) <> 0uL then PieceType.Queen
+                    else PieceType.King
 
-            Some ((color <<< 3) ||| kind)
+            Some ((color <<< 3) ||| kind)    
 
     /// A helper to flip a piece on/off. Essential for incremental updates.
     let togglePiece (p: int) (sq: int) (bbs: BitboardSet) =
         let bit = 1uL <<< sq
+        let color = Piece.colour p
+        let kind = Piece.kind p
 
-        let newBbs =
-            match Piece.colour p, Piece.kind p with
-            | Colour.White, PieceType.Pawn ->
-                { bbs with
-                    WhitePawns = bbs.WhitePawns ^^^ bit }
-            | Colour.White, PieceType.Knight ->
-                { bbs with
-                    WhiteKnights = bbs.WhiteKnights ^^^ bit }
-            | Colour.White, PieceType.Bishop ->
-                { bbs with
-                    WhiteBishops = bbs.WhiteBishops ^^^ bit }
-            | Colour.White, PieceType.Rook ->
-                { bbs with
-                    WhiteRooks = bbs.WhiteRooks ^^^ bit }
-            | Colour.White, PieceType.Queen ->
-                { bbs with
-                    WhiteQueens = bbs.WhiteQueens ^^^ bit }
-            | Colour.White, PieceType.King ->
-                { bbs with
-                    WhiteKings = bbs.WhiteKings ^^^ bit }
-            | Colour.Black, PieceType.Pawn ->
-                { bbs with
-                    BlackPawns = bbs.BlackPawns ^^^ bit }
-            | Colour.Black, PieceType.Knight ->
-                { bbs with
-                    BlackKnights = bbs.BlackKnights ^^^ bit }
-            | Colour.Black, PieceType.Bishop ->
-                { bbs with
-                    BlackBishops = bbs.BlackBishops ^^^ bit }
-            | Colour.Black, PieceType.Rook ->
-                { bbs with
-                    BlackRooks = bbs.BlackRooks ^^^ bit }
-            | Colour.Black, PieceType.Queen ->
-                { bbs with
-                    BlackQueens = bbs.BlackQueens ^^^ bit }
-            | Colour.Black, PieceType.King ->
-                { bbs with
-                    BlackKings = bbs.BlackKings ^^^ bit }
-            | _ -> invalidArg "p" $"Invalid colour/kind: %A{p}"
+        if color = Colour.White then
+            let newBbs =
+                match kind with
+                | PieceType.Pawn -> { bbs with WhitePawns = bbs.WhitePawns ^^^ bit }
+                | PieceType.Knight -> { bbs with WhiteKnights = bbs.WhiteKnights ^^^ bit }
+                | PieceType.Bishop -> { bbs with WhiteBishops = bbs.WhiteBishops ^^^ bit }
+                | PieceType.Rook -> { bbs with WhiteRooks = bbs.WhiteRooks ^^^ bit }
+                | PieceType.Queen -> { bbs with WhiteQueens = bbs.WhiteQueens ^^^ bit }
+                | PieceType.King -> { bbs with WhiteKings = bbs.WhiteKings ^^^ bit }
+                | _ -> invalidArg "p" $"Invalid kind: %A{kind}"
 
-        let whiteTotal =
-            newBbs.WhitePawns
-            ||| newBbs.WhiteKnights
-            ||| newBbs.WhiteBishops
-            ||| newBbs.WhiteRooks
-            ||| newBbs.WhiteQueens
-            ||| newBbs.WhiteKings
+            let whiteTotal =
+                newBbs.WhitePawns
+                ||| newBbs.WhiteKnights
+                ||| newBbs.WhiteBishops
+                ||| newBbs.WhiteRooks
+                ||| newBbs.WhiteQueens
+                ||| newBbs.WhiteKings
 
-        let blackTotal =
-            newBbs.BlackPawns
-            ||| newBbs.BlackKnights
-            ||| newBbs.BlackBishops
-            ||| newBbs.BlackRooks
-            ||| newBbs.BlackQueens
-            ||| newBbs.BlackKings
+            { newBbs with
+                WhiteTotal = whiteTotal
+                Occupancy = whiteTotal ||| bbs.BlackTotal }
+        else
+            let newBbs =
+                match kind with
+                | PieceType.Pawn -> { bbs with BlackPawns = bbs.BlackPawns ^^^ bit }
+                | PieceType.Knight -> { bbs with BlackKnights = bbs.BlackKnights ^^^ bit }
+                | PieceType.Bishop -> { bbs with BlackBishops = bbs.BlackBishops ^^^ bit }
+                | PieceType.Rook -> { bbs with BlackRooks = bbs.BlackRooks ^^^ bit }
+                | PieceType.Queen -> { bbs with BlackQueens = bbs.BlackQueens ^^^ bit }
+                | PieceType.King -> { bbs with BlackKings = bbs.BlackKings ^^^ bit }
+                | _ -> invalidArg "p" $"Invalid kind: %A{kind}"
 
-        { newBbs with
-            WhiteTotal = whiteTotal
-            BlackTotal = blackTotal
-            Occupancy = whiteTotal ||| blackTotal }
+            let blackTotal =
+                newBbs.BlackPawns
+                ||| newBbs.BlackKnights
+                ||| newBbs.BlackBishops
+                ||| newBbs.BlackRooks
+                ||| newBbs.BlackQueens
+                ||| newBbs.BlackKings
 
+            { newBbs with
+                BlackTotal = blackTotal
+                Occupancy = bbs.WhiteTotal ||| blackTotal }
+    
     /// Returns a sequence of all (Square, Piece) pairs currently on the board.
     let allPieces (bbs: BitboardSet) =
         seq {
@@ -511,7 +499,6 @@ module Magic =
 
     /// Initializes the sliding attack tables for bishops and rooks.
     let init () =
-        //printfn "info string Initializing Sliding Attack Tables..."
         for sq in 0 .. 63 do
             // Bishops
             let bMask = bishopMask sq
@@ -530,7 +517,6 @@ module Magic =
                 let blockers = getBlockers i rMask
                 let tableIdx = (sq * 4096) + i
                 rookTable.[tableIdx] <- rookAttacks sq blockers
-        //printfn "info string Sliding Attack Tables initialized."
 
 module BitboardGen =
     /// Pre-calculated knight attacks for every square
