@@ -179,32 +179,30 @@ module CastlingRights =
             let bq = if rights &&& BQ <> 0 then "q" else ""
             k + q + bk + bq
 
-[<Struct>]
-type Move =
-    val data: uint32
-
-    new (fromSq: int, toSq: int, kind: int, promo: int) =
-        { data =
-            uint32 fromSq
-            ||| (uint32 toSq <<< 6)
-            ||| (uint32 kind <<< 12)
-            ||| (uint32 promo <<< 16) }
-
 module Move =
+    let [<Literal>] Quiet = 0
+    let [<Literal>] Capture = 1
+    let [<Literal>] EnPassant = 2
+    let [<Literal>] KingsideCastling = 3
+    let [<Literal>] QueensideCastling = 4
+    let [<Literal>] Promotion = 5
 
-    let fromSq (m: Move) =
-        int (m.data &&& 0b111111u)
+    let create (fromSq: int, toSq: int, kind: int, promo: int) = 
+        fromSq ||| (toSq <<< 6) ||| (kind <<< 12) ||| (promo <<< 16)
 
-    let toSq (m: Move) =
-        int ((m.data >>> 6) &&& 0b111111u)
+    let fromSq (m: int) =
+        m &&& 63
 
-    let kind (m: Move) =
-        int ((m.data >>> 12) &&& 0b1111u)
+    let toSq (m: int) =
+        (m >>> 6) &&& 63
 
-    let promo (m: Move) =
-        int ((m.data >>> 16) &&& 0b1111u)
+    let kind (m: int) =
+        (m >>> 12) &&& 15
 
-    let toUci (m: Move) =
+    let promo (m: int) =
+        (m >>> 16) &&& 15
+
+    let toUci (m: int) =
         let baseStr =
             Square.toString (fromSq m) +
             Square.toString (toSq m)
@@ -212,7 +210,7 @@ module Move =
         match kind m with
         | 5 ->   // promotion
             let pt = promo m
-            baseStr + (PieceType.toChar pt |> Char.ToUpper |> string)
+            baseStr + (PieceType.toChar pt |> Char.ToLower |> string)
         | _ ->
             baseStr
 
@@ -718,7 +716,7 @@ module TranspositionTable =
     [<Struct>]
     type TTEntry = {
         Hash: uint64
-        Move: Move option
+        Move: int option
         Value: int
         Depth: int
         Age : byte
@@ -756,7 +754,7 @@ module TranspositionTable =
         Array.fill table 0 SIZE emptyEntry
 
     /// Stores an entry in the transposition table with the given parameters.
-    let store (hash: uint64) (depth: int) (ply: int) (flag: NodeFlag) (value: int) (m: Move option) =
+    let store (hash: uint64) (depth: int) (ply: int) (flag: NodeFlag) (value: int) (m: int option) =
         let index = int (hash % uint64 SIZE)
         let adjustedValue = mateToTT value ply
         
@@ -828,7 +826,7 @@ module Board =
     
                         (rookAttacks &&& themRooks) <> 0uL                    
 
-    let fromUci (b: Board) (s: string) : Move =
+    let fromUci (b: Board) (s: string) : int =
         if s.Length < 4 then
             invalidArg "s" "UCI move string too short"
 
@@ -844,31 +842,31 @@ module Board =
         // --- 1. Promotion ---
         if s.Length = 5 then
             let promo = int (PieceType.fromChar s.[4])
-            Move(fromSq, toSq, 5, promo)
+            Move.create(fromSq, toSq, 5, promo)
 
         // --- 2. Castling ---
         elif Piece.kind movingPiece = PieceType.King then
             match (fromSq, toSq) with
-            | (4, 6)   -> Move(fromSq, toSq, 3, 0)   // White O-O
-            | (4, 2)   -> Move(fromSq, toSq, 4, 0)   // White O-O-O
-            | (60, 62) -> Move(fromSq, toSq, 3, 0)   // Black O-O
-            | (60, 58) -> Move(fromSq, toSq, 4, 0)   // Black O-O-O
-            | _ -> Move(fromSq, toSq, 0, 0)
+            | (4, 6)   -> Move.create(fromSq, toSq, 3, 0)   // White O-O
+            | (4, 2)   -> Move.create(fromSq, toSq, 4, 0)   // White O-O-O
+            | (60, 62) -> Move.create(fromSq, toSq, 3, 0)   // Black O-O
+            | (60, 58) -> Move.create(fromSq, toSq, 4, 0)   // Black O-O-O
+            | _ -> Move.create(fromSq, toSq, 0, 0)
 
         // --- 3. En passant ---
         elif isPawn &&
              b.EnPassantSquare.IsSome &&
              toSq = b.EnPassantSquare.Value &&
              Square.file fromSq <> Square.file toSq then
-            Move(fromSq, toSq, 2, 0)
+            Move.create(fromSq, toSq, 2, 0)
 
         // --- 4. Capture ---
         elif BitboardSet.getPieceAt toSq b.Bitboards |> Option.isSome then
-            Move(fromSq, toSq, 1, 0)
+            Move.create(fromSq, toSq, 1, 0)
 
         // --- 5. Quiet ---
         else
-            Move(fromSq, toSq, 0, 0)
+            Move.create(fromSq, toSq, 0, 0)
    
     /// Tries to get a piece from a square (Source of truth: Bitboards).
     let tryGetPiece (b: Board) (sq: int) = BitboardSet.getPieceAt sq b.Bitboards
@@ -1000,7 +998,7 @@ module Board =
     /// Executes a move, updating both Bitboards and the Piece Map.
     /// This is the final step before the Map is removed entirely.
     /// </summary>
-    let applyMove (m: Move) (b: Board) =
+    let applyMove (m: int) (b: Board) =
         // 1. Initialize variables for the new state
         let mutable newBitboards = b.Bitboards
         let mutable newHash = b.Hash
@@ -1186,7 +1184,7 @@ module MoveGen =
 
     // Gets all pseudo-legal moves for the current position using Bitboards.
     let getPseudoLegalMoves (b: Board) =
-        let moves = ResizeArray<Move>()
+        let moves = ResizeArray<int>()
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
 
         // Use the bitboard iterator to find all our pieces
@@ -1206,16 +1204,16 @@ module MoveGen =
                             // Promotion push
                             if nr1 = (if us = Colour.White then 7 else 0) then
                                 for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                    moves.Add(Move(sq, p1, 5, int pt))
+                                    moves.Add(Move.create(sq, p1, 5, int pt))
                             else
-                                moves.Add(Move(sq, p1, 0, 0))
+                                moves.Add(Move.create(sq, p1, 0, 0))
 
                             // 2. Double push from starting rank
                             if r = (if us = Colour.White then 1 else 6) then
                                 let nr2 = r + 2 * d
                                 let p2 = Square.ofFileRank f nr2
                                 if not (Board.isOccupied b p2) then
-                                    moves.Add(Move(sq, p2, 0, 0))
+                                    moves.Add(Move.create(sq, p2, 0, 0))
 
                     // 3. Captures
                     for df in [ -1; 1 ] do
@@ -1226,16 +1224,16 @@ module MoveGen =
                             | Some victim when Piece.colour victim = them ->
                                 if nr = (if us = Colour.White then 7 else 0) then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add(Move(sq, cap, 5, int pt))
+                                        moves.Add(Move.create(sq, cap, 5, int pt))
                                 else
-                                    moves.Add(Move(sq, cap, 1, 0))
+                                    moves.Add(Move.create(sq, cap, 1, 0))
                             | _ -> ()
 
                     // 4. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
                         if abs ((Square.file ep) - f) = 1 && Square.rank ep = r + d then
-                            moves.Add(Move(sq, ep, 2, 0))
+                            moves.Add(Move.create(sq, ep, 2, 0))
                     | None -> ()
 
                 | PieceType.Knight ->
@@ -1246,8 +1244,8 @@ module MoveGen =
                         match Board.tryGetPiece b t with
                         | Some target ->
                             if Piece.colour target = them then
-                                moves.Add(Move(sq, t, 1, 0))
-                        | None -> moves.Add(Move(sq, t, 0, 0))
+                                moves.Add(Move.create(sq, t, 1, 0))
+                        | None -> moves.Add(Move.create(sq, t, 0, 0))
 
                 | PieceType.King ->
                     // Use high-speed Bitboard lookup
@@ -1257,22 +1255,22 @@ module MoveGen =
                         match Board.tryGetPiece b t with
                         | Some target ->
                             if Piece.colour target = them then
-                                moves.Add(Move(sq, t, 1, 0))
-                        | None -> moves.Add(Move(sq, t, 0, 0))  
+                                moves.Add(Move.create(sq, t, 1, 0))
+                        | None -> moves.Add(Move.create(sq, t, 0, 0))  
 
                     // Castling
                     let rnk, cr = (if us = Colour.White then 0 else 7), b.CastlingRights
                     if (us = Colour.White && (int cr &&& int CastlingRights.WK) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BK) <> 0) then
                         let f1, g1 = Square.ofFileRank File.F rnk, Square.ofFileRank File.G rnk
                         if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
-                            moves.Add(Move(sq, g1, 3, 0))
+                            moves.Add(Move.create(sq, g1, 3, 0))
 
                     if (us = Colour.White && (int cr &&& int CastlingRights.WQ) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BQ) <> 0) then
                         let d1, c1, b1 = Square.ofFileRank File.D rnk, 
                                          Square.ofFileRank File.C rnk,
                                          Square.ofFileRank File.B rnk
                         if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
-                            moves.Add(Move(sq, c1, 4, 0))
+                            moves.Add(Move.create(sq, c1, 4, 0))
 
                 | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
                     let occ = b.Bitboards.Occupancy
@@ -1291,8 +1289,8 @@ module MoveGen =
     
                     while targets <> 0uL do
                         let t = Bitboard.popLsb &targets
-                        if Board.isOccupied b t then moves.Add(Move(sq, t, 1, 0))
-                        else moves.Add(Move(sq, t, 0, 0))
+                        if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                        else moves.Add(Move.create(sq, t, 0, 0))
 
                 | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
@@ -1329,7 +1327,7 @@ module MoveGen =
 
     /// Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.
     let getCaptureMoves (b: Board) =
-        let moves = ResizeArray<Move>()
+        let moves = ResizeArray<int>()
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
 
         for (sq, p) in BitboardSet.allPieces b.Bitboards do
@@ -1350,16 +1348,16 @@ module MoveGen =
                             | Some victim when Piece.colour victim = them ->
                                 if nr = targetRank then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add(Move(sq, cap, 5, int pt))
+                                        moves.Add(Move.create(sq, cap, 5, int pt))
                                 else
-                                    moves.Add(Move(sq, cap, 1, 0))
+                                    moves.Add(Move.create(sq, cap, 1, 0))
                             | _ -> ()
 
                     // 2. En passant
                     match b.EnPassantSquare with
                     | Some ep ->
                         if abs (Square.file ep - f) = 1 && Square.rank ep = r + d then
-                            moves.Add(Move(sq, ep, 2, 0))
+                            moves.Add(Move.create(sq, ep, 2, 0))
                     | None -> ()
                     
                     // 3. Quiet Promotions (important for QS)
@@ -1368,19 +1366,19 @@ module MoveGen =
                         let p1 = Square.ofFileRank f nr1
                         if not (Board.isOccupied b p1) then
                             for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                moves.Add(Move(sq, p1, 5, int pt))
+                                moves.Add(Move.create(sq, p1, 5, int pt))
 
                 | PieceType.Knight ->
                     let mutable attacks = BitboardGen.knightAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        moves.Add(Move(sq, t, 1, 0))
+                        moves.Add(Move.create(sq, t, 1, 0))
 
                 | PieceType.King ->
                     let mutable attacks = BitboardGen.kingAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        moves.Add(Move(sq, t, 1, 0))
+                        moves.Add(Move.create(sq, t, 1, 0))
 
                 | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
                     let occ = b.Bitboards.Occupancy
@@ -1397,7 +1395,7 @@ module MoveGen =
     
                     while targets <> 0uL do
                         let t = Bitboard.popLsb &targets
-                        moves.Add(Move(sq, t, 1, 0))
+                        moves.Add(Move.create(sq, t, 1, 0))
 
                 | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
 
@@ -1692,7 +1690,7 @@ module Search =
     let INF = 1000000
 
     // Stores two quiet moves per ply that caused a beta cutoff
-    let killerMoves: Move option[,] = Array2D.create 2 256 None
+    let killerMoves: int option[,] = Array2D.create 2 256 None
 
     // Add this to clear killers at the start of every search
     let clearKillers () =
@@ -1767,7 +1765,7 @@ module Search =
                 currentAlpha    
     
     /// Internal negamax implementation with Null-Move Pruning (allowNull).
-    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * Move option =
+    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * int option =
         nodes <- nodes + 1uL
         
         // 1. Terminal Conditions
@@ -1921,7 +1919,7 @@ module Search =
                             (bestScore, bestMove)
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
-    let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * Move option =
+    let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int option =
         negamaxInternal b depth ply alpha beta true history ct
 
     /// Iterative Deepening with Aspiration Windows
@@ -1995,7 +1993,7 @@ type PerftSuiteItem =
 
 module Perft =
     /// Converts a move to Standard Algebraic Notation (SAN) based on the current board state.
-    let toSan (b: Board) (m: Move) =
+    let toSan (b: Board) (m: int) =
         match Move.kind m with
         | 3 -> "O-O"
         | 4 -> "O-O-O"

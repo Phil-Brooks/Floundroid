@@ -791,7 +791,7 @@ module TTTests =
     [<Fact>]
     let ``TT can store and retrieve an entry`` () =
         let hash = 12345UL
-        let move = Some (Move(12, 28, 0, 0))
+        let move = Some (Move.create(12, 28, 0, 0))
         
         TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
         let result = TranspositionTable.probe hash
@@ -950,7 +950,7 @@ module BoardTests =
         let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         
         // Nf3 (Quiet move from g1 to f3)
-        let m = Move(6, 21, 0, 0)
+        let m = Move.create(6, 21, 0, 0)
         let b2 = Board.applyMove m b1
         
         let scratchHash = Board.calculateHash b2
@@ -960,7 +960,7 @@ module BoardTests =
     let ``Hash handles piece captures correctly`` () =
         // e4, then Black plays d5, then White captures exd5
         let b1 = Board.fromFen "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2"
-        let capture = Move(28, 35, 1, 0)
+        let capture = Move.create(28, 35, 1, 0)
         
         let b2 = Board.applyMove capture b1
         let scratchHash = Board.calculateHash b2
@@ -970,7 +970,7 @@ module BoardTests =
     let ``Hash handles promotion correctly`` () =
         // Pawn on a7 about to promote on a8
         let b1 = Board.fromFen "8/P7/8/8/8/8/8/k6K w - - 0 1"
-        let prom = Move(48, 56, 5, int PieceType.Queen)
+        let prom = Move.create(48, 56, 5, int PieceType.Queen)
         
         let b2 = Board.applyMove prom b1
         let scratchHash = Board.calculateHash b2
@@ -981,12 +981,12 @@ module BoardTests =
         let b1 = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         
         // Knight moves out and back
-        let m1 = Move(1, 18, 0, 0) // Nb1-c3
-        let m2 = Move(18, 1, 0, 0) // Nc3-b1
+        let m1 = Move.create(1, 18, 0, 0) // Nb1-c3
+        let m2 = Move.create(18, 1, 0, 0) // Nc3-b1
         
         // Black does the same to keep the turn cycle correct
-        let m3 = Move(62, 45, 0, 0) // Ng8-f6
-        let m4 = Move(45, 62, 0, 0) // Nf6-g8
+        let m3 = Move.create(62, 45, 0, 0) // Ng8-f6
+        let m4 = Move.create(45, 62, 0, 0) // Nf6-g8
         
         let bFinal = b1 
                      |> Board.applyMove m1 |> Board.applyMove m3 
@@ -1053,7 +1053,7 @@ module BoardTests =
     let ``applyMove updates piece positions and side to move`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        let m = Move.create(Square.fromString "e2", Square.fromString "e4", 0, 0)
 
         let nextB = Board.applyMove m b
         Assert.False(Board.isOccupied nextB (Square.fromString "e2"))
@@ -1064,7 +1064,7 @@ module BoardTests =
     let ``applyMove increments fullmove number after black moves`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1"
 
-        let m = Move(Square.fromString "a7", Square.fromString "a6", 0, 0)
+        let m = Move.create(Square.fromString "a7", Square.fromString "a6", 0, 0)
 
         let nextB = Board.applyMove m b
         Assert.Equal(2, nextB.FullmoveNumber)
@@ -1073,7 +1073,7 @@ module BoardTests =
     let ``Kingside castling moves rook`` () =
         let b = Board.fromFen "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1"
 
-        let m = Move(Square.fromString "e1", Square.fromString "g1", 3, 0)
+        let m = Move.create(Square.fromString "e1", Square.fromString "g1", 3, 0)
 
         let b2 = Board.applyMove m b
 
@@ -1084,7 +1084,7 @@ module BoardTests =
     let ``En passant removes captured pawn`` () =
         let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
 
-        let m = Move(Square.fromString "e5", Square.fromString "d6", 2, 0)
+        let m = Move.create(Square.fromString "e5", Square.fromString "d6", 2, 0)
 
         let b2 = Board.applyMove m b
 
@@ -1095,7 +1095,7 @@ module BoardTests =
     let ``Promotion creates promoted piece`` () =
         let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
 
-        let m = Move(Square.fromString "e7", Square.fromString "e8", 5, int PieceType.Queen)
+        let m = Move.create(Square.fromString "e7", Square.fromString "e8", 5, int PieceType.Queen)
 
         let b2 = Board.applyMove m b
 
@@ -1107,7 +1107,7 @@ module BoardTests =
     let ``Moving rook removes kingside castling rights`` () =
         let b = Board.fromFen "4k3/8/8/8/8/8/8/4K2R w K - 0 1"
 
-        let m = Move(Square.fromString "h1", Square.fromString "h2", 0, 0)
+        let m = Move.create(Square.fromString "h1", Square.fromString "h2", 0, 0)
 
         let b2 = Board.applyMove m b
 
@@ -1116,7 +1116,7 @@ module BoardTests =
     [<Fact>]
     let ``Moving King removes all castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
-        let m = Move(Square.fromString "e1", Square.fromString "e2", 0, 0)
+        let m = Move.create(Square.fromString "e1", Square.fromString "e2", 0, 0)
         let b2 = Board.applyMove m b
         Assert.False(b2.CastlingRights &&& CastlingRights.WK <> 0)
         Assert.False(b2.CastlingRights &&& CastlingRights.WQ <> 0)
@@ -1127,7 +1127,7 @@ module BoardTests =
     let ``Capturing opponent rook removes their castling rights`` () =
         let b = Board.fromFen "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
         // White Rook on a1 captures Black Rook on a8
-        let m = Move(Square.fromString "a1", Square.fromString "a8", 1, 0)
+        let m = Move.create(Square.fromString "a1", Square.fromString "a8", 1, 0)
         let b2 = Board.applyMove m b
         Assert.False(b2.CastlingRights &&& CastlingRights.BQ <> 0)
         Assert.True(b2.CastlingRights &&& CastlingRights.BK <> 0)
@@ -1135,21 +1135,21 @@ module BoardTests =
     [<Fact>]
     let ``Pawn move resets halfmove clock`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 10 1"
-        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        let m = Move.create(Square.fromString "e2", Square.fromString "e4", 0, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(0, b2.HalfmoveClock)
 
     [<Fact>]
     let ``Capture resets halfmove clock`` () =
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR w KQkq - 5 1"
-        let m = Move(Square.fromString "d1", Square.fromString "d5", 1, 0)
+        let m = Move.create(Square.fromString "d1", Square.fromString "d5", 1, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(0, b2.HalfmoveClock)
 
     [<Fact>]
     let ``Quiet non-pawn move increments halfmove clock`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let m = Move(Square.fromString "g1", Square.fromString "f3", 0, 0)
+        let m = Move.create(Square.fromString "g1", Square.fromString "f3", 0, 0)
         let b2 = Board.applyMove m b
         Assert.Equal(1, b2.HalfmoveClock)
 
@@ -1825,7 +1825,7 @@ module SearchTests =
         let moves = MoveGen.getLegalMoves b
         
         // Helper to mimic the internal search scoring (simplified for test)
-        let getScore (m: Move) =
+        let getScore (m: int) =
             match Move.kind m with
             | 1 -> 
                 let v = Board.tryGetPiece b (Move.toSq m) |> Option.map (fun p -> Evaluation.matsMG[int (Piece.kind p)]) |> Option.defaultValue 100
@@ -1897,7 +1897,7 @@ module SearchTests =
         // 99 halfmoves, White to move. Any quiet non-pawn move will lead to 100.
         let b = Board.fromFen "4k3/8/8/8/8/8/8/4K2R w K - 99 1"
         // Try to move rook Rh1-h2
-        let m = Move(Square.fromString "h1", Square.fromString "h2", 0, 0)
+        let m = Move.create(Square.fromString "h1", Square.fromString "h2", 0, 0)
         let nextB = Board.applyMove m b
         Assert.Equal(100, nextB.HalfmoveClock)
         
@@ -1907,7 +1907,7 @@ module SearchTests =
     [<Fact>]
     let ``Killer table is writable`` () =
         Search.clearKillers()
-        let m = Move(0, 1, 0, 0)
+        let m = Move.create(0, 1, 0, 0)
         Search.killerMoves.[0, 0] <- Some m
         Assert.Equal(Some m, Search.killerMoves.[0, 0])
 
@@ -1959,7 +1959,7 @@ module SearchTests =
         let fen = "8/8/8/8/8/8/8/4K3 w - - 0 1"
         let b = Board.fromFen fen
 
-        let pvMove = Move(Square.fromString "e1", Square.fromString "e2", 0, 0)
+        let pvMove = Move.create(Square.fromString "e1", Square.fromString "e2", 0, 0)
 
         TranspositionTable.clear()
         TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeFlag.Exact 0 (Some pvMove)
@@ -2024,13 +2024,13 @@ module PerftTests =
     [<Fact>]
     let ``Initial position perft divide depth 2 e2e4 is 20`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        let m = Move.create(Square.fromString "e2", Square.fromString "e4", 0, 0)
         Assert.Equal(20uL, Perft.countNodes 1 (Board.applyMove m b))
 
     [<Fact>]
     let ``SAN for e2e4 is e4`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let m = Move(Square.fromString "e2", Square.fromString "e4", 0, 0)
+        let m = Move.create(Square.fromString "e2", Square.fromString "e4", 0, 0)
         Assert.Equal("e4", Perft.toSan b m)
 
 module DebugTests =
