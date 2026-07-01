@@ -853,7 +853,9 @@ module Board =
             Move.create(fromSq, toSq, 0, 0)
    
     /// Tries to get a piece from a square (Source of truth: Bitboards).
-    let tryGetPiece (b: Board) (sq: int) = BitboardSet.getPieceAt sq b.Bitboards
+    let tryGetPiece (b: Board) (sq: int) = 
+        let pc = BitboardSet.getPieceAt sq b.Bitboards
+        if pc.IsSome then pc.Value else -1
 
     /// Checks if a square is occupied (Source of truth: Bitboards).
     let isOccupied (b: Board) (sq: int) =
@@ -940,12 +942,12 @@ module Board =
             let mutable emptyCount = 0
             for f in 0..7 do
                 let sq = Square.ofFileRank f r
-                match tryGetPiece b sq with // This now uses Bitboards!
-                | Some p ->
+                let p = tryGetPiece b sq // This now uses Bitboards!
+                if p <> -1 then
                     if emptyCount > 0 then sb.Append(emptyCount) |> ignore
                     emptyCount <- 0
                     sb.Append(Piece.toChar p) |> ignore
-                | None -> emptyCount <- emptyCount + 1
+                else emptyCount <- emptyCount + 1
             if emptyCount > 0 then sb.Append(emptyCount) |> ignore
             if r > 0 then sb.Append('/') |> ignore
 
@@ -1151,9 +1153,11 @@ module Board =
             printf "%d " (r + 1)
             for f in 0..7 do
                 // Use the bitboard-powered tryGetPiece
-                match tryGetPiece b (Square.ofFileRank f r) with
-                | Some p -> printf "%c " (Piece.toChar p)
-                | None -> printf ". "
+                let p = tryGetPiece b (Square.ofFileRank f r)
+                if p <> -1 then
+                    printf "%c " (Piece.toChar p)
+                else
+                    printf ". "
             printfn ""
         printfn "  a b c d e f g h"
 
@@ -1204,14 +1208,13 @@ module MoveGen =
                         let nf, nr = f + df, r + d
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank nf nr
-                            match Board.tryGetPiece b cap with
-                            | Some victim when Piece.colour victim = them ->
+                            let victim = Board.tryGetPiece b cap
+                            if victim <> -1 && Piece.colour victim = them then
                                 if nr = (if us = Colour.White then 7 else 0) then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
                                         moves.Add(Move.create(sq, cap, 5, int pt))
                                 else
                                     moves.Add(Move.create(sq, cap, 1, 0))
-                            | _ -> ()
 
                     // 4. En passant
                     let ep = b.EnPassantSquare
@@ -1223,22 +1226,24 @@ module MoveGen =
                     let mutable attacks = BitboardGen.knightAttacks.[sq]
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        match Board.tryGetPiece b t with
-                        | Some target ->
+                        let target = Board.tryGetPiece b t
+                        if target <> -1 then
                             if Piece.colour target = them then
                                 moves.Add(Move.create(sq, t, 1, 0))
-                        | None -> moves.Add(Move.create(sq, t, 0, 0))
+                        else
+                            moves.Add(Move.create(sq, t, 0, 0))
 
                 | PieceType.King ->
                     // Use high-speed Bitboard lookup
                     let mutable attacks = BitboardGen.kingAttacks.[sq]
                     while attacks <> 0uL do
                         let t = Bitboard.popLsb &attacks
-                        match Board.tryGetPiece b t with
-                        | Some target ->
+                        let target = Board.tryGetPiece b t
+                        if target <> -1 then
                             if Piece.colour target = them then
                                 moves.Add(Move.create(sq, t, 1, 0))
-                        | None -> moves.Add(Move.create(sq, t, 0, 0))  
+                        else
+                            moves.Add(Move.create(sq, t, 0, 0))
 
                     // Castling
                     let rnk, cr = (if us = Colour.White then 0 else 7), b.CastlingRights
@@ -1326,14 +1331,13 @@ module MoveGen =
                         let nf, nr = f + df, r + d
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank nf nr
-                            match Board.tryGetPiece b cap with
-                            | Some victim when Piece.colour victim = them ->
+                            let victim = Board.tryGetPiece b cap
+                            if victim <> -1 && Piece.colour victim = them then
                                 if nr = targetRank then
                                     for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
                                         moves.Add(Move.create(sq, cap, 5, int pt))
                                 else
                                     moves.Add(Move.create(sq, cap, 1, 0))
-                            | _ -> ()
 
                     // 2. En passant
                     let ep = b.EnPassantSquare
@@ -1710,13 +1714,11 @@ module Search =
                 for i in 0 .. moves.Length - 1 do
                     let m = moves.[i]
                     let victimVal = 
-                        match Board.tryGetPiece b (Move.toSq m) with 
-                        | Some p -> Evaluation.matsMG[int (Piece.kind p)] 
-                        | None -> 100 // En Passant
+                        let victim = Board.tryGetPiece b (Move.toSq m)
+                        if victim <> -1 then Evaluation.matsMG[int (Piece.kind victim)] else 100 // En Passant
                     let attackerVal = 
-                        match Board.tryGetPiece b (Move.fromSq m) with 
-                        | Some p -> Evaluation.matsMG[int (Piece.kind p)] 
-                        | None -> 0
+                        let attacker = Board.tryGetPiece b (Move.fromSq m)
+                        if attacker <> -1 then Evaluation.matsMG[int (Piece.kind attacker)] else 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
                 System.Array.Sort(scores, moves)
@@ -1822,8 +1824,8 @@ module Search =
                                 else
                                     match Move.kind m with
                                     | 1 | 2 -> 
-                                        let victimVal = match Board.tryGetPiece b (Move.toSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 100
-                                        let attackerVal = match Board.tryGetPiece b (Move.fromSq m) with Some p -> Evaluation.matsMG[int (Piece.kind p)] | None -> 0
+                                        let victimVal = let victim = Board.tryGetPiece b (Move.toSq m) in if victim <> -1 then Evaluation.matsMG[int (Piece.kind victim)] else 100
+                                        let attackerVal = let attacker = Board.tryGetPiece b (Move.fromSq m) in if attacker <> -1 then Evaluation.matsMG[int (Piece.kind attacker)] else 0
                                         10000 + (victimVal * 10) - attackerVal
                                     | 5 -> 9000 + Evaluation.matsMG[Move.promo m]
                                     | _ -> 
@@ -1979,7 +1981,7 @@ module Perft =
         | 4 -> "O-O-O"
         | _ ->
             // Use Board.tryGetPiece instead of b.Pieces.Value
-            let piece = (Board.tryGetPiece b (Move.fromSq m)).Value
+            let piece = Board.tryGetPiece b (Move.fromSq m)
 
             let isCapture =
                 match Move.kind m with
@@ -2013,10 +2015,11 @@ module Perft =
                         MoveGen.getLegalMoves b
                         |> Array.filter (fun alt ->
                             // Use Board.tryGetPiece to identify the piece on the alternative square
-                            match Board.tryGetPiece b (Move.fromSq alt) with
-                            | Some altPiece ->
+                            let altPiece = Board.tryGetPiece b (Move.fromSq alt)
+                            if altPiece <> -1 then
                                 (Move.fromSq alt) <> (Move.fromSq m) && (Move.toSq alt) = (Move.toSq m) && Piece.kind altPiece = Piece.kind piece
-                            | None -> false)
+                            else
+                                false)
 
                     let disambiguator =
                         if others.Length = 0 then

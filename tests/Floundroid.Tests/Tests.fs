@@ -1039,7 +1039,7 @@ module BoardTests =
         let b = Board.empty
 
         for sq in 0..63 do
-            Assert.True(Board.tryGetPiece b sq |> Option.isNone)
+            Assert.True(Board.tryGetPiece b sq = -1)
 
     [<Fact>]
     let ``Set and get piece works`` () =
@@ -1047,7 +1047,7 @@ module BoardTests =
         let sq = Square.fromString "e4"
         let p = Piece.fromChar 'Q'
         let b2 = Board.setPiece b sq (Some p)
-        Assert.Equal(Some p, Board.tryGetPiece b2 sq)
+        Assert.Equal(p, Board.tryGetPiece b2 sq)
 
     [<Fact>]
     let ``applyMove updates piece positions and side to move`` () =
@@ -1100,8 +1100,8 @@ module BoardTests =
         let b2 = Board.applyMove m b
 
         match Board.tryGetPiece b2 (Square.fromString "e8") with
-        | Some p -> Assert.Equal(PieceType.Queen, Piece.kind p)
-        | None -> Assert.True(false)
+        | p when p <> -1 -> Assert.Equal(PieceType.Queen, Piece.kind p)
+        | _ -> Assert.True(false)
 
     [<Fact>]
     let ``Moving rook removes kingside castling rights`` () =
@@ -1828,9 +1828,9 @@ module SearchTests =
         let getScore (m: int) =
             match Move.kind m with
             | 1 -> 
-                let v = Board.tryGetPiece b (Move.toSq m) |> Option.map (fun p -> Evaluation.matsMG[int (Piece.kind p)]) |> Option.defaultValue 100
-                let a = Board.tryGetPiece b (Move.fromSq m) |> Option.map (fun p -> Evaluation.matsMG[int (Piece.kind p)]) |> Option.defaultValue 0
-                10000 + (v * 10) - a
+                let v = Board.tryGetPiece b (Move.toSq m)
+                let a = Board.tryGetPiece b (Move.fromSq m)
+                10000 + (if v <> -1 then Evaluation.matsMG[int (Piece.kind v)] else 100) * 10 - (if a <> -1 then Evaluation.matsMG[int (Piece.kind a)] else 0)
             | _ -> 0
 
         let sorted = moves |> Array.sortByDescending getScore
