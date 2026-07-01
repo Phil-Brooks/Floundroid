@@ -791,9 +791,9 @@ module TTTests =
     [<Fact>]
     let ``TT can store and retrieve an entry`` () =
         let hash = 12345UL
-        let move = Some (Move.create(12, 28, 0, 0))
+        let move = Move.create(12, 28, 0, 0)
         
-        TranspositionTable.store hash 5 0 NodeFlag.Exact 100 move
+        TranspositionTable.store hash 5 0 NodeExact 100 move
         let result = TranspositionTable.probe hash
         
         Assert.True(result.IsSome)
@@ -819,8 +819,8 @@ module TTTests =
         let hash1 = 1UL
         let hash2 = uint64 TranspositionTable.SIZE + 1UL // Different hash, same index
         
-        TranspositionTable.store hash1 5 0 NodeFlag.Exact 100 None
-        TranspositionTable.store hash2 6 0 NodeFlag.Exact 200 None // Deeper, should replace
+        TranspositionTable.store hash1 5 0 NodeExact 100 0
+        TranspositionTable.store hash2 6 0 NodeExact 200 0 // Deeper, should replace
         
         let result = TranspositionTable.probe hash2
         Assert.Equal(200, result.Value.Value)
@@ -869,13 +869,13 @@ module TTTests =
         
         // 1. Store a very deep search in Age 0
         TranspositionTable.currentAge <- 0uy
-        TranspositionTable.store hash 20 0 TranspositionTable.NodeFlag.Exact 100 None
+        TranspositionTable.store hash 20 0 TranspositionTable.NodeExact 100 0
         
         // 2. Advance Age
         TranspositionTable.advanceAge() // Age is now 1
         
         // 3. Store a shallow search in Age 1
-        TranspositionTable.store hash 2 0 TranspositionTable.NodeFlag.Exact 200 None
+        TranspositionTable.store hash 2 0 TranspositionTable.NodeExact 200 0
         
         // 4. Probe
         let entry = TranspositionTable.probe hash
@@ -887,7 +887,7 @@ module TTTests =
     let ``TT clear resets all entries`` () =
         TranspositionTable.clear()
         let hash = 42UL
-        TranspositionTable.store hash 5 0 NodeFlag.Exact 123 None
+        TranspositionTable.store hash 5 0 TranspositionTable.NodeExact 123 0
         Assert.True((TranspositionTable.probe hash).IsSome)
 
         TranspositionTable.clear()
@@ -899,7 +899,7 @@ module TTTests =
         let h1 = 1UL
         let h2 = uint64 TranspositionTable.SIZE + 1UL // same index, different hash
 
-        TranspositionTable.store h1 5 0 NodeFlag.Exact 100 None
+        TranspositionTable.store h1 5 0 TranspositionTable.NodeExact 100 0
         let res = TranspositionTable.probe h2
         Assert.True(res.IsNone)
 
@@ -909,8 +909,8 @@ module TTTests =
         let hash = 777UL
 
         TranspositionTable.currentAge <- 0uy
-        TranspositionTable.store hash 4 0 NodeFlag.Exact 100 None
-        TranspositionTable.store hash 6 0 NodeFlag.Exact 200 None
+        TranspositionTable.store hash 4 0 TranspositionTable.NodeExact 100 0
+        TranspositionTable.store hash 6 0 TranspositionTable.NodeExact 200 0
 
         let entry = TranspositionTable.probe hash
         Assert.Equal(6, entry.Value.Depth)
@@ -923,10 +923,10 @@ module TTTests =
         let h2 = uint64 TranspositionTable.SIZE + 1000UL // same index, different hash
 
         TranspositionTable.currentAge <- 0uy
-        TranspositionTable.store h1 10 0 NodeFlag.Exact 100 None
+        TranspositionTable.store h1 10 0 TranspositionTable.NodeExact 100 0
 
         TranspositionTable.advanceAge() // age = 1
-        TranspositionTable.store h2 2 0 NodeFlag.Exact 200 None
+        TranspositionTable.store h2 2 0 TranspositionTable.NodeExact 200 0
 
         let eNew = TranspositionTable.probe h2
         let eOld = TranspositionTable.probe h1
@@ -1948,7 +1948,7 @@ module SearchTests =
         TranspositionTable.clear()
 
         // Store an exact entry
-        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeFlag.Exact 42 None
+        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeExact 42 0
 
         let score, _ = Search.negamax b 5 0 -Search.INF Search.INF [] CancellationToken.None
 
@@ -1962,7 +1962,7 @@ module SearchTests =
         let pvMove = Move.create(Square.fromString "e1", Square.fromString "e2", 0, 0)
 
         TranspositionTable.clear()
-        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeFlag.Exact 0 (Some pvMove)
+        TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeExact 0 pvMove
 
         let moves = MoveGen.getPseudoLegalMoves b
 

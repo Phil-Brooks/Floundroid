@@ -694,23 +694,22 @@ module Zobrist =
 module TranspositionTable =
 
     /// Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)
-    type NodeFlag = 
-        | Exact = 0 
-        | Alpha = 1 
-        | Beta = 2
+    let [<Literal>] NodeExact = 0
+    let [<Literal>] NodeAlpha = 1
+    let [<Literal>] NodeBeta = 2
 
     [<Struct>]
     type TTEntry = {
         Hash: uint64
-        Move: int option
+        Move: int
         Value: int
         Depth: int
         Age : byte
-        Flag: NodeFlag
+        Flag: int
     }
 
     // Update empty entry
-    let emptyEntry = { Hash = 0UL; Move = None; Value = 0; Depth = -1; Age = 0uy; Flag = NodeFlag.Alpha }
+    let emptyEntry = { Hash = 0UL; Move = 0; Value = 0; Depth = -1; Age = 0uy; Flag = NodeAlpha }
 
     // Global age counter
     let mutable currentAge = 0uy
@@ -740,8 +739,8 @@ module TranspositionTable =
         Array.fill table 0 SIZE emptyEntry
 
     /// Stores an entry in the transposition table with the given parameters.
-    let store (hash: uint64) (depth: int) (ply: int) (flag: NodeFlag) (value: int) (m: int option) =
-        let index = int (hash % uint64 SIZE)
+    let store (hash: uint64) (depth: int) (ply: int) (flag: int) (value: int) (m: int) =
+        let index = int (hash &&& uint64 (SIZE - 1))
         let adjustedValue = mateToTT value ply
         
         let existing = table.[index]
@@ -759,7 +758,7 @@ module TranspositionTable =
             }
 
     let probe (hash: uint64) =
-        let index = int (hash % uint64 SIZE)
+        let index = int (hash &&& uint64 (SIZE - 1))
         let entry = table.[index]
         if entry.Hash = hash then Some entry else None
 
@@ -1767,13 +1766,13 @@ module Search =
 
             match ttEntry with
             | Some entry ->
-                ttMove <- entry.Move
+                ttMove <- Some(entry.Move)
                 let value = TranspositionTable.mateFromTT entry.Value ply
                 if entry.Depth >= depth then
                     match entry.Flag with
-                    | TranspositionTable.NodeFlag.Exact -> ttResult <- Some (value, entry.Move)
-                    | TranspositionTable.NodeFlag.Alpha when value <= alpha -> ttResult <- Some (alpha, entry.Move)
-                    | TranspositionTable.NodeFlag.Beta when value >= beta -> ttResult <- Some (beta, entry.Move)
+                    | TranspositionTable.NodeExact -> ttResult <- Some (value, Some(entry.Move))
+                    | TranspositionTable.NodeAlpha when value <= alpha -> ttResult <- Some (alpha, Some(entry.Move))
+                    | TranspositionTable.NodeBeta when value >= beta -> ttResult <- Some (beta, Some(entry.Move))
                     | _ -> ()
             | None -> ()
 
@@ -1900,8 +1899,8 @@ module Search =
                             if inCheck then (-MATE_VALUE + ply, None) else (0, None)
                         else
                             if not ct.IsCancellationRequested then
-                                let flag = if bestScore <= originalAlpha then TranspositionTable.NodeFlag.Alpha elif bestScore >= beta then TranspositionTable.NodeFlag.Beta else TranspositionTable.NodeFlag.Exact
-                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+                                let flag = if bestScore <= originalAlpha then TranspositionTable.NodeAlpha elif bestScore >= beta then TranspositionTable.NodeBeta else TranspositionTable.NodeExact
+                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove.Value
                             (bestScore, bestMove)
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
