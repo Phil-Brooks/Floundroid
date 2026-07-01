@@ -307,11 +307,11 @@ module BitboardSet =
           Occupancy = 0uL }
 
     /// Identifies the piece (if any) at a specific square using bitboards.
-    let getPieceAt (sq: int) (bbs: BitboardSet) : int option =
+    let getPieceAt (sq: int) (bbs: BitboardSet) : int =
         let bit = 1uL <<< sq
 
         if (bbs.Occupancy &&& bit) = 0uL then
-            None
+            -1
         else
             let color = if (bbs.WhiteTotal &&& bit) <> 0uL then Colour.White else Colour.Black
 
@@ -331,7 +331,7 @@ module BitboardSet =
                     elif (bbs.BlackQueens &&& bit) <> 0uL then PieceType.Queen
                     else PieceType.King
 
-            Some ((color <<< 3) ||| kind)    
+            (color <<< 3) ||| kind
 
     /// A helper to flip a piece on/off. Essential for incremental updates.
     let togglePiece (p: int) (sq: int) (bbs: BitboardSet) =
@@ -391,7 +391,7 @@ module BitboardSet =
 
             while occ <> 0uL do
                 let sq = Bitboard.popLsb &occ
-                yield (sq, getPieceAt sq bbs |> Option.get)
+                yield (sq, getPieceAt sq bbs)
         }
 
 module Magic =
@@ -819,7 +819,6 @@ module Board =
 
         let movingPiece =
             BitboardSet.getPieceAt fromSq b.Bitboards
-            |> Option.get
 
         let isPawn = Piece.kind movingPiece = PieceType.Pawn
 
@@ -845,7 +844,7 @@ module Board =
             Move.create(fromSq, toSq, 2, 0)
 
         // --- 4. Capture ---
-        elif BitboardSet.getPieceAt toSq b.Bitboards |> Option.isSome then
+        elif BitboardSet.getPieceAt toSq b.Bitboards <> -1 then
             Move.create(fromSq, toSq, 1, 0)
 
         // --- 5. Quiet ---
@@ -854,8 +853,8 @@ module Board =
    
     /// Tries to get a piece from a square (Source of truth: Bitboards).
     let tryGetPiece (b: Board) (sq: int) = 
-        let pc = BitboardSet.getPieceAt sq b.Bitboards
-        if pc.IsSome then pc.Value else -1
+        BitboardSet.getPieceAt sq b.Bitboards
+        
 
     /// Checks if a square is occupied (Source of truth: Bitboards).
     let isOccupied (b: Board) (sq: int) =
@@ -876,9 +875,9 @@ module Board =
         let mutable newBbs = b.Bitboards
 
         // 1. If there's already a piece at this square, we must toggle it OFF first
-        match BitboardSet.getPieceAt sq b.Bitboards with
-        | Some oldPiece -> newBbs <- BitboardSet.togglePiece oldPiece sq newBbs
-        | None -> ()
+        let oldPiece = BitboardSet.getPieceAt sq b.Bitboards 
+        if oldPiece <> -1 then
+            newBbs <- BitboardSet.togglePiece oldPiece sq newBbs
 
         // 2. If we are setting a new piece, toggle it ON
         match pOpt with
@@ -988,7 +987,7 @@ module Board =
         // 1. Initialize variables for the new state
         let mutable newBitboards = b.Bitboards
         let mutable newHash = b.Hash
-        let movingPiece = BitboardSet.getPieceAt (Move.fromSq m) b.Bitboards |> Option.get
+        let movingPiece = BitboardSet.getPieceAt (Move.fromSq m) b.Bitboards
         let isPawn = Piece.kind movingPiece = PieceType.Pawn
         let opponent = Colour.opposite b.SideToMove
 
@@ -1013,11 +1012,9 @@ module Board =
             newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
         | _ ->
             // Normal captures (Quiet, Promotion, or Castling can't capture, but we check 'To' occupancy)
-            match capturedPieceAtTo with
-            | Some victim ->
-                newBitboards <- BitboardSet.togglePiece victim (Move.toSq m) newBitboards
-                newHash <- newHash ^^^ (Zobrist.getPieceKey victim (Move.toSq m))
-            | None -> ()
+            if capturedPieceAtTo <> -1 then
+                newBitboards <- BitboardSet.togglePiece capturedPieceAtTo (Move.toSq m) newBitboards
+                newHash <- newHash ^^^ (Zobrist.getPieceKey capturedPieceAtTo (Move.toSq m))
 
         // 5. Place the piece at the destination
         match Move.kind m with
@@ -1080,7 +1077,7 @@ module Board =
 
         // 9. Update Clocks
         let newHMClock =
-            if isPawn || capturedPieceAtTo.IsSome then 0
+            if isPawn || capturedPieceAtTo <> -1 then 0
             else b.HalfmoveClock + 1
         
         let newFMNumber =

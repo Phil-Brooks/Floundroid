@@ -288,7 +288,7 @@ module BitboardSetTests =
     [<Fact>]
     let ``empty has no pieces`` () =
         for sq in allSquares do
-            Assert.Equal(None, BitboardSet.getPieceAt sq BitboardSet.empty)
+            Assert.Equal(-1, BitboardSet.getPieceAt sq BitboardSet.empty)
 
     [<Fact>]
     let ``togglePiece adds then removes piece`` () =
@@ -296,10 +296,10 @@ module BitboardSetTests =
         let p = (Colour.White <<< 3) ||| PieceType.Knight
 
         let b1 = BitboardSet.togglePiece p sq BitboardSet.empty
-        Assert.Equal(Some p, BitboardSet.getPieceAt sq b1)
+        Assert.Equal(p, BitboardSet.getPieceAt sq b1)
 
         let b2 = BitboardSet.togglePiece p sq b1
-        Assert.Equal(None, BitboardSet.getPieceAt sq b2)
+        Assert.Equal(-1, BitboardSet.getPieceAt sq b2)
 
     [<Fact>]
     let ``togglePiece updates totals and occupancy`` () =
@@ -325,17 +325,17 @@ module BitboardSetTests =
         for p in allPieces do
             for sq in allSquares do
                 let b = BitboardSet.togglePiece p sq BitboardSet.empty
-                Assert.Equal(Some p, BitboardSet.getPieceAt sq b)
+                Assert.Equal(p, BitboardSet.getPieceAt sq b)
 
     [<Fact>]
-    let ``getPieceAt returns None for untouched squares`` () =
+    let ``getPieceAt returns -1 for untouched squares`` () =
         let p = (Colour.White <<< 3) ||| PieceType.Bishop
         let sq = 30
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
 
         for otherSq in allSquares do
             if otherSq <> sq then
-                Assert.Equal(None, BitboardSet.getPieceAt otherSq b)
+                Assert.Equal(-1, BitboardSet.getPieceAt otherSq b)
 
     // ------------------------------------------------------------
     // allPieces roundtrip
@@ -381,7 +381,7 @@ module BitboardSetTests =
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
     let ``prop - getPieceAt after toggle returns piece`` (p: int) (sq: int) =
         let b = BitboardSet.togglePiece p sq BitboardSet.empty
-        BitboardSet.getPieceAt sq b = Some p
+        BitboardSet.getPieceAt sq b = p
 
     [<Property(Arbitrary=[| typeof<PieceGen>; typeof<SquareGen> |])>]
     let ``prop - allPieces contains toggled piece`` (p: int) (sq: int) =
