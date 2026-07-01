@@ -763,13 +763,13 @@ module ZobristTests =
     let ``En passant keys are unique per file`` () =
         let keys =
             [ for file in 0..7 ->
-                Zobrist.getEnPassantKey (Some file) ]
+                Zobrist.getEnPassantKey (file) ]
 
         Assert.Equal(8, keys |> List.distinct |> List.length)
 
     [<Fact>]
     let ``En passant None returns 0`` () =
-        Assert.Equal(0UL, Zobrist.getEnPassantKey None)
+        Assert.Equal(0UL, Zobrist.getEnPassantKey -1)
 
     [<Fact>]
     let ``Empty board Zobrist hash is deterministic`` () =
@@ -1208,7 +1208,7 @@ module BoardTests =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         let b2 = Board.applyNullMove b
         Assert.Equal(Colour.Black, b2.SideToMove)
-        Assert.Equal(None, b2.EnPassantSquare)
+        Assert.Equal(-1, b2.EnPassantSquare)
         Assert.Equal(b.HalfmoveClock + 1, b2.HalfmoveClock)
 
         let scratch = Board.calculateHash b2
@@ -1788,7 +1788,7 @@ module SearchTests =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
         let nextB = Board.applyNullMove b
         Assert.Equal(Colour.White, nextB.SideToMove)
-        Assert.True(nextB.EnPassantSquare.IsNone)
+        Assert.Equal(-1, nextB.EnPassantSquare)
         Assert.Equal(b.HalfmoveClock + 1, nextB.HalfmoveClock)
         Assert.NotEqual(b.Hash, nextB.Hash)
 

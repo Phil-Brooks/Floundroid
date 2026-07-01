@@ -630,10 +630,10 @@ module BitboardGen =
 
 /// The Board type represents the state of a chess game, including piece placement, side to move, castling rights, en passant target square, and move clocks.
 type Board =
-    { Bitboards: BitboardSet // The new performance core
+    { Bitboards: BitboardSet
       SideToMove: int
       CastlingRights: int
-      EnPassantSquare: int option
+      EnPassantSquare: int
       HalfmoveClock: int
       FullmoveNumber: int
       Hash: uint64 }
@@ -686,10 +686,9 @@ module Zobrist =
         Table.Castling.[index]
 
     /// Gets the key for an En Passant file (0-7).
-    let getEnPassantKey (sq: int option) =
-        match sq with
-        | Some s -> Table.EnPassantFile.[s % 8]
-        | None -> 0UL
+    let getEnPassantKey (sq: int) =
+        if sq < 0 || sq > 63 then 0UL else
+        Table.EnPassantFile.[sq % 8]
 
 module TranspositionTable =
 
@@ -768,7 +767,7 @@ module Board =
         { Bitboards = BitboardSet.empty // Placeholder
           SideToMove = Colour.White
           CastlingRights = CastlingRights.None
-          EnPassantSquare = None
+          EnPassantSquare = -1
           HalfmoveClock = 0
           FullmoveNumber = 1
           Hash = 0UL }
@@ -840,8 +839,8 @@ module Board =
 
         // --- 3. En passant ---
         elif isPawn &&
-             b.EnPassantSquare.IsSome &&
-             toSq = b.EnPassantSquare.Value &&
+             b.EnPassantSquare <> -1 &&
+             toSq = b.EnPassantSquare &&
              Square.file fromSq <> Square.file toSq then
             Move.create(fromSq, toSq, 2, 0)
 
@@ -928,7 +927,7 @@ module Board =
             { Bitboards = bbs
               SideToMove = Colour.fromChar parts.[1].[0]
               CastlingRights = CastlingRights.fromString parts.[2]
-              EnPassantSquare = if parts.[3] = "-" then None else Some(Square.fromString parts.[3])
+              EnPassantSquare = if parts.[3] = "-" then -1 else Square.fromString parts.[3]
               HalfmoveClock = int parts.[4]
               FullmoveNumber = int parts.[5]
               Hash = 0UL } 
@@ -954,7 +953,7 @@ module Board =
             sb
             (Colour.toChar b.SideToMove)
             (CastlingRights.toString b.CastlingRights)
-            (match b.EnPassantSquare with | Some s -> Square.toString s | None -> "-")
+            (match b.EnPassantSquare with | s when s <> -1 -> Square.toString s | _ -> "-")
             b.HalfmoveClock
             b.FullmoveNumber
 
@@ -1074,8 +1073,8 @@ module Board =
         // Only set if a pawn moves two squares
         let newEPSquare =
             if isPawn && abs ((Move.toSq m) - (Move.fromSq m)) = 16 then
-                Some (((Move.fromSq m) + (Move.toSq m)) / 2)
-            else None
+                ((Move.fromSq m) + (Move.toSq m)) / 2
+            else -1
 
         // 9. Update Clocks
         let newHMClock =
@@ -1113,7 +1112,7 @@ module Board =
         { Bitboards = b.Bitboards
           SideToMove = opponent
           CastlingRights = b.CastlingRights
-          EnPassantSquare = None
+          EnPassantSquare = -1
           HalfmoveClock = b.HalfmoveClock + 1
           FullmoveNumber = newFMNumber
           Hash = newHash }
@@ -1215,11 +1214,9 @@ module MoveGen =
                             | _ -> ()
 
                     // 4. En passant
-                    match b.EnPassantSquare with
-                    | Some ep ->
-                        if abs ((Square.file ep) - f) = 1 && Square.rank ep = r + d then
-                            moves.Add(Move.create(sq, ep, 2, 0))
-                    | None -> ()
+                    let ep = b.EnPassantSquare
+                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r + d then
+                        moves.Add(Move.create(sq, ep, 2, 0))
 
                 | PieceType.Knight ->
                     // Use high-speed Bitboard lookup
@@ -1339,11 +1336,9 @@ module MoveGen =
                             | _ -> ()
 
                     // 2. En passant
-                    match b.EnPassantSquare with
-                    | Some ep ->
-                        if abs (Square.file ep - f) = 1 && Square.rank ep = r + d then
-                            moves.Add(Move.create(sq, ep, 2, 0))
-                    | None -> ()
+                    let ep = b.EnPassantSquare
+                    if ep <> -1 && abs (Square.file ep - f) = 1 && Square.rank ep = r + d then
+                        moves.Add(Move.create(sq, ep, 2, 0))
                     
                     // 3. Quiet Promotions (important for QS)
                     let nr1 = r + d
