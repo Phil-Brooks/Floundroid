@@ -31,11 +31,10 @@
 ## 📦 module Floundroid
 ---
 
-#### 🧩 `type Colour`
-> Colour is represented as an integer 0–1, where 0 = White and 1 = Black.
-
 ## 📦 module Colour
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `toChar`
     - *Converts a Colour to its character representation ('w' or 'b').*
 - **fn** `fromChar`
@@ -43,36 +42,37 @@
 - **fn** `opposite`
     - *Returns the opposite colour.*
 
-#### 🧩 `type File`
-
 ## 📦 module File
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `firstChar`
-- **fn** `toInt`
-    - *Converts a File to its integer representation (0–7).*
-- **fn** `fromInt`
-    - *Converts an integer (0–7) to a File.*
 - **fn** `toChar`
     - *Converts a File to its character representation ('a'–'h').*
 - **fn** `fromChar`
     - *Converts a character ('a'–'h') to a File.*
 
-#### 🧩 `type Rank`
-
 ## 📦 module Rank
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `firstChar`
-- **fn** `toInt`
-    - *Converts a Rank to its integer representation (0–7).*
-- **fn** `fromInt`
-    - *Converts an integer (0–7) to a Rank.*
 - **fn** `toChar`
     - *Converts a Rank to its character representation ('1'–'8').*
 - **fn** `fromChar`
     - *Converts a character ('1'–'8') to a Rank.*
-
-#### 🧩 `type Square = int`
-> Squares are represented as integers 0–63, where 0 = a1 and 63 = h8.
 
 ## 📦 module Square
 ---
@@ -89,36 +89,61 @@
 - **fn** `isOnBoard`
     - *Checks if a file/rank pair is on the board.*
 
-#### 🧩 `type PieceType`
-
 ## 📦 module PieceType
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `chars`
 - **fn** `toChar`
     - *Converts a PieceType to its character representation ('p'..'k').*
 - **fn** `fromChar`
     - *Converts a character to a PieceType.*
 
-#### 🧩 `type Piece`
-
 ## 📦 module Piece
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `colour`
 - **fn** `kind`
 - **fn** `toChar`
 - **fn** `fromChar`
 
-#### 🧩 `type CastlingRights`
-
 ## 📦 module CastlingRights
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 - **fn** `fromString`
 - **fn** `toString`
 
-#### 🧩 `type Move`
-
 ## 📦 module Move
 ---
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
+- **fn** `create`
 - **fn** `fromSq`
 - **fn** `toSq`
 - **fn** `kind`
@@ -214,10 +239,6 @@
 
 #### 🧩 `type ZobristTable = {`
 > Storage for all random keys used for hashing.
-- **fn** `pieceIdx`
-    - *Maps PieceType to an index 0-5*
-- **fn** `colourIdx`
-    - *Maps Colour to index 0-1*
 - **fn** `private`
     - *Pre-calculates the table with a fixed seed for reproducibility.*
 - **fn** `Table`
@@ -231,9 +252,10 @@
 
 ## 📦 module TranspositionTable
 ---
-
-#### 🧩 `type NodeFlag`
-> Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)
+- **fn** `[<Literal>]`
+    - *Flags for TT entries: Exact (PV), Alpha (Upper bound), Beta (Lower bound)*
+- **fn** `[<Literal>]`
+- **fn** `[<Literal>]`
 
 #### 🧩 `type TTEntry = {`
 - **fn** `emptyEntry`

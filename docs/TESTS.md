@@ -40,18 +40,12 @@
 
 ## 📦 module FileTests
 ---
-- **fn** `File int roundtrip`
 - **fn** `File char roundtrip`
-- **fn** `File.fromInt rejects invalid integers`
-- **fn** `File.fromChar rejects invalid characters`
 - **fn** `File toChar fromChar roundtrip`
 
 ## 📦 module RankTests
 ---
-- **fn** `Rank int roundtrip`
 - **fn** `Rank char roundtrip`
-- **fn** `Rank.fromInt rejects invalid integers`
-- **fn** `Rank.fromChar rejects invalid characters`
 - **fn** `Rank toChar fromChar roundtrip`
 
 ## 📦 module SquareTests
@@ -84,7 +78,7 @@
 - **fn** `togglePiece adds then removes piece`
 - **fn** `togglePiece updates totals and occupancy`
 - **fn** `getPieceAt returns correct piece after toggle`
-- **fn** `getPieceAt returns None for untouched squares`
+- **fn** `getPieceAt returns -1 for untouched squares`
 - **fn** `allPieces returns exactly the toggled pieces`
 
 #### 🧩 `type PieceGen`
