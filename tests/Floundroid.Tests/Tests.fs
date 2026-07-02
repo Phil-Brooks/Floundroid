@@ -1844,7 +1844,7 @@ module SearchTests =
             | 1 -> 
                 let v = Board.tryGetPiece b (Move.toSq m)
                 let a = Board.tryGetPiece b (Move.fromSq m)
-                10000 + (if v <> -1 then Evaluation.matsMG[int (Piece.kind v)] else 100) * 10 - (if a <> -1 then Evaluation.matsMG[int (Piece.kind a)] else 0)
+                10000 + (if v <> -1 then Pst.matsMG[int (Piece.kind v)] else 100) * 10 - (if a <> -1 then Pst.matsMG[int (Piece.kind a)] else 0)
             | _ -> 0
 
         let sorted = moves |> Array.sortByDescending getScore
