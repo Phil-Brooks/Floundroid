@@ -1463,78 +1463,211 @@ module MoveGen =
 
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
-    /// Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.
-    let getCaptureMoves (b: Board) =
-        let moves = ResizeArray<int>()
-        let us, them = b.SideToMove, Colour.opposite b.SideToMove
-
-        for (sq, p) in BitboardSet.allPieces b.Bitboards do
-            if Piece.colour p = us then
+    /// Generates all capture moves for White pieces, including pawns, knights, bishops, rooks, and queens.
+    let getcapW (b:Board) (moves: ResizeArray<int>) = 
+        let getcapWP () = 
+            let mutable bb = b.Bitboards.WhitePawns
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
                 let f, r = Square.file sq, Square.rank sq
-
-                match Piece.kind p with
-                | PieceType.Pawn ->
-                    let d = if us = Colour.White then 1 else -1
-                    let targetRank = if us = Colour.White then 7 else 0
-                    
-                    // 1. Captures (Normal + Promotion Captures)
-                    for df in [ -1; 1 ] do
-                        let nf, nr = f + df, r + d
+                // 1. Single Push
+                let nr1 = r + 1
+                if nr1 >= 0 && nr1 <= 7 then
+                    let p1 = Square.ofFileRank f nr1
+                    if not (Board.isOccupied b p1) then
+                        // Promotion push
+                        if nr1 = 7 then
+                            for pt = 4 downto 1 do
+                                moves.Add(Move.create(sq, p1, 5, pt))
+                    // 3. Captures
+                    for df in [| -1; 1 |] do
+                        let nf, nr = f + df, r + 1
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank nf nr
-                            let victim = Board.tryGetPiece b cap
-                            if victim <> -1 && Piece.colour victim = them then
-                                if nr = targetRank then
-                                    for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add(Move.create(sq, cap, 5, int pt))
+                            if Board.isOccupiedB b cap then
+                                if nr = 7 then
+                                    for pt = 4 downto 1 do
+                                        moves.Add(Move.create(sq, cap, 5, pt))
                                 else
                                     moves.Add(Move.create(sq, cap, 1, 0))
-
-                    // 2. En passant
+                    // 4. En passant
                     let ep = b.EnPassantSquare
-                    if ep <> -1 && abs (Square.file ep - f) = 1 && Square.rank ep = r + d then
+                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r + 1 then
                         moves.Add(Move.create(sq, ep, 2, 0))
-                    
-                    // 3. Quiet Promotions (important for QS)
-                    let nr1 = r + d
-                    if nr1 = targetRank then
-                        let p1 = Square.ofFileRank f nr1
-                        if not (Board.isOccupied b p1) then
-                            for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                moves.Add(Move.create(sq, p1, 5, int pt))
-
-                | PieceType.Knight ->
-                    let mutable attacks = BitboardGen.knightAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
-                    while attacks <> 0uL do
-                        let t = Bitboard.popLsb &attacks
+        let getcapWN () = 
+            let mutable bb = b.Bitboards.WhiteKnights
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.knightAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedB b t then
                         moves.Add(Move.create(sq, t, 1, 0))
-
-                | PieceType.King ->
-                    let mutable attacks = BitboardGen.kingAttacks.[sq] &&& (if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal)
-                    while attacks <> 0uL do
-                        let t = Bitboard.popLsb &attacks
+        let getcapWB () = 
+            let mutable bb = b.Bitboards.WhiteBishops
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapWR () = 
+            let mutable bb = b.Bitboards.WhiteRooks
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.rookEntries.[sq]
+                let combinedAttacks = Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapWQ () = 
+            let mutable bb = b.Bitboards.WhiteQueens
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let mutable combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let er = Magic.rookEntries.[sq]
+                combinedAttacks <- combinedAttacks ||| Magic.rookTable.[er.Offset + Magic.getIndex occ er.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapWK () = 
+            let mutable bb = b.Bitboards.WhiteKings
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.kingAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedB b t then
                         moves.Add(Move.create(sq, t, 1, 0))
-
-                | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
-                    let occ = b.Bitboards.Occupancy
-                    let mutable combinedAttacks = 0uL
-                    if kind = PieceType.Bishop || kind = PieceType.Queen then
-                        let e = Magic.bishopEntries.[sq]
-                        combinedAttacks <- combinedAttacks ||| Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
-                    if kind = PieceType.Rook || kind = PieceType.Queen then
-                        let e = Magic.rookEntries.[sq]
-                        combinedAttacks <- combinedAttacks ||| Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
-
-                    let themTotal = if us = Colour.White then b.Bitboards.BlackTotal else b.Bitboards.WhiteTotal
-                    let mutable targets = combinedAttacks &&& themTotal
-    
-                    while targets <> 0uL do
-                        let t = Bitboard.popLsb &targets
-                        moves.Add(Move.create(sq, t, 1, 0))
-
-                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
-
+        getcapWP()
+        getcapWN()
+        getcapWB()
+        getcapWR()
+        getcapWQ()
+        getcapWK()
         moves.ToArray()
+    
+    /// Generates all capture moves for Black pieces, including pawns, knights, bishops, rooks, and queens.
+    let getcapB (b:Board) (moves: ResizeArray<int>) = 
+        let getcapBP () = 
+            let mutable bb = b.Bitboards.BlackPawns
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // 1. Single Push
+                let nr1 = r - 1
+                if nr1 >= 0 && nr1 <= 7 then
+                    let p1 = Square.ofFileRank f nr1
+                    if not (Board.isOccupied b p1) then
+                        // Promotion push
+                        if nr1 = 0 then
+                            for pt = 4 downto 1 do
+                                moves.Add(Move.create(sq, p1, 5, pt))
+                    // 3. Captures
+                    for df in [| -1; 1 |] do
+                        let nf, nr = f + df, r - 1
+                        if Square.isOnBoard nf nr then
+                            let cap = Square.ofFileRank nf nr
+                            if Board.isOccupiedW b cap then
+                                if nr = 0 then
+                                    for pt = 4 downto 1 do
+                                        moves.Add(Move.create(sq, cap, 5, pt))
+                                else
+                                    moves.Add(Move.create(sq, cap, 1, 0))
+                    // 4. En passant
+                    let ep = b.EnPassantSquare
+                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r - 1 then
+                        moves.Add(Move.create(sq, ep, 2, 0))
+        let getcapBN () = 
+            let mutable bb = b.Bitboards.BlackKnights
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.knightAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedW b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+        let getcapBB () = 
+            let mutable bb = b.Bitboards.BlackBishops
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapBR () = 
+            let mutable bb = b.Bitboards.BlackRooks
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.rookEntries.[sq]
+                let combinedAttacks = Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapBQ () = 
+            let mutable bb = b.Bitboards.BlackQueens
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let mutable combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let er = Magic.rookEntries.[sq]
+                combinedAttacks <- combinedAttacks ||| Magic.rookTable.[er.Offset + Magic.getIndex occ er.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+        let getcapBK () = 
+            let mutable bb = b.Bitboards.BlackKings
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.kingAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedW b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+        getcapBP()
+        getcapBN()
+        getcapBB()
+        getcapBR()
+        getcapBQ()
+        getcapBK()
+        moves.ToArray()
+    
+    /// Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.
+    let getCaptureMoves (b: Board) (caps: ResizeArray<int>) =
+        caps.Clear()
+        if b.SideToMove = Colour.White then
+            getcapW b caps
+        else
+            getcapB b caps
 
 module Evaluation =
     // --- Weights & Phase Constants ---
@@ -1846,7 +1979,7 @@ module Search =
         history |> List.contains hash
     
     /// Quiescence search: plays out tactical moves until the position is stable.
-    let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
+    let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) (capsBuffer: ResizeArray<int>) : int =
         nodes <- nodes + 1uL
         if ct.IsCancellationRequested then alpha
         else
@@ -1858,7 +1991,7 @@ module Search =
                 let mutable currentAlpha = Math.Max(alpha, standPat)
 
                 // 1. Generate only tactical moves
-                let moves = MoveGen.getCaptureMoves b
+                let moves = MoveGen.getCaptureMoves b capsBuffer
                 
                 // 2. Simple MVV-LVA Scoring for QS
                 let scores = Array.zeroCreate moves.Length
@@ -1885,7 +2018,7 @@ module Search =
                     if Board.isInCheckFor b.SideToMove nextB then
                         i <- i + 1
                     else
-                        let score = -quiesce nextB (ply + 1) (-beta) (-currentAlpha) ct
+                        let score = -quiesce nextB (ply + 1) (-beta) (-currentAlpha) ct capsBuffer
 
                         if score >= beta then
                             currentAlpha <- beta
@@ -1898,7 +2031,7 @@ module Search =
                 currentAlpha    
     
     /// Internal negamax implementation with Null-Move Pruning (allowNull).
-    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) (moveBuffer: ResizeArray<int>) : int * int option =
+    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) (moveBuffer: ResizeArray<int>) (capsBuffer: ResizeArray<int>) : int * int option =
         nodes <- nodes + 1uL
         
         // 1. Terminal Conditions
@@ -1927,7 +2060,7 @@ module Search =
             if ttResult.IsSome then 
                 ttResult.Value
             elif depth <= 0 then 
-                (quiesce b ply alpha beta ct, None)
+                (quiesce b ply alpha beta ct capsBuffer, None)
             else
                 let inCheck = Board.isInCheck b
                 let sideMult = if b.SideToMove = Colour.White then 1 else -1
@@ -1951,7 +2084,7 @@ module Search =
                         if hasMaterial then
                             let R = if depth > 6 then 3 else 2
                             let nullBoard = Board.applyNullMove b
-                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct moveBuffer
+                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct moveBuffer capsBuffer
                             if not ct.IsCancellationRequested && -nullValue >= beta then
                                 nmpCutoff <- true
 
@@ -2014,17 +2147,17 @@ module Search =
                                     // LMR and PVS
                                     if depth >= 3 && legalMovesFound > 4 && not inCheck && (Move.kind m = 0) then
                                         let reduction = if legalMovesFound > 12 then 2 else 1
-                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
+                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer capsBuffer
                                         moveScore <- -sLMR
                                         if moveScore > currentAlpha then
-                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
+                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer capsBuffer
                                             moveScore <- -sFull
                                     elif legalMovesFound > 1 then
-                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
+                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer capsBuffer
                                         moveScore <- -sPVS
                                 
                                     if moveScore > currentAlpha || legalMovesFound = 1 then
-                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
+                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct moveBuffer capsBuffer
                                         moveScore <- -sFullWindow
 
                                     if moveScore > bestScore then
@@ -2054,7 +2187,8 @@ module Search =
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int option =
         let moveBuffer = ResizeArray<int>()
-        negamaxInternal b depth ply alpha beta true history ct moveBuffer
+        let capsBuffer = ResizeArray<int>()
+        negamaxInternal b depth ply alpha beta true history ct moveBuffer capsBuffer
 
     /// Iterative Deepening with Aspiration Windows
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
