@@ -1175,8 +1175,7 @@ module MoveGen =
               PieceType.King, [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ] ]
 
     /// Generates pseudo-legal moves for White pieces, including pawns, knights, bishops, rooks, and queens.
-    let getpseudoW (b:Board) = 
-        let moves = ResizeArray<int>()
+    let getpseudoW (b:Board) (moves: ResizeArray<int>) = 
         let getpseudoWP () = 
             let mutable bb = b.Bitboards.WhitePawns
             while bb <> 0uL do
@@ -1302,8 +1301,7 @@ module MoveGen =
         moves.ToArray()
 
     /// Generates all pseudo-legal moves for Black pieces on the board.
-    let getpseudoB (b:Board) = 
-        let moves = ResizeArray<int>()
+    let getpseudoB (b:Board) (moves: ResizeArray<int>) = 
         let getpseudoBP () = 
             let mutable bb = b.Bitboards.BlackPawns
             while bb <> 0uL do
@@ -1429,17 +1427,18 @@ module MoveGen =
         moves.ToArray()
     
     // Gets all pseudo-legal moves for the current position using Bitboards.
-    let getPseudoLegalMoves (b: Board) =
+    let getPseudoLegalMoves (b: Board) (moves: ResizeArray<int>) =
+        moves.Clear()
         if b.SideToMove = Colour.White then
-            getpseudoW b
+            getpseudoW b moves
         else 
-            getpseudoB b
+            getpseudoB b moves
 
     /// Gets all legal moves for the current position.
     let getLegalMoves (b: Board) =
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
-
-        getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        getPseudoLegalMoves b moveBuffer
         |> Array.filter (fun m ->
             let castlingCheck =
                 match Move.kind m with
@@ -1899,7 +1898,7 @@ module Search =
                 currentAlpha    
     
     /// Internal negamax implementation with Null-Move Pruning (allowNull).
-    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * int option =
+    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) (moveBuffer: ResizeArray<int>) : int * int option =
         nodes <- nodes + 1uL
         
         // 1. Terminal Conditions
@@ -1952,7 +1951,7 @@ module Search =
                         if hasMaterial then
                             let R = if depth > 6 then 3 else 2
                             let nullBoard = Board.applyNullMove b
-                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct
+                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct moveBuffer
                             if not ct.IsCancellationRequested && -nullValue >= beta then
                                 nmpCutoff <- true
 
@@ -1960,7 +1959,7 @@ module Search =
                         (beta, None)
                     else
                         // 4. Move Ordering
-                        let moves = MoveGen.getPseudoLegalMoves b
+                        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
                         let mutable bestScore = -INF
                         let mutable bestMove = None
                         let mutable currentAlpha = alpha
@@ -2015,17 +2014,17 @@ module Search =
                                     // LMR and PVS
                                     if depth >= 3 && legalMovesFound > 4 && not inCheck && (Move.kind m = 0) then
                                         let reduction = if legalMovesFound > 12 then 2 else 1
-                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
                                         moveScore <- -sLMR
                                         if moveScore > currentAlpha then
-                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
                                             moveScore <- -sFull
                                     elif legalMovesFound > 1 then
-                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
+                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
                                         moveScore <- -sPVS
                                 
                                     if moveScore > currentAlpha || legalMovesFound = 1 then
-                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct
+                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct moveBuffer
                                         moveScore <- -sFullWindow
 
                                     if moveScore > bestScore then
@@ -2054,7 +2053,8 @@ module Search =
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int option =
-        negamaxInternal b depth ply alpha beta true history ct
+        let moveBuffer = ResizeArray<int>()
+        negamaxInternal b depth ply alpha beta true history ct moveBuffer
 
     /// Iterative Deepening with Aspiration Windows
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =

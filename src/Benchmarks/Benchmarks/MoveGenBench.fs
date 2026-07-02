@@ -14,7 +14,8 @@ type MoveGenBench() =
 
     [<Benchmark>]
     member _.PseudoLegal() =
-        let moves = MoveGen.getPseudoLegalMoves board 
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves board moveBuffer
         moves.Length
 
     //[<Benchmark>]

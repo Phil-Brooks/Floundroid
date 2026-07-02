@@ -1249,14 +1249,15 @@ module MoveGenTests =
     [<Fact>]
     let ``Starting position has 20 pseudo-legal moves`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
         Assert.Equal(20, moves.Length)
 
     [<Fact>]
     let ``Knight in center has 8 moves`` () =
         let b = Board.fromFen "8/8/8/8/4N3/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
         Assert.Equal(8, moves.Length)
 
     [<Fact>]
@@ -1264,7 +1265,8 @@ module MoveGenTests =
         let b = Board.fromFen "8/8/8/3p1p2/4P3/8/8/8 w - - 0 1"
 
         let moves =
-            MoveGen.getPseudoLegalMoves b
+            let moveBuffer = ResizeArray<int>()
+            MoveGen.getPseudoLegalMoves b moveBuffer
             |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
 
         Assert.Equal(3, moves.Length)
@@ -1281,7 +1283,8 @@ module MoveGenTests =
         let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
 
         let moves =
-            MoveGen.getPseudoLegalMoves b
+            let moveBuffer = ResizeArray<int>()
+            MoveGen.getPseudoLegalMoves b moveBuffer
             |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e5")
 
         Assert.Contains(moves, fun m -> Move.kind m = 2 && Square.toString (Move.toSq m) = "d6")
@@ -1291,7 +1294,8 @@ module MoveGenTests =
         let b = Board.fromFen "8/8/4p3/8/4R3/8/4P3/8 w - - 0 1"
 
         let moves =
-            MoveGen.getPseudoLegalMoves b
+            let moveBuffer = ResizeArray<int>()
+            MoveGen.getPseudoLegalMoves b moveBuffer
             |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
 
         Assert.Equal(10, moves.Length)
@@ -1352,8 +1356,9 @@ module MoveGenTests =
         // FEN: White pawn on e2, Black Knight on e3. e4 is empty.
         let fen = "rnbqkbnr/pppp1ppp/8/8/4n3/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         let board = Board.fromFen fen
-        let moves = MoveGen.getPseudoLegalMoves board
-    
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves board moveBuffer
+
         // Check if the move e2-e4 (which jumps over e3) is generated
         let hasJump = moves |> Array.exists (fun m -> 
             Square.toString (Move.fromSq m) = "e2" && Square.toString (Move.toSq m) = "e4")
@@ -1396,7 +1401,8 @@ module MoveGenTests =
     [<Fact>]
     let ``White pawn generates 4 quiet promotion moves`` () =
         let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
 
         let promos =
             moves
@@ -1407,7 +1413,8 @@ module MoveGenTests =
     [<Fact>]
     let ``White pawn generates 4 capture promotion moves`` () =
         let b = Board.fromFen "3p4/4P3/8/8/8/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
 
         let promos =
             moves
@@ -1418,7 +1425,8 @@ module MoveGenTests =
     [<Fact>]
     let ``Black pawn generates 4 quiet promotion moves`` () =
         let b = Board.fromFen "8/8/8/8/8/8/4p3/8 b - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
 
         let promos =
             moves
@@ -1429,7 +1437,8 @@ module MoveGenTests =
     [<Fact>]
     let ``Black pawn generates 4 capture promotion moves`` () =
         let b = Board.fromFen "8/8/8/8/8/8/4p3/5P2 b - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
 
         let promos =
             moves
@@ -1472,7 +1481,8 @@ module MoveGenTests =
 
         for fen in fens do
             let b = Board.fromFen fen
-            let pseudo = MoveGen.getPseudoLegalMoves b |> Set.ofArray
+            let moveBuffer = ResizeArray<int>()
+            let pseudo = MoveGen.getPseudoLegalMoves b moveBuffer |> Set.ofArray
             let legal = MoveGen.getLegalMoves b |> Set.ofArray
             Assert.True(Set.isSubset legal pseudo, $"Legal not subset of pseudo for FEN: {fen}")
 
@@ -1803,7 +1813,8 @@ module SearchTests =
 
         // Search with NMP disabled (allowNull = false)
         Search.nodes <- 0uL
-        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None
+        let moveBuffer = ResizeArray<int>()
+        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None moveBuffer
         
         // Clear 
         TranspositionTable.clear()
@@ -1812,7 +1823,7 @@ module SearchTests =
         
         // Search with NMP enabled (allowNull = true)
         Search.nodes <- 0uL
-        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None
+        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None moveBuffer
         
         Assert.Equal(scoreWithout, scoreWith)
 
@@ -1924,8 +1935,8 @@ module SearchTests =
     let ``Null move pruning is disabled when in check`` () =
         let fen = "4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1" // Black in check
         let b = Board.fromFen fen
-
-        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None
+        let moveBuffer = ResizeArray<int>()
+        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer
 
         // If NMP incorrectly triggers, it returns beta immediately.
         Assert.NotEqual(Search.INF, score)
@@ -1935,8 +1946,10 @@ module SearchTests =
         let fen = "8/8/8/8/8/8/5k2/6K1 w - - 0 1"
         let b = Board.fromFen fen
 
-        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None
-        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None
+        let moveBuffer = ResizeArray<int>()
+
+        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer
+        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None moveBuffer
 
         Assert.Equal(scoreWithoutNMP, scoreWithNMP)
 
@@ -1964,7 +1977,8 @@ module SearchTests =
         TranspositionTable.clear()
         TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeExact 0 pvMove
 
-        let moves = MoveGen.getPseudoLegalMoves b
+        let moveBuffer = ResizeArray<int>()
+        let moves = MoveGen.getPseudoLegalMoves b moveBuffer
 
         // Score the moves the same way search does
         let scored =
