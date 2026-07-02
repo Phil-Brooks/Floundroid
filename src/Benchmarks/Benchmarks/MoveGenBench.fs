@@ -17,7 +17,7 @@ type MoveGenBench() =
         let moves = MoveGen.getPseudoLegalMoves board 
         moves.Length
 
-    [<Benchmark>]
-    member _.Legal() =
-        let moves = MoveGen.getLegalMoves board
-        moves.Length
+    //[<Benchmark>]
+    //member _.Legal() =
+    //    let moves = MoveGen.getLegalMoves board
+    //    moves.Length

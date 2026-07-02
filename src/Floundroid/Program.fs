@@ -854,11 +854,18 @@ module Board =
     /// Tries to get a piece from a square (Source of truth: Bitboards).
     let tryGetPiece (b: Board) (sq: int) = 
         BitboardSet.getPieceAt sq b.Bitboards
-        
 
     /// Checks if a square is occupied (Source of truth: Bitboards).
     let isOccupied (b: Board) (sq: int) =
         (b.Bitboards.Occupancy &&& (1uL <<< sq)) <> 0uL
+    
+    /// Checks if a square is occupied by White
+    let isOccupiedW (b: Board) (sq: int) =
+        (b.Bitboards.WhiteTotal &&& (1uL <<< sq)) <> 0uL
+
+    /// Checks if a square is occupied by Black
+    let isOccupiedB (b: Board) (sq: int) =
+        (b.Bitboards.BlackTotal &&& (1uL <<< sq)) <> 0uL
 
     /// Find the king square (Needed for check detection).
     let findKing (colour: int) (b: Board) =
@@ -1167,118 +1174,266 @@ module MoveGen =
               PieceType.Knight, [ (1, 2); (1, -2); (-1, 2); (-1, -2); (2, 1); (2, -1); (-2, 1); (-2, -1) ]
               PieceType.King, [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ] ]
 
-    // Gets all pseudo-legal moves for the current position using Bitboards.
-    let getPseudoLegalMoves (b: Board) =
+    /// Generates pseudo-legal moves for White pieces, including pawns, knights, bishops, rooks, and queens.
+    let getpseudoW (b:Board) = 
         let moves = ResizeArray<int>()
-        let us, them = b.SideToMove, Colour.opposite b.SideToMove
-
-        // Use the bitboard iterator to find all our pieces
-        for (sq, p) in BitboardSet.allPieces b.Bitboards do
-            if Piece.colour p = us then
+        let getpseudoWP () = 
+            let mutable bb = b.Bitboards.WhitePawns
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
                 let f, r = Square.file sq, Square.rank sq
-
-                match Piece.kind p with
-                | PieceType.Pawn ->
-                    let d = if us = Colour.White then 1 else -1
-
-                    // 1. Single Push
-                    let nr1 = r + d
-                    if nr1 >= 0 && nr1 <= 7 then
-                        let p1 = Square.ofFileRank f nr1
-                        if not (Board.isOccupied b p1) then
-                            // Promotion push
-                            if nr1 = (if us = Colour.White then 7 else 0) then
-                                for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                    moves.Add(Move.create(sq, p1, 5, int pt))
-                            else
-                                moves.Add(Move.create(sq, p1, 0, 0))
-
-                            // 2. Double push from starting rank
-                            if r = (if us = Colour.White then 1 else 6) then
-                                let nr2 = r + 2 * d
-                                let p2 = Square.ofFileRank f nr2
-                                if not (Board.isOccupied b p2) then
-                                    moves.Add(Move.create(sq, p2, 0, 0))
-
+                // 1. Single Push
+                let nr1 = r + 1
+                if nr1 >= 0 && nr1 <= 7 then
+                    let p1 = Square.ofFileRank f nr1
+                    if not (Board.isOccupied b p1) then
+                        // Promotion push
+                        if nr1 = 7 then
+                            for pt = 4 downto 1 do
+                                moves.Add(Move.create(sq, p1, 5, pt))
+                        else
+                            moves.Add(Move.create(sq, p1, 0, 0))
+                        // 2. Double push from starting rank
+                        if r = 1 then
+                            let nr2 = r + 2
+                            let p2 = Square.ofFileRank f nr2
+                            if not (Board.isOccupied b p2) then
+                                moves.Add(Move.create(sq, p2, 0, 0))
                     // 3. Captures
-                    for df in [ -1; 1 ] do
-                        let nf, nr = f + df, r + d
+                    for df in [| -1; 1 |] do
+                        let nf, nr = f + df, r + 1
                         if Square.isOnBoard nf nr then
                             let cap = Square.ofFileRank nf nr
-                            let victim = Board.tryGetPiece b cap
-                            if victim <> -1 && Piece.colour victim = them then
-                                if nr = (if us = Colour.White then 7 else 0) then
-                                    for pt in [ PieceType.Queen; PieceType.Rook; PieceType.Bishop; PieceType.Knight ] do
-                                        moves.Add(Move.create(sq, cap, 5, int pt))
+                            if Board.isOccupiedB b cap then
+                                if nr = 7 then
+                                    for pt = 4 downto 1 do
+                                        moves.Add(Move.create(sq, cap, 5, pt))
                                 else
                                     moves.Add(Move.create(sq, cap, 1, 0))
-
                     // 4. En passant
                     let ep = b.EnPassantSquare
-                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r + d then
+                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r + 1 then
                         moves.Add(Move.create(sq, ep, 2, 0))
+        let getpseudoWN () = 
+            let mutable bb = b.Bitboards.WhiteKnights
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.knightAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedB b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+                    elif not (Board.isOccupied b t) then
+                        moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoWB () = 
+            let mutable bb = b.Bitboards.WhiteBishops
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoWR () = 
+            let mutable bb = b.Bitboards.WhiteRooks
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.rookEntries.[sq]
+                let combinedAttacks = Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoWQ () = 
+            let mutable bb = b.Bitboards.WhiteQueens
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let mutable combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let er = Magic.rookEntries.[sq]
+                combinedAttacks <- combinedAttacks ||| Magic.rookTable.[er.Offset + Magic.getIndex occ er.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.WhiteTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoWK () = 
+            let mutable bb = b.Bitboards.WhiteKings
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.kingAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedB b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+                    elif not (Board.isOccupied b t) then
+                        moves.Add(Move.create(sq, t, 0, 0))
 
-                | PieceType.Knight ->
-                    // Use high-speed Bitboard lookup
-                    let mutable attacks = BitboardGen.knightAttacks.[sq]
-                    while attacks <> 0uL do
-                        let t = Bitboard.popLsb &attacks
-                        let target = Board.tryGetPiece b t
-                        if target <> -1 then
-                            if Piece.colour target = them then
-                                moves.Add(Move.create(sq, t, 1, 0))
+                // Castling
+                let rnk, cr = 0, b.CastlingRights
+                if (cr &&& CastlingRights.WK) <> 0 then
+                    let f1, g1 = Square.ofFileRank File.F rnk, Square.ofFileRank File.G rnk
+                    if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
+                        moves.Add(Move.create(sq, g1, 3, 0))
+
+                if (cr &&& CastlingRights.WQ) <> 0 then
+                    let d1, c1, b1 = Square.ofFileRank File.D rnk,Square.ofFileRank File.C rnk, Square.ofFileRank File.B rnk
+                    if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
+                        moves.Add(Move.create(sq, c1, 4, 0))
+        getpseudoWP()
+        getpseudoWN()
+        getpseudoWB()
+        getpseudoWR()
+        getpseudoWQ()
+        getpseudoWK()
+        moves.ToArray()
+
+    /// Generates all pseudo-legal moves for Black pieces on the board.
+    let getpseudoB (b:Board) = 
+        let moves = ResizeArray<int>()
+        let getpseudoBP () = 
+            let mutable bb = b.Bitboards.BlackPawns
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // 1. Single Push
+                let nr1 = r - 1
+                if nr1 >= 0 && nr1 <= 7 then
+                    let p1 = Square.ofFileRank f nr1
+                    if not (Board.isOccupied b p1) then
+                        // Promotion push
+                        if nr1 = 0 then
+                            for pt = 4 downto 1 do
+                                moves.Add(Move.create(sq, p1, 5, pt))
                         else
-                            moves.Add(Move.create(sq, t, 0, 0))
+                            moves.Add(Move.create(sq, p1, 0, 0))
+                        // 2. Double push from starting rank
+                        if r = 6 then
+                            let nr2 = r - 2
+                            let p2 = Square.ofFileRank f nr2
+                            if not (Board.isOccupied b p2) then
+                                moves.Add(Move.create(sq, p2, 0, 0))
+                    // 3. Captures
+                    for df in [| -1; 1 |] do
+                        let nf, nr = f + df, r - 1
+                        if Square.isOnBoard nf nr then
+                            let cap = Square.ofFileRank nf nr
+                            if Board.isOccupiedW b cap then
+                                if nr = 0 then
+                                    for pt = 4 downto 1 do
+                                        moves.Add(Move.create(sq, cap, 5, pt))
+                                else
+                                    moves.Add(Move.create(sq, cap, 1, 0))
+                    // 4. En passant
+                    let ep = b.EnPassantSquare
+                    if ep <> -1 && abs ((Square.file ep) - f) = 1 && Square.rank ep = r - 1 then
+                        moves.Add(Move.create(sq, ep, 2, 0))
+        let getpseudoBN () = 
+            let mutable bb = b.Bitboards.BlackKnights
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.knightAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedW b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+                    elif not (Board.isOccupied b t) then
+                        moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoBB () = 
+            let mutable bb = b.Bitboards.BlackBishops
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoBR () = 
+            let mutable bb = b.Bitboards.BlackRooks
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.rookEntries.[sq]
+                let combinedAttacks = Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoBQ () = 
+            let mutable bb = b.Bitboards.BlackQueens
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                let occ = b.Bitboards.Occupancy
+                let e = Magic.bishopEntries.[sq]
+                let mutable combinedAttacks = Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
+                let er = Magic.rookEntries.[sq]
+                combinedAttacks <- combinedAttacks ||| Magic.rookTable.[er.Offset + Magic.getIndex occ er.Mask]
+                let mutable targets = combinedAttacks &&& ~~~b.Bitboards.BlackTotal
+                while targets <> 0uL do
+                    let t = Bitboard.popLsb &targets
+                    if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
+                    else moves.Add(Move.create(sq, t, 0, 0))
+        let getpseudoBK () = 
+            let mutable bb = b.Bitboards.BlackKings
+            while bb <> 0uL do
+                let sq = Bitboard.popLsb &bb
+                let f, r = Square.file sq, Square.rank sq
+                // Use high-speed Bitboard lookup
+                let mutable attacks = BitboardGen.kingAttacks.[sq]
+                while attacks <> 0uL do
+                    let t = Bitboard.popLsb &attacks
+                    if Board.isOccupiedW b t then
+                        moves.Add(Move.create(sq, t, 1, 0))
+                    elif not (Board.isOccupied b t) then
+                        moves.Add(Move.create(sq, t, 0, 0))
 
-                | PieceType.King ->
-                    // Use high-speed Bitboard lookup
-                    let mutable attacks = BitboardGen.kingAttacks.[sq]
-                    while attacks <> 0uL do
-                        let t = Bitboard.popLsb &attacks
-                        let target = Board.tryGetPiece b t
-                        if target <> -1 then
-                            if Piece.colour target = them then
-                                moves.Add(Move.create(sq, t, 1, 0))
-                        else
-                            moves.Add(Move.create(sq, t, 0, 0))
+                // Castling
+                let rnk, cr = 7, b.CastlingRights
+                if (cr &&& CastlingRights.BK) <> 0 then
+                    let f8, g8 = Square.ofFileRank File.F rnk, Square.ofFileRank File.G rnk
+                    if not (Board.isOccupied b f8) && not (Board.isOccupied b g8) then
+                        moves.Add(Move.create(sq, g8, 3, 0))
 
-                    // Castling
-                    let rnk, cr = (if us = Colour.White then 0 else 7), b.CastlingRights
-                    if (us = Colour.White && (int cr &&& int CastlingRights.WK) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BK) <> 0) then
-                        let f1, g1 = Square.ofFileRank File.F rnk, Square.ofFileRank File.G rnk
-                        if not (Board.isOccupied b f1) && not (Board.isOccupied b g1) then
-                            moves.Add(Move.create(sq, g1, 3, 0))
-
-                    if (us = Colour.White && (int cr &&& int CastlingRights.WQ) <> 0) || (us = Colour.Black && (int cr &&& int CastlingRights.BQ) <> 0) then
-                        let d1, c1, b1 = Square.ofFileRank File.D rnk, 
-                                         Square.ofFileRank File.C rnk,
-                                         Square.ofFileRank File.B rnk
-                        if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
-                            moves.Add(Move.create(sq, c1, 4, 0))
-
-                | PieceType.Bishop | PieceType.Rook | PieceType.Queen as kind ->
-                    let occ = b.Bitboards.Occupancy
-                    let mutable combinedAttacks = 0uL
-
-                    if kind = PieceType.Bishop || kind = PieceType.Queen then
-                        let e = Magic.bishopEntries.[sq]
-                        combinedAttacks <- combinedAttacks ||| Magic.bishopTable.[e.Offset + Magic.getIndex occ e.Mask]
-
-                    if kind = PieceType.Rook || kind = PieceType.Queen then
-                        let e = Magic.rookEntries.[sq]
-                        combinedAttacks <- combinedAttacks ||| Magic.rookTable.[e.Offset + Magic.getIndex occ e.Mask]
-
-                    let usTotal = if us = Colour.White then b.Bitboards.WhiteTotal else b.Bitboards.BlackTotal
-                    let mutable targets = combinedAttacks &&& ~~~usTotal
+                if (cr &&& CastlingRights.BQ) <> 0 then
+                    let d8, c8, b8 = Square.ofFileRank File.D rnk,Square.ofFileRank File.C rnk, Square.ofFileRank File.B rnk
+                    if not (Board.isOccupied b d8) && not (Board.isOccupied b c8) && not (Board.isOccupied b b8) then
+                        moves.Add(Move.create(sq, c8, 4, 0))
+        getpseudoBP()
+        getpseudoBN()
+        getpseudoBB()
+        getpseudoBR()
+        getpseudoBQ()
+        getpseudoBK()
+        moves.ToArray()
     
-                    while targets <> 0uL do
-                        let t = Bitboard.popLsb &targets
-                        if Board.isOccupied b t then moves.Add(Move.create(sq, t, 1, 0))
-                        else moves.Add(Move.create(sq, t, 0, 0))
-
-                | _ -> invalidArg "Piece.kind p" $"Invalid PieceType: %A{Piece.kind p}"
-
-        moves.ToArray()    
+    // Gets all pseudo-legal moves for the current position using Bitboards.
+    let getPseudoLegalMoves (b: Board) =
+        if b.SideToMove = Colour.White then
+            getpseudoW b
+        else 
+            getpseudoB b
 
     /// Gets all legal moves for the current position.
     let getLegalMoves (b: Board) =
