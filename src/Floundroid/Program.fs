@@ -492,42 +492,46 @@ module BitboardSet =
                 yield (sq, getPieceAt sq bbs)
         }
 
+    /// Evaluates the board using piece-square tables and tapered material.
     let getscr (bbs: BitboardSet) =
         let mutable mg = 0
         let mutable eg = 0
 
-        let evalLayer (bb: Bitboard) (kind: int) (isWhite: bool) =
+        let evalLayerW (bb: Bitboard) (kIdx: int) =
             let mutable tempBb = bb
-            // Ensure kIdx is 0-5. Adjust if your PieceType enum is different.
-            let kIdx = kind 
             let tableMG = Pst.MG.[kIdx]
             let tableEG = Pst.EG.[kIdx]
             
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
-                let pstIdx = if isWhite then sq else sq ^^^ 56
-                
-                if isWhite then
-                    mg <- mg + Pst.matsMG.[kIdx] + tableMG.[pstIdx]
-                    eg <- eg + Pst.matsEG.[kIdx] + tableEG.[pstIdx]
-                else
-                    mg <- mg - Pst.matsMG.[kIdx] - tableMG.[pstIdx]
-                    eg <- eg - Pst.matsEG.[kIdx] - tableEG.[pstIdx]
+                let pstIdx = sq
+                mg <- mg + Pst.matsMG.[kIdx] + tableMG.[pstIdx]
+                eg <- eg + Pst.matsEG.[kIdx] + tableEG.[pstIdx]
+        let evalLayerB (bb: Bitboard) (kIdx: int) =
+            let mutable tempBb = bb
+            let tableMG = Pst.MG.[kIdx]
+            let tableEG = Pst.EG.[kIdx]
+            
+            while tempBb <> 0uL do
+                let sq = Bitboard.popLsb &tempBb
+                let pstIdx = sq ^^^ 56
+                mg <- mg - Pst.matsMG.[kIdx] - tableMG.[pstIdx]
+                eg <- eg - Pst.matsEG.[kIdx] - tableEG.[pstIdx]
 
         // --- THE 12 LAYERS (Must include all) ---
-        evalLayer bbs.WhitePawns   PieceType.Pawn   true
-        evalLayer bbs.WhiteKnights  PieceType.Knight true
-        evalLayer bbs.WhiteBishops  PieceType.Bishop true
-        evalLayer bbs.WhiteRooks    PieceType.Rook   true
-        evalLayer bbs.WhiteQueens   PieceType.Queen  true
-        evalLayer bbs.WhiteKings    PieceType.King   true
+        evalLayerW bbs.WhitePawns    PieceType.Pawn   
+        evalLayerW bbs.WhiteKnights  PieceType.Knight
+        evalLayerW bbs.WhiteBishops  PieceType.Bishop
+        evalLayerW bbs.WhiteRooks    PieceType.Rook
+        evalLayerW bbs.WhiteQueens   PieceType.Queen
+        evalLayerW bbs.WhiteKings    PieceType.King
 
-        evalLayer bbs.BlackPawns   PieceType.Pawn   false
-        evalLayer bbs.BlackKnights  PieceType.Knight false
-        evalLayer bbs.BlackBishops  PieceType.Bishop false
-        evalLayer bbs.BlackRooks    PieceType.Rook   false
-        evalLayer bbs.BlackQueens   PieceType.Queen  false
-        evalLayer bbs.BlackKings    PieceType.King   false
+        evalLayerB bbs.BlackPawns    PieceType.Pawn   
+        evalLayerB bbs.BlackKnights  PieceType.Knight
+        evalLayerB bbs.BlackBishops  PieceType.Bishop
+        evalLayerB bbs.BlackRooks    PieceType.Rook   
+        evalLayerB bbs.BlackQueens   PieceType.Queen  
+        evalLayerB bbs.BlackKings    PieceType.King   
         mg,eg
 
 module Magic =
@@ -772,6 +776,8 @@ type Board =
       EnPassantSquare: int
       HalfmoveClock: int
       FullmoveNumber: int
+      ScoreMG: int
+      ScoreEG: int
       Hash: uint64 }
 
 module Zobrist =
@@ -906,6 +912,8 @@ module Board =
           EnPassantSquare = -1
           HalfmoveClock = 0
           FullmoveNumber = 1
+          ScoreMG = 0
+          ScoreEG = 0
           Hash = 0UL }
 
     let isSquareAttacked (b: Board) (sq: int) (attacker: int) =
@@ -1074,9 +1082,14 @@ module Board =
               EnPassantSquare = if parts.[3] = "-" then -1 else Square.fromString parts.[3]
               HalfmoveClock = int parts.[4]
               FullmoveNumber = int parts.[5]
+              ScoreMG = 0
+              ScoreEG = 0
               Hash = 0UL } 
         { boardWithoutHash with Hash = calculateHash boardWithoutHash }
  
+    /// The standard starting position in FEN notation.
+    let start = fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
     /// Converts a Board record to its FEN string representation.
     let toFen (b: Board) =
         let sb = StringBuilder()
@@ -1237,6 +1250,8 @@ module Board =
           EnPassantSquare = newEPSquare
           HalfmoveClock = newHMClock
           FullmoveNumber = newFMNumber
+          ScoreMG = 0
+          ScoreEG = 0
           Hash = newHash }
 
     /// Executes a null move, updating side to move, en passant, halfmove clock, fullmove number, and hash.
@@ -1257,6 +1272,8 @@ module Board =
           EnPassantSquare = -1
           HalfmoveClock = b.HalfmoveClock + 1
           FullmoveNumber = newFMNumber
+          ScoreMG = b.ScoreMG
+          ScoreEG = b.ScoreEG
           Hash = newHash }
 
     /// Checks if the board has insufficient material for checkmate.
@@ -1913,58 +1930,69 @@ module Evaluation =
         let mutable blackKingAttacksCount = 0
         let mutable blackKingAttackWeight = 0
 
-        let evalLayer (bb: Bitboard) (kind: int) (isWhite: bool) =
+        let evalLayerW (bb: Bitboard) (kIdx: int) =
             let mutable tempBb = bb
-            // Ensure kIdx is 0-5. Adjust if your PieceType enum is different.
-            let kIdx = kind 
-            let usTotal = if isWhite then bbs.WhiteTotal else bbs.BlackTotal
-            let enemyKingZone = if isWhite then blackKingZone else whiteKingZone
+            let usTotal = bbs.WhiteTotal
+            let enemyKingZone = blackKingZone
             let tableMG = Pst.MG.[kIdx]
             let tableEG = Pst.EG.[kIdx]
             
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
-                let pstIdx = if isWhite then sq else sq ^^^ 56
+                let pstIdx = sq
                 
-                if isWhite then
-                    mg <- mg + Pst.matsMG.[kIdx] + tableMG.[pstIdx]
-                    eg <- eg + Pst.matsEG.[kIdx] + tableEG.[pstIdx]
-                else
-                    mg <- mg - Pst.matsMG.[kIdx] - tableMG.[pstIdx]
-                    eg <- eg - Pst.matsEG.[kIdx] - tableEG.[pstIdx]
+                mg <- mg + Pst.matsMG.[kIdx] + tableMG.[pstIdx]
+                eg <- eg + Pst.matsEG.[kIdx] + tableEG.[pstIdx]
 
-                if kind <> PieceType.Pawn && kind <> PieceType.King then
-                    let attacks = getAttackBitboard sq kind occ
+                if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
+                    let attacks = getAttackBitboard sq kIdx occ
                     let mob = Bitboard.count (attacks &&& ~~~usTotal)
                     
-                    if isWhite then 
-                        mb <- mb + (mob * mobWeights.[kIdx])
-                    else 
-                        mb <- mb - (mob * mobWeights.[kIdx])
+                    mb <- mb + (mob * mobWeights.[kIdx])
 
                     let attacksOnZone = attacks &&& enemyKingZone
                     if attacksOnZone <> 0uL then
-                        if isWhite then
-                            blackKingAttacksCount <- blackKingAttacksCount + 1
-                            blackKingAttackWeight <- blackKingAttackWeight + kingAttackWeights.[kIdx]
-                        else
-                            whiteKingAttacksCount <- whiteKingAttacksCount + 1
-                            whiteKingAttackWeight <- whiteKingAttackWeight + kingAttackWeights.[kIdx]
+                        blackKingAttacksCount <- blackKingAttacksCount + 1
+                        blackKingAttackWeight <- blackKingAttackWeight + kingAttackWeights.[kIdx]
+        let evalLayerB (bb: Bitboard) (kIdx: int) =
+            let mutable tempBb = bb
+            let usTotal = bbs.BlackTotal
+            let enemyKingZone = whiteKingZone
+            let tableMG = Pst.MG.[kIdx]
+            let tableEG = Pst.EG.[kIdx]
+            
+            while tempBb <> 0uL do
+                let sq = Bitboard.popLsb &tempBb
+                let pstIdx = sq ^^^ 56
+                
+                mg <- mg - Pst.matsMG.[kIdx] - tableMG.[pstIdx]
+                eg <- eg - Pst.matsEG.[kIdx] - tableEG.[pstIdx]
+
+                if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
+                    let attacks = getAttackBitboard sq kIdx occ
+                    let mob = Bitboard.count (attacks &&& ~~~usTotal)
+                    
+                    mb <- mb - (mob * mobWeights.[kIdx])
+
+                    let attacksOnZone = attacks &&& enemyKingZone
+                    if attacksOnZone <> 0uL then
+                        whiteKingAttacksCount <- whiteKingAttacksCount + 1
+                        whiteKingAttackWeight <- whiteKingAttackWeight + kingAttackWeights.[kIdx]
 
         // --- THE 12 LAYERS (Must include all) ---
-        evalLayer bbs.WhitePawns   PieceType.Pawn   true
-        evalLayer bbs.WhiteKnights  PieceType.Knight true
-        evalLayer bbs.WhiteBishops  PieceType.Bishop true
-        evalLayer bbs.WhiteRooks    PieceType.Rook   true
-        evalLayer bbs.WhiteQueens   PieceType.Queen  true
-        evalLayer bbs.WhiteKings    PieceType.King   true
+        evalLayerW bbs.WhitePawns    PieceType.Pawn
+        evalLayerW bbs.WhiteKnights  PieceType.Knight
+        evalLayerW bbs.WhiteBishops  PieceType.Bishop
+        evalLayerW bbs.WhiteRooks    PieceType.Rook
+        evalLayerW bbs.WhiteQueens   PieceType.Queen
+        evalLayerW bbs.WhiteKings    PieceType.King
 
-        evalLayer bbs.BlackPawns   PieceType.Pawn   false
-        evalLayer bbs.BlackKnights  PieceType.Knight false
-        evalLayer bbs.BlackBishops  PieceType.Bishop false
-        evalLayer bbs.BlackRooks    PieceType.Rook   false
-        evalLayer bbs.BlackQueens   PieceType.Queen  false
-        evalLayer bbs.BlackKings    PieceType.King   false
+        evalLayerB bbs.BlackPawns    PieceType.Pawn
+        evalLayerB bbs.BlackKnights  PieceType.Knight
+        evalLayerB bbs.BlackBishops  PieceType.Bishop
+        evalLayerB bbs.BlackRooks    PieceType.Rook
+        evalLayerB bbs.BlackQueens   PieceType.Queen
+        evalLayerB bbs.BlackKings    PieceType.King
 
         //mg,eg are now the clean mat and psg scores. Add mobility bonus.
         mg <- mg + mb
@@ -2535,8 +2563,7 @@ module Debug =
         printfn "  a b c d e f g h"
 
 module UciLoop =
-    let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    let mutable board = Board.fromFen startFen
+    let mutable board = Board.start
     let mutable positionHistory: uint64 list = []
     // Track the current search task and its cancellation token
     let mutable searchCts = new CancellationTokenSource()
@@ -2584,14 +2611,14 @@ module UciLoop =
                 TranspositionTable.clear()
                 Search.clearKillers() 
                 Search.clearHistory() 
-                board <- Board.fromFen startFen            
+                board <- Board.start            
                 positionHistory <- []
             
             | "position" :: rest ->
-                let (fen, moveParts) =
+                let (bd, moveParts) =
                     match rest with
-                    | "startpos" :: "moves" :: m -> (startFen, m)
-                    | "startpos" :: _ -> (startFen, [])
+                    | "startpos" :: "moves" :: m -> (Board.start, m)
+                    | "startpos" :: _ -> (Board.start, [])
                     | "fen" :: fParts ->
                         // Find where "moves" starts, if it exists
                         let movesIdx = fParts |> List.tryFindIndex (fun s -> s = "moves")
@@ -2600,11 +2627,11 @@ module UciLoop =
                         | Some i ->
                             let f = fParts |> List.take i |> String.concat " "
                             let m = fParts |> List.skip (i + 1)
-                            (f, m)
-                        | None -> (String.concat " " fParts, [])
-                    | _ -> (startFen, [])
+                            (Board.fromFen f, m)
+                        | None -> (Board.fromFen (String.concat " " fParts), [])
+                    | _ -> (Board.start, [])
 
-                board <- Board.fromFen fen
+                board <- bd
                 positionHistory <- [ board.Hash ]
 
                 for mStr in moveParts do
