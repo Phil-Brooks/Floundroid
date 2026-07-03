@@ -1075,6 +1075,8 @@ module Board =
                     bbs <- BitboardSet.togglePiece (Piece.fromChar char) sq bbs
                     file.Value <- file.Value + 1
 
+        let scmg, sceg = BitboardSet.getscr bbs
+        
         let boardWithoutHash = 
             { Bitboards = bbs
               SideToMove = Colour.fromChar parts.[1].[0]
@@ -1082,9 +1084,9 @@ module Board =
               EnPassantSquare = if parts.[3] = "-" then -1 else Square.fromString parts.[3]
               HalfmoveClock = int parts.[4]
               FullmoveNumber = int parts.[5]
-              ScoreMG = 0
-              ScoreEG = 0
-              Hash = 0UL } 
+              ScoreMG = scmg
+              ScoreEG = sceg
+              Hash = 0UL }
         { boardWithoutHash with Hash = calculateHash boardWithoutHash }
  
     /// The standard starting position in FEN notation.
@@ -1142,10 +1144,14 @@ module Board =
     let applyMove (m: int) (b: Board) =
         // 1. Initialize variables for the new state
         let mutable newBitboards = b.Bitboards
+        let mutable newScoreMG = b.ScoreMG
+        let mutable newScoreEG = b.ScoreEG
         let mutable newHash = b.Hash
         let movingPiece = BitboardSet.getPieceAt (Move.fromSq m) b.Bitboards
         let isPawn = Piece.kind movingPiece = PieceType.Pawn
         let opponent = Colour.opposite b.SideToMove
+        let toSq = Move.toSq m
+        let fromSq = Move.fromSq m
 
         // 2. XOR out old state from Hash (Side, Castling, EP)
         newHash <- newHash ^^^ Zobrist.Table.SideToMove
@@ -1154,23 +1160,45 @@ module Board =
 
         // 3. Remove the moving piece from the source
         // TogglePiece XORs the bitboard and we XOR the hash
-        newBitboards <- BitboardSet.togglePiece movingPiece (Move.fromSq m) newBitboards
-        newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece (Move.fromSq m))
+        newBitboards <- BitboardSet.togglePiece movingPiece fromSq newBitboards
+        newHash <- newHash ^^^ (Zobrist.getPieceKey movingPiece fromSq) 
+        if b.SideToMove = Colour.White then
+            newScoreMG <- newScoreMG - Pst.MG[Piece.kind movingPiece].[fromSq]
+            newScoreEG <- newScoreEG - Pst.EG[Piece.kind movingPiece].[fromSq]
+        else
+            let idx = fromSq ^^^ 56
+            newScoreMG <- newScoreMG + Pst.MG[Piece.kind movingPiece].[idx]
+            newScoreEG <- newScoreEG + Pst.EG[Piece.kind movingPiece].[idx]
 
         // 4. Handle Captures (including En Passant)
-        let capturedPieceAtTo = BitboardSet.getPieceAt (Move.toSq m) b.Bitboards
+        let capturedPieceAtTo = BitboardSet.getPieceAt toSq b.Bitboards
     
         match Move.kind m with
         | 2 ->   // EnPassant
-            let epPawnSq = if b.SideToMove = Colour.White then (Move.toSq m) - 8 else (Move.toSq m) + 8
+            let epPawnSq = if b.SideToMove = Colour.White then toSq - 8 else toSq + 8
             let victimPawn = (opponent <<< 3) ||| PieceType.Pawn
             newBitboards <- BitboardSet.togglePiece victimPawn epPawnSq newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey victimPawn epPawnSq)
+            if b.SideToMove = Colour.White then
+                let idx = epPawnSq ^^^ 56
+                newScoreMG <- newScoreMG + Pst.MG[PieceType.Pawn].[idx] + Pst.matsMG[PieceType.Pawn]
+                newScoreEG <- newScoreEG + Pst.EG[PieceType.Pawn].[idx] + Pst.matsEG[PieceType.Pawn]
+            else
+                newScoreMG <- newScoreMG - Pst.MG[PieceType.Pawn].[epPawnSq] - Pst.matsMG[PieceType.Pawn]
+                newScoreEG <- newScoreEG - Pst.EG[PieceType.Pawn].[epPawnSq] - Pst.matsEG[PieceType.Pawn]
+
         | _ ->
             // Normal captures (Quiet, Promotion, or Castling can't capture, but we check 'To' occupancy)
             if capturedPieceAtTo <> -1 then
-                newBitboards <- BitboardSet.togglePiece capturedPieceAtTo (Move.toSq m) newBitboards
-                newHash <- newHash ^^^ (Zobrist.getPieceKey capturedPieceAtTo (Move.toSq m))
+                newBitboards <- BitboardSet.togglePiece capturedPieceAtTo toSq newBitboards
+                newHash <- newHash ^^^ (Zobrist.getPieceKey capturedPieceAtTo toSq)
+                if b.SideToMove = Colour.White then
+                    let idx = toSq ^^^ 56
+                    newScoreMG <- newScoreMG + Pst.MG[Piece.kind capturedPieceAtTo].[idx] + Pst.matsMG[Piece.kind capturedPieceAtTo]
+                    newScoreEG <- newScoreEG + Pst.EG[Piece.kind capturedPieceAtTo].[idx] + Pst.matsEG[Piece.kind capturedPieceAtTo]
+                else
+                    newScoreMG <- newScoreMG - Pst.MG[Piece.kind capturedPieceAtTo].[toSq] - Pst.matsMG[Piece.kind capturedPieceAtTo]
+                    newScoreEG <- newScoreEG - Pst.EG[Piece.kind capturedPieceAtTo].[toSq] - Pst.matsEG[Piece.kind capturedPieceAtTo]
 
         // 5. Place the piece at the destination
         match Move.kind m with
@@ -1178,14 +1206,26 @@ module Board =
             let promoType = Move.promo m
             let promotedPiece = (b.SideToMove <<< 3) ||| promoType
 
-            let toSq = Move.toSq m
             newBitboards <- BitboardSet.togglePiece promotedPiece toSq newBitboards
             newHash <- newHash ^^^ Zobrist.getPieceKey promotedPiece toSq
+            if b.SideToMove = Colour.White then
+                newScoreMG <- newScoreMG + Pst.MG[promoType].[toSq] + Pst.matsMG[promoType] - Pst.matsMG[Piece.kind movingPiece]
+                newScoreEG <- newScoreEG + Pst.EG[promoType].[toSq] + Pst.matsEG[promoType] - Pst.matsEG[Piece.kind movingPiece]
+            else
+                let idx = toSq ^^^ 56
+                newScoreMG <- newScoreMG - Pst.MG[promoType].[idx] - Pst.matsMG[promoType] + Pst.matsMG[Piece.kind movingPiece]
+                newScoreEG <- newScoreEG - Pst.EG[promoType].[idx] - Pst.matsEG[promoType] + Pst.matsEG[Piece.kind movingPiece]
 
         | _ ->
-            let toSq = Move.toSq m
             newBitboards <- BitboardSet.togglePiece movingPiece toSq newBitboards
             newHash <- newHash ^^^ Zobrist.getPieceKey movingPiece toSq
+            if b.SideToMove = Colour.White then
+                newScoreMG <- newScoreMG + Pst.MG[Piece.kind movingPiece].[toSq]
+                newScoreEG <- newScoreEG + Pst.EG[Piece.kind movingPiece].[toSq]
+            else
+                let idx = toSq ^^^ 56
+                newScoreMG <- newScoreMG - Pst.MG[Piece.kind movingPiece].[idx]
+                newScoreEG <- newScoreEG - Pst.EG[Piece.kind movingPiece].[idx]
 
         // 6. Handle Special Rook Moves (Castling)
         match Move.kind m with
@@ -1195,12 +1235,38 @@ module Board =
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
+            if b.SideToMove = Colour.White then
+                newScoreMG <- newScoreMG - Pst.MG[PieceType.Rook].[rSrc]
+                newScoreEG <- newScoreEG - Pst.EG[PieceType.Rook].[rSrc]
+                newScoreMG <- newScoreMG + Pst.MG[PieceType.Rook].[rDst]
+                newScoreEG <- newScoreEG + Pst.EG[PieceType.Rook].[rDst]
+            else
+                let sidx = rSrc ^^^ 56
+                newScoreMG <- newScoreMG + Pst.MG[PieceType.Rook].[sidx]
+                newScoreEG <- newScoreEG + Pst.EG[PieceType.Rook].[sidx]
+                let didx = rDst ^^^ 56
+                newScoreMG <- newScoreMG - Pst.MG[PieceType.Rook].[didx]
+                newScoreEG <- newScoreEG - Pst.EG[PieceType.Rook].[didx]
+
         | 4 ->   // CastleQueenSide ->
             let (rSrc, rDst) = if b.SideToMove = Colour.White then (0, 3) else (56, 59)
             let rook = (b.SideToMove <<< 3) ||| PieceType.Rook
             newBitboards <- BitboardSet.togglePiece rook rSrc newBitboards
             newBitboards <- BitboardSet.togglePiece rook rDst newBitboards
             newHash <- newHash ^^^ (Zobrist.getPieceKey rook rSrc) ^^^ (Zobrist.getPieceKey rook rDst)
+            if b.SideToMove = Colour.White then
+                newScoreMG <- newScoreMG - Pst.MG[PieceType.Rook].[rSrc]
+                newScoreEG <- newScoreEG - Pst.EG[PieceType.Rook].[rSrc]
+                newScoreMG <- newScoreMG + Pst.MG[PieceType.Rook].[rDst]
+                newScoreEG <- newScoreEG + Pst.EG[PieceType.Rook].[rDst]
+            else
+                let sidx = rSrc ^^^ 56
+                newScoreMG <- newScoreMG + Pst.MG[PieceType.Rook].[sidx]
+                newScoreEG <- newScoreEG + Pst.EG[PieceType.Rook].[sidx]
+                let didx = rDst ^^^ 56
+                newScoreMG <- newScoreMG - Pst.MG[PieceType.Rook].[didx]
+                newScoreEG <- newScoreEG - Pst.EG[PieceType.Rook].[didx]
+
         | _ -> ()
 
         // 7. Update Castling Rights
@@ -1213,22 +1279,22 @@ module Board =
                 newCR <- newCR &&& ~~~(CastlingRights.BK ||| CastlingRights.BQ)
 
         // If a rook moves from its starting square
-        if (Move.fromSq m) = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
-        if (Move.fromSq m) = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
-        if (Move.fromSq m) = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
-        if (Move.fromSq m) = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
+        if fromSq = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if fromSq = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if fromSq = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if fromSq = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
 
         // If a rook is captured on its starting square
-        if (Move.toSq m) = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
-        if (Move.toSq m) = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
-        if (Move.toSq m) = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
-        if (Move.toSq m) = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
+        if toSq = 0 then newCR <- newCR &&& ~~~(CastlingRights.WQ)
+        if toSq = 7 then newCR <- newCR &&& ~~~(CastlingRights.WK)
+        if toSq = 56 then newCR <- newCR &&& ~~~(CastlingRights.BQ)
+        if toSq = 63 then newCR <- newCR &&& ~~~(CastlingRights.BK)
 
         // 8. Update En Passant Square
         // Only set if a pawn moves two squares
         let newEPSquare =
-            if isPawn && abs ((Move.toSq m) - (Move.fromSq m)) = 16 then
-                ((Move.fromSq m) + (Move.toSq m)) / 2
+            if isPawn && abs (toSq - fromSq) = 16 then
+                (fromSq + toSq) / 2
             else -1
 
         // 9. Update Clocks
@@ -1250,8 +1316,8 @@ module Board =
           EnPassantSquare = newEPSquare
           HalfmoveClock = newHMClock
           FullmoveNumber = newFMNumber
-          ScoreMG = 0
-          ScoreEG = 0
+          ScoreMG = newScoreMG
+          ScoreEG = newScoreEG
           Hash = newHash }
 
     /// Executes a null move, updating side to move, en passant, halfmove clock, fullmove number, and hash.

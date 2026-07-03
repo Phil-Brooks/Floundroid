@@ -12,5 +12,5 @@ copy D:\Github\Floundroid\publish\Floundroid.exe
 copy D:\Github\Floundroid\publish\Floundroid.pdb
 
 rem @echo off
-cutechess-cli.exe -engine name=Floundroid cmd=Floundroid.exe proto=uci stderr=err.txt -engine name=Cinnamon cmd=cinnamon_2.0_x64-modern.exe proto=uci stderr=err.txt -each tc=30 -openings file=gm2001.bin -games 8 -repeat -concurrency 4 -pgnout cin_results8.pgn >cin8.txt 
+cutechess-cli.exe -engine name=Floundroid cmd=Floundroid.exe proto=uci stderr=err.txt -engine name=Halogen6.0 cmd=Halogen6-x64-popcnt.exe proto=uci stderr=err.txt -each tc=30 -openings file=gm2001.bin -games 8 -repeat -concurrency 4 -pgnout cin_results8.pgn -debug all>cin8.txt 
 pause
