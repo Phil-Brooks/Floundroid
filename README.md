@@ -15,37 +15,41 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.4.5 (The Performance Refinement Update)
+## 🚀 Latest Stable Release: v0.4.6 (The High-Stakes Calibration)
 
-This release focuses on "under-the-hood" efficiency. By utilizing **BenchmarkDotNet** to identify bottlenecks in the move generator and search hot-paths, Floundroid v0.4.5 achieves significantly higher nodes-per-second (NPS). This increased throughput allows the engine to reach deeper plies within the same time constraints, resulting in a dominant performance increase over Cinnamon 2.0.
+This release marks a significant milestone in Floundroid's development. After the performance gains of v0.4.5, we have moved away from testing against entry-level engines and begun benchmarking against **Halogen 6.0** (est. 2440 Elo). 
 
-### **Key Improvements in v0.4.5**
-- **Micro-Optimizations via BenchmarkDotNet**
-  - Refactored bitboard lookups and move-generation loops for better CPU cache locality.
-  - Reduced allocations in the search stack, lowering GC pressure during high-depth calculations.
-- **Improved Time Management**
-  - Refined the "move-overhead" logic to prevent losses on time (though still a work in progress).
-- **Search Stability**
-  - The performance gains have allowed for more stable results in the "Big Five" search architecture (Aspiration Windows, RFP, LMR, PVS, and Move Ordering).
-- 👉 [**Download Floundroid.exe v0.4.5**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+By identifying further bottlenecks in the search and evaluation hot-paths, v0.4.6 hardens the engine for "Master-level" play.
+
+### **Key Improvements in v0.4.6**
+- **Deep-Trace Benchmarking**
+  - Identified and resolved secondary bottlenecks in the bitboard attack generators.
+  - Optimized the Search Stack to better handle the tactical pressure of 2400+ rated opponents.
+- **Improved UCI Stability**
+  - Enhanced move-validation logic, ensuring robust performance even when opponents encounter internal errors.
+- **Engine Hardening**
+  - While still trailing a 2440-rated heavyweight, Floundroid has established a "floor" rating in the 2200+ range, providing a high-quality baseline for upcoming evaluation tuning.
+- 👉 [**Download Floundroid.exe v0.4.6**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
-## 📊 Calibration & Rating (v0.4.5 vs Cinnamon 2.0)
+## 📊 Calibration & Rating (v0.4.6 vs Halogen 6.0)
 
-Floundroid v0.4.5 was tested against **Cinnamon 2.0** over 100 games at `tc=30`.
+To test the limits of our recent optimizations, Floundroid v0.4.6 was put through a 100-game gauntlet against **Halogen 6.0 (2440 Elo)** at `tc=30`.
 
 ### **Performance Comparison**
 
-| Metric | v0.4.4 (Previous) | **v0.4.5 (Latest)** | Change |
-| :--- | :--- | :--- | :--- |
-| **Score vs Cinnamon** | 52.0% | **66.5%** | **+14.5%** |
-| **Elo Difference** | +14 | **+119** | **+105 Elo** |
-| **Wins** | 45 | **58** | **+13 Wins** |
-| **Draw Ratio** | 14% | **17%** | **+3%** |
+| Metric | Result vs Halogen 6.0 |
+| :--- | :--- |
+| **Score** | 24.0% |
+| **Elo Difference** | -200.2 +/- 72.2 |
+| **Estimated Performance** | **~2240 Elo** |
+| **Wins** | 16 |
+| **Draws** | 16 |
+| **Losses** | 68 |
 
 ### **Interpretation**
-The **+105 Elo increase** over the previous version demonstrates the power of code optimization. Without changing the underlying evaluation terms, Floundroid is now significantly stronger simply by seeing further. With an 80% win rate as White, the engine is becoming a formidable tactical opponent.
+Testing against a 2440-rated opponent is a "stress test." Floundroid v0.4.6 successfully held its own in nearly 1/3 of the games (32% non-loss rate). These results highlight that while our **search speed** (NPS) is now competitive, the next leap in strength must come from **Evaluation Tuning**—specifically refining how the engine perceives King Safety and Pawn Structures to close the 200-point gap.
 
 ---
 
@@ -59,7 +63,8 @@ The **+105 Elo increase** over the previous version demonstrates the power of co
 - [x] Mobility & Tapered Evaluation (v0.4.3)
 - [x] Reverse Futility Pruning (v0.4.4)
 - [x] Aspiration Windows (v0.4.4)
-- [x] **BenchmarkDotNet Performance Tuning** (v0.4.5)
+- [x] BenchmarkDotNet Performance Tuning (v0.4.5)
+- [x] **Further Benchmarking Fixes (v0.4.6)** 
 - [x] Tapered PSTs (Middlegame vs Endgame tables)
 - [x] Passed pawn advancement bonuses  
 - [ ] **Strength Tuning (SPSA/Texel)** 🔵 *Next Priority*

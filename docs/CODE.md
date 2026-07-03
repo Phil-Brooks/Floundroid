@@ -13,6 +13,7 @@
 - [CastlingRights](#module-castlingrights)
 - [Move](#module-move)
 - [Bitboard](#module-bitboard)
+- [Pst](#module-pst)
 - [BitboardSet](#module-bitboardset)
 - [Magic](#module-magic)
 - [BitboardGen](#module-bitboardgen)
@@ -175,6 +176,13 @@
 - **fn** `toString`
     - *Visualizes the bitboard as an 8x8 grid for debugging.*
 
+## 📦 module Pst
+---
+- **fn** `matsMG`
+- **fn** `matsEG`
+- **fn** `MG`
+- **fn** `EG`
+
 #### 🧩 `type BitboardSet`
 > A collection of bitboards representing all pieces on the board.
 
@@ -187,6 +195,8 @@
     - *A helper to flip a piece on/off. Essential for incremental updates.*
 - **fn** `allPieces`
     - *Returns a sequence of all (Square, Piece) pairs currently on the board.*
+- **fn** `getscr`
+    - *Evaluates the board using piece-square tables and tapered material.*
 
 ## 📦 module Magic
 ---
@@ -284,6 +294,10 @@
     - *Tries to get a piece from a square (Source of truth: Bitboards).*
 - **fn** `isOccupied`
     - *Checks if a square is occupied (Source of truth: Bitboards).*
+- **fn** `isOccupiedW`
+    - *Checks if a square is occupied by White*
+- **fn** `isOccupiedB`
+    - *Checks if a square is occupied by Black*
 - **fn** `findKing`
     - *Find the king square (Needed for check detection).*
 - **fn** `setPiece`
@@ -292,6 +306,8 @@
     - *Calculates the full Zobrist hash from scratch (Used for FEN initialization)*
 - **fn** `fromFen`
     - *Parses a FEN string and returns a Board record representing the position.*
+- **fn** `start`
+    - *The standard starting position in FEN notation.*
 - **fn** `toFen`
     - *Converts a Board record to its FEN string representation.*
 - **fn** `isInCheckFor`
@@ -318,9 +334,17 @@
 
 ## 📦 module MoveGen
 ---
+- **fn** `getpseudoW`
+    - *Generates pseudo-legal moves for White pieces, including pawns, knights, bishops, rooks, and queens.*
+- **fn** `getpseudoB`
+    - *Generates all pseudo-legal moves for Black pieces on the board.*
 - **fn** `getPseudoLegalMoves`
 - **fn** `getLegalMoves`
     - *Gets all legal moves for the current position.*
+- **fn** `getcapW`
+    - *Generates all capture moves for White pieces, including pawns, knights, bishops, rooks, and queens.*
+- **fn** `getcapB`
+    - *Generates all capture moves for Black pieces, including pawns, knights, bishops, rooks, and queens.*
 - **fn** `getCaptureMoves`
     - *Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.*
 
@@ -330,10 +354,6 @@
 - **fn** `mobWeights`
     - *Weights for each square of mobility (tuning values)*
 - **fn** `kingAttackWeights`
-- **fn** `matsMG`
-- **fn** `matsEG`
-- **fn** `pstsMG`
-- **fn** `pstsEG`
 - **fn** `pawnStructureScore`
     - *Evaluates the pawn structure of the board, returning a score from White's perspective.*
 - **fn** `getAttackBitboard`
@@ -383,7 +403,6 @@
 
 ## 📦 module UciLoop
 ---
-- **fn** `startFen`
 - **fn** `tryGetIntArg`
 - **fn** `calculateTargetTime`
 - **fn** `run`

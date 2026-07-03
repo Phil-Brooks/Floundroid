@@ -5,5 +5,6 @@ open Benchmarks
 let main _ =
     
     //BenchmarkRunner.Run<BoardBench>() |> ignore
-    BenchmarkRunner.Run<MoveGenBench>() |> ignore
+    //BenchmarkRunner.Run<MoveGenBench>() |> ignore
+    BenchmarkRunner.Run<EvalBench>() |> ignore
     0

@@ -1981,9 +1981,8 @@ module Evaluation =
             (Bitboard.count (bbs.WhiteQueens ||| bbs.BlackQueens) * 4)
         let p = if phase > MaxPhase then MaxPhase else phase
 
-        let mutable mg = 0
-        let mutable eg = 0
-        let mutable mb = 0
+        let mutable mg = b.ScoreMG
+        let mutable eg = b.ScoreEG
 
         // King Safety setup
         let whiteKingSq = Bitboard.lsb bbs.WhiteKings
@@ -2000,21 +1999,16 @@ module Evaluation =
             let mutable tempBb = bb
             let usTotal = bbs.WhiteTotal
             let enemyKingZone = blackKingZone
-            let tableMG = Pst.MG.[kIdx]
-            let tableEG = Pst.EG.[kIdx]
             
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
-                let pstIdx = sq
-                
-                mg <- mg + Pst.matsMG.[kIdx] + tableMG.[pstIdx]
-                eg <- eg + Pst.matsEG.[kIdx] + tableEG.[pstIdx]
 
                 if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
                     let attacks = getAttackBitboard sq kIdx occ
                     let mob = Bitboard.count (attacks &&& ~~~usTotal)
                     
-                    mb <- mb + (mob * mobWeights.[kIdx])
+                    mg <- mg + (mob * mobWeights.[kIdx])
+                    eg <- eg + (mob * mobWeights.[kIdx])
 
                     let attacksOnZone = attacks &&& enemyKingZone
                     if attacksOnZone <> 0uL then
@@ -2024,21 +2018,16 @@ module Evaluation =
             let mutable tempBb = bb
             let usTotal = bbs.BlackTotal
             let enemyKingZone = whiteKingZone
-            let tableMG = Pst.MG.[kIdx]
-            let tableEG = Pst.EG.[kIdx]
             
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
-                let pstIdx = sq ^^^ 56
-                
-                mg <- mg - Pst.matsMG.[kIdx] - tableMG.[pstIdx]
-                eg <- eg - Pst.matsEG.[kIdx] - tableEG.[pstIdx]
 
                 if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
                     let attacks = getAttackBitboard sq kIdx occ
                     let mob = Bitboard.count (attacks &&& ~~~usTotal)
                     
-                    mb <- mb - (mob * mobWeights.[kIdx])
+                    mg <- mg - (mob * mobWeights.[kIdx])
+                    eg <- eg - (mob * mobWeights.[kIdx])
 
                     let attacksOnZone = attacks &&& enemyKingZone
                     if attacksOnZone <> 0uL then
@@ -2059,10 +2048,6 @@ module Evaluation =
         evalLayerB bbs.BlackRooks    PieceType.Rook
         evalLayerB bbs.BlackQueens   PieceType.Queen
         evalLayerB bbs.BlackKings    PieceType.King
-
-        //mg,eg are now the clean mat and psg scores. Add mobility bonus.
-        mg <- mg + mb
-        eg <- eg + mb
 
         // King Safety Calculation
         let whiteSafetyPenalty = (whiteKingAttacksCount * whiteKingAttackWeight)
