@@ -1344,8 +1344,7 @@ module MoveGenTests =
         // Position: White Pawn on e2 (can move to e3, e4), White Rook on a1. 
         // Black Pawn on d3.
         let b = Board.fromFen "8/8/8/8/8/3p4/4P3/R3K3 w Q - 0 1"
-        let capsBuffer = ResizeArray<int>()
-        let captures = MoveGen.getCaptureMoves b capsBuffer
+        let captures = MoveGen.getCaptureMoves b
         
         // Should find e2xd3 but NOT e2e3 or e2e4
         Assert.Contains(captures, fun m -> Square.toString (Move.toSq m) = "d3")
@@ -1509,8 +1508,7 @@ module MoveGenTests =
         let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
         let b = Board.fromFen fen
         let legal = MoveGen.getLegalMoves b |> Set.ofArray
-        let capsBuffer = ResizeArray<int>()
-        let caps = MoveGen.getCaptureMoves b capsBuffer
+        let caps = MoveGen.getCaptureMoves b
 
         // All capture moves must be legal
         for m in caps do
@@ -1817,7 +1815,7 @@ module SearchTests =
         Search.nodes <- 0uL
         let moveBuffer = ResizeArray<int>()
         let capsBuffer = ResizeArray<int>()
-        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None moveBuffer capsBuffer
+        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None moveBuffer
         
         // Clear 
         TranspositionTable.clear()
@@ -1826,7 +1824,7 @@ module SearchTests =
         
         // Search with NMP enabled (allowNull = true)
         Search.nodes <- 0uL
-        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None moveBuffer capsBuffer
+        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None moveBuffer
         
         Assert.Equal(scoreWithout, scoreWith)
 
@@ -1940,7 +1938,7 @@ module SearchTests =
         let b = Board.fromFen fen
         let moveBuffer = ResizeArray<int>()
         let capsBuffer = ResizeArray<int>()
-        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer capsBuffer
+        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer
 
         // If NMP incorrectly triggers, it returns beta immediately.
         Assert.NotEqual(Search.INF, score)
@@ -1953,8 +1951,8 @@ module SearchTests =
         let moveBuffer = ResizeArray<int>()
         let capsBuffer = ResizeArray<int>()
 
-        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer capsBuffer
-        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None moveBuffer capsBuffer
+        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None moveBuffer
+        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None moveBuffer
 
         Assert.Equal(scoreWithoutNMP, scoreWithNMP)
 

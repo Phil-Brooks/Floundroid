@@ -29,5 +29,5 @@ type MoveGenBench() =
 
     [<Benchmark>]
     member _.Captures() =
-        let moveslen = MoveGen.getCaptureMoves board capsBuffer
+        let moveslen = MoveGen.getCaptureMoves board 
         moveslen
