@@ -9,6 +9,7 @@
     <Compile Include="BoardBench.fs" />
     <Compile Include="EvalBench.fs" />
     <Compile Include="MoveGenBench.fs" />
+    <Compile Include="SearchBench.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
