@@ -9,13 +9,13 @@ module Search =
     let INF = 1000000
 
     // Stores two quiet moves per ply that caused a beta cutoff
-    let killerMoves: int option[,] = Array2D.create 2 256 None
+    let killerMoves: int [,] = Array2D.create 2 256 0
 
     // Add this to clear killers at the start of every search
     let clearKillers () =
         for i in 0 .. 1 do
             for j in 0 .. 255 do
-                killerMoves.[i, j] <- None
+                killerMoves.[i, j] <- 0
     
     // History table: [Side][From][To]
     let historyTable = Array3D.create 2 64 64 0
@@ -82,14 +82,14 @@ module Search =
                 currentAlpha    
     
     /// Internal negamax implementation with Null-Move Pruning (allowNull).
-    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * int option =
+    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * int =
         nodes <- nodes + 1uL
         
         // 1. Terminal Conditions
         if ct.IsCancellationRequested then 
-            (0, None)
+            (0, 0)
         elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100 || Board.hasInsufficientMaterial b) then 
-            (0, None)
+            (0, 0)
         else
             // 2. Transposition Table Probe
             let ttEntry = TranspositionTable.probe b.Hash
@@ -102,16 +102,16 @@ module Search =
                 let value = TranspositionTable.mateFromTT entry.Value ply
                 if entry.Depth >= depth then
                     match entry.Flag with
-                    | TranspositionTable.NodeExact -> ttResult <- Some (value, Some(entry.Move))
-                    | TranspositionTable.NodeAlpha when value <= alpha -> ttResult <- Some (alpha, Some(entry.Move))
-                    | TranspositionTable.NodeBeta when value >= beta -> ttResult <- Some (beta, Some(entry.Move))
+                    | TranspositionTable.NodeExact -> ttResult <- Some (value, entry.Move)
+                    | TranspositionTable.NodeAlpha when value <= alpha -> ttResult <- Some (alpha, entry.Move)
+                    | TranspositionTable.NodeBeta when value >= beta -> ttResult <- Some (beta, entry.Move)
                     | _ -> ()
             | None -> ()
 
             if ttResult.IsSome then 
                 ttResult.Value
             elif depth <= 0 then 
-                (quiesce b ply alpha beta ct, None)
+                (quiesce b ply alpha beta ct, 0)
             else
                 let inCheck = Board.isInCheck b
                 let sideMult = if b.SideToMove = Colour.White then 1 else -1
@@ -119,7 +119,7 @@ module Search =
 
                 // --- Reverse Futility Pruning (RFP) ---
                 if not inCheck && depth <= 3 && abs beta < (MATE_VALUE - 100) && staticEval - (120 * depth) >= beta then
-                    (beta, None) // This is the "return" value for this branch
+                    (beta, 0) // This is the "return" value for this branch
                 else
                     let mutable nmpCutoff = false
 
@@ -140,12 +140,12 @@ module Search =
                                 nmpCutoff <- true
 
                     if nmpCutoff then 
-                        (beta, None)
+                        (beta, 0)
                     else
                         // 4. Move Ordering
                         let moves = MoveGen.getPseudoLegalMoves b
                         let mutable bestScore = -INF
-                        let mutable bestMove = None
+                        let mutable bestMove = 0
                         let mutable currentAlpha = alpha
                         let originalAlpha = alpha
                         let mutable legalMovesFound = 0
@@ -164,8 +164,8 @@ module Search =
                                         10000 + (victimVal * 10) - attackerVal
                                     | 5 -> 9000 + Pst.matsMG[Move.promo m]
                                     | _ -> 
-                                        if Some m = killerMoves.[0, ply] then 8000
-                                        elif Some m = killerMoves.[1, ply] then 7000
+                                        if m = killerMoves.[0, ply] then 8000
+                                        elif m = killerMoves.[1, ply] then 7000
                                         else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], 6000)
                             scores.[i] <- -score 
 
@@ -213,14 +213,14 @@ module Search =
 
                                     if moveScore > bestScore then
                                         bestScore <- moveScore
-                                        bestMove <- Some m
+                                        bestMove <- m
                                         if moveScore > currentAlpha then currentAlpha <- moveScore
 
                                     if currentAlpha >= beta then
                                         if Move.kind m = 0 || Move.kind m = 3 || Move.kind m = 4 then
-                                            if killerMoves.[0, ply] <> Some m then
+                                            if killerMoves.[0, ply] <> m then
                                                 killerMoves.[1, ply] <- killerMoves.[0, ply]
-                                                killerMoves.[0, ply] <- Some m
+                                                killerMoves.[0, ply] <- m
                                             historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + (depth * depth)
                                         cutoffFound <- true
                                     else
@@ -228,15 +228,15 @@ module Search =
 
                         // 6. Final Result Scoring
                         if legalMovesFound = 0 then
-                            if inCheck then (-MATE_VALUE + ply, None) else (0, None)
+                            if inCheck then (-MATE_VALUE + ply, 0) else (0, 0)
                         else
                             if not ct.IsCancellationRequested then
                                 let flag = if bestScore <= originalAlpha then TranspositionTable.NodeAlpha elif bestScore >= beta then TranspositionTable.NodeBeta else TranspositionTable.NodeExact
-                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove.Value
+                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove
                             (bestScore, bestMove)
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
-    let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int option =
+    let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int =
         negamaxInternal b depth ply alpha beta true history ct
 
     /// Iterative Deepening with Aspiration Windows
@@ -250,7 +250,7 @@ module Search =
             
             let sw = Diagnostics.Stopwatch.StartNew()
             let legalMoves = MoveGen.getLegalMoves b
-            let mutable absoluteBestMove = if legalMoves.Length > 0 then Some legalMoves.[0] else None
+            let mutable absoluteBestMove = if legalMoves.Length > 0 then legalMoves.[0] else 0
 
             let mutable d = 1
             let mutable lastScore = 0
@@ -266,7 +266,7 @@ module Search =
                     alpha <- lastScore - window
                     beta <- lastScore + window
 
-                let mutable (score, moveOpt) = negamax b d 0 alpha beta history ct
+                let mutable (score, move) = negamax b d 0 alpha beta history ct
 
                 // 2. Check for Window Failure
                 // If the score is outside our window, we must re-search with full bounds
@@ -275,18 +275,16 @@ module Search =
                     beta <- INF
                     let (rescore, remove) = negamax b d 0 alpha beta history ct
                     score <- rescore
-                    moveOpt <- remove
+                    move <- remove
 
                 // 3. Process Results
                 if not ct.IsCancellationRequested then
                     lastScore <- score
                     let elapsed = sw.Elapsed.TotalSeconds
                     let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
-                    match moveOpt with
-                    | Some m ->
-                        absoluteBestMove <- Some m
-                        printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci m)
-                    | None -> ()
+                    if move <> 0 then
+                        absoluteBestMove <- move
+                        printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci move)
 
                 // 4. Timer check
                 let totalElapsed = sw.ElapsedMilliseconds
@@ -296,8 +294,8 @@ module Search =
                     d <- d + 1
 
             // Fallback for safety
-            if absoluteBestMove.IsNone && legalMoves.Length > 0 then
-                absoluteBestMove <- Some legalMoves.[0]
+            if absoluteBestMove = 0 && legalMoves.Length > 0 then
+                absoluteBestMove <- legalMoves.[0]
 
             return absoluteBestMove
         }

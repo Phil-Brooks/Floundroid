@@ -12,26 +12,22 @@ module SearchTests =
         let b =
             Board.fromFen "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
 
-        let bestMoveOpt =
+        let bestMove =
             Search.findBestMove b 2 2000 [] System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
-        match bestMoveOpt with
-        | Some move -> Assert.Equal("h5f7", Move.toUci move)
-        | None -> Assert.True(false, "Search did not find a move.")
+        Assert.Equal("h5f7", Move.toUci bestMove)
 
     [<Fact>]
     let ``Search finds a simple winning capture`` () =
         // White Queen on d1 can capture a free Black Queen on d5.
         let b = Board.fromFen "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPP11PPP/RNBQKBNR w KQkq - 0 1"
 
-        let bestMoveOpt =
+        let bestMove =
             Search.findBestMove b 3 2000 [] System.Threading.CancellationToken.None
             |> Async.RunSynchronously
 
-        match bestMoveOpt with
-        | Some move -> Assert.Equal("d1d5", Move.toUci move)
-        | None -> Assert.True(false, "Search did not find a move.")
+        Assert.Equal("d1d5", Move.toUci bestMove)
 
     [<Fact>]
     let ``Search identifies stalemate as draw`` () =
@@ -49,15 +45,15 @@ module SearchTests =
         let cts = new System.Threading.CancellationTokenSource()
         cts.Cancel() // Cancel it before it even starts
         
-        let bestMoveOpt =
+        let bestMove =
             Search.findBestMove b 5 1000 [] cts.Token
             |> Async.RunSynchronously
 
         // ASSERT: Iterative deepening should still provide a move from the fallback
-        Assert.True(bestMoveOpt.IsSome, "Search must return a move fallback to satisfy UCI")
+        Assert.True(bestMove<>0, "Search must return a move fallback to satisfy UCI")
         
         let legalMoves = MoveGen.getLegalMoves b
-        Assert.Contains(bestMoveOpt.Value, legalMoves)
+        Assert.Contains(bestMove, legalMoves)
 
     [<Fact>]
     let ``Board applyNullMove toggles side to move and clears en passant`` () =
@@ -184,8 +180,8 @@ module SearchTests =
     let ``Killer table is writable`` () =
         Search.clearKillers()
         let m = Move.create(0, 1, 0, 0)
-        Search.killerMoves.[0, 0] <- Some m
-        Assert.Equal(Some m, Search.killerMoves.[0, 0])
+        Search.killerMoves.[0, 0] <- m
+        Assert.Equal(m, Search.killerMoves.[0, 0])
 
     [<Fact>]
     let ``History table is writable`` () =

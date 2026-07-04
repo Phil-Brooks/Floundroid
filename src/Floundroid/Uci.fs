@@ -351,9 +351,9 @@ module UciLoop =
                             let! result = Search.findBestMove searchBoard depth targetTime currentHistory currentCts.Token
         
                             if mySearchId = currentSearchId then
-                                match result with
-                                | Some m -> printfn "bestmove %s" (Move.toUci m)
-                                | None -> 
+                                if result <> 0 then
+                                    printfn "bestmove %s" (Move.toUci result)
+                                else
                                     // Fallback: If search failed, try to find any legal move
                                     let legals = MoveGen.getLegalMoves searchBoard
                                     if legals.Length > 0 then
