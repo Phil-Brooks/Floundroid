@@ -50,10 +50,10 @@ module Search =
                     let m = moves.[i]
                     let victimVal = 
                         let victim = Board.tryGetPiece b (Move.toSq m)
-                        if victim <> -1 then Pst.matsMG[int (Piece.kind victim)] else 100 // En Passant
+                        if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100 // En Passant
                     let attackerVal = 
                         let attacker = Board.tryGetPiece b (Move.fromSq m)
-                        if attacker <> -1 then Pst.matsMG[int (Piece.kind attacker)] else 0
+                        if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
                     scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
 
                 System.Array.Sort(scores, moves)
@@ -93,12 +93,12 @@ module Search =
         else
             // 2. Transposition Table Probe
             let ttEntry = TranspositionTable.probe b.Hash
-            let mutable ttMove = None
+            let mutable ttMove = 0
             let mutable ttResult = None // Stores (value, flag) if we find a cutoff
 
             match ttEntry with
             | Some entry ->
-                ttMove <- Some(entry.Move)
+                ttMove <- entry.Move
                 let value = TranspositionTable.mateFromTT entry.Value ply
                 if entry.Depth >= depth then
                     match entry.Flag with
@@ -155,12 +155,12 @@ module Search =
                         for i in 0 .. moves.Length - 1 do
                             let m = moves.[i]
                             let score = 
-                                if Some m = ttMove then 1000000 
+                                if m = ttMove then 1000000 
                                 else
                                     match Move.kind m with
                                     | 1 | 2 -> 
-                                        let victimVal = let victim = Board.tryGetPiece b (Move.toSq m) in if victim <> -1 then Pst.matsMG[int (Piece.kind victim)] else 100
-                                        let attackerVal = let attacker = Board.tryGetPiece b (Move.fromSq m) in if attacker <> -1 then Pst.matsMG[int (Piece.kind attacker)] else 0
+                                        let victimVal = let victim = Board.tryGetPiece b (Move.toSq m) in if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100
+                                        let attackerVal = let attacker = Board.tryGetPiece b (Move.fromSq m) in if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
                                         10000 + (victimVal * 10) - attackerVal
                                     | 5 -> 9000 + Pst.matsMG[Move.promo m]
                                     | _ -> 
