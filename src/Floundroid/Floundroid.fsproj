@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Base.fs" />
+    <Compile Include="Bits.fs" />
+    <Compile Include="Board.fs" />
+    <Compile Include="MoveGen.fs" />
+    <Compile Include="Eval.fs" />
+    <Compile Include="Search.fs" />
+    <Compile Include="Uci.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -13,7 +13,10 @@ dotnet publish src/Floundroid/Floundroid.fsproj ^
   -p:PublishAot=true ^
   -p:OtherFlags="--reflectionfree" ^
   -p:InvariantGlobalization=true ^
-  -o %OUTPUT_DIR%
+  -o .\publish\AOT
+
+rem add this for detailed warnings: -p:TrimmerSingleWarn=false
+
 
 echo.
 echo Publish complete! 
