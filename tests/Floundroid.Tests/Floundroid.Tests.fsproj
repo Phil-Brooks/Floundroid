@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\FloundroidLib\FloundroidLib.fsproj" />
     <ProjectReference Include="..\..\src\Floundroid\Floundroid.fsproj" />
   </ItemGroup>
 

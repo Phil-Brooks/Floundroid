@@ -18,5 +18,6 @@
   </Folder>
   <Project Path="src/Benchmarks/Benchmarks/Benchmarks.fsproj" Id="e8c9aa14-6017-4426-b085-6f3480eb0554" />
   <Project Path="src/Floundroid/Floundroid.fsproj" />
+  <Project Path="src/FloundroidLib/FloundroidLib.fsproj" Id="c1c0a79b-7563-4b27-b1c6-0757f69ab4fb" />
   <Project Path="tests/Floundroid.Tests/Floundroid.Tests.fsproj" />
 </Solution>
