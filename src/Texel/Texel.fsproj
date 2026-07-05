@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FloundroidLib\FloundroidLib.fsproj" />
+    <ProjectReference Include="..\Floundroid\Floundroid.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,19 +1,19 @@
 cd /d D:\cutechess\match
 rem delete backups
-del oldcin_results.pgn
-del oldcin.txt
+del oldhal_results.pgn
+del oldhal.txt
 rem create new backups
-move cin_results.pgn oldcin_results.pgn
-move cin.txt oldcin.txt
+move hal_results.pgn oldhal_results.pgn
+move hal.txt oldhal.txt
 rem copy latest
 del Floundroid.exe
 copy D:\Github\Floundroid\publish\Floundroid.exe
 
 rem @echo off
-cutechess-cli.exe -engine name=Floundroid cmd=Floundroid.exe proto=uci stderr=err.txt -engine name=Halogen6.0 cmd=Halogen6-x64-popcnt.exe proto=uci stderr=err.txt -each tc=30 -openings file=gm2001.bin -games 100 -repeat -concurrency 4 -pgnout cin_results.pgn >cin.txt 
+cutechess-cli.exe -engine name=Floundroid cmd=Floundroid.exe proto=uci stderr=err.txt -engine name=Halogen6.0 cmd=Halogen6-x64-popcnt.exe proto=uci stderr=err.txt -each tc=30 -openings file=gm2001.bin -games 100 -repeat -concurrency 4 -pgnout hal_results.pgn >hal.txt 
 pause
 
 rem update runlog
 del D:\Github\Floundroid\runlog.txt
-copy cin.txt D:\Github\Floundroid\bat\runlog.txt
+copy hal.txt D:\Github\Floundroid\bat\runlog.txt
 pause
