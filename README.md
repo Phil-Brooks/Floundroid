@@ -2,7 +2,7 @@
 [![.NET](https://img.shields.io/badge/.NET-10.0-blueviolet)](https://dotnet.microsoft.com/download)  
 [![Language](https://img.shields.io/badge/Language-F%23-blue)](https://fsharp.org/)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-![Status](https://img.shields.io/badge/Status-Stage%204%20In%20Progress-blue)  
+![Status](https://img.shields.io/badge/Status-Stage%204%20Complete-green)  
 [![Latest Release](https://img.shields.io/github/v/release/Phil-Brooks/Floundroid)](https://github.com/Phil-Brooks/Floundroid/releases)
 
 <p align="center">
@@ -15,41 +15,66 @@
 
 ---
 
-## 🚀 Latest Stable Release: v0.4.6 (The High-Stakes Calibration)
+## 🚀 Latest Stable Release: v0.4.7 (The Texel Enlightenment)
 
-This release marks a significant milestone in Floundroid's development. After the performance gains of v0.4.5, we have moved away from testing against entry-level engines and begun benchmarking against **Halogen 6.0** (est. 2440 Elo). 
+This release represents the single largest jump in Floundroid's playing strength to date. By implementing a custom **Texel Tuning** framework, we have replaced "human-guessed" evaluation constants with mathematically optimized values derived from over 725,000 professional game positions.
 
-By identifying further bottlenecks in the search and evaluation hot-paths, v0.4.6 hardens the engine for "Master-level" play.
+The result is an engine that no longer just "searches fast," but truly "understands" positional nuances, king safety, and endgame transitions.
 
-### **Key Improvements in v0.4.6**
-- **Deep-Trace Benchmarking**
-  - Identified and resolved secondary bottlenecks in the bitboard attack generators.
-  - Optimized the Search Stack to better handle the tactical pressure of 2400+ rated opponents.
-- **Improved UCI Stability**
-  - Enhanced move-validation logic, ensuring robust performance even when opponents encounter internal errors.
-- **Engine Hardening**
-  - While still trailing a 2440-rated heavyweight, Floundroid has established a "floor" rating in the 2200+ range, providing a high-quality baseline for upcoming evaluation tuning.
-- 👉 [**Download Floundroid.exe v0.4.6**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
+### **Key Improvements in v0.4.7**
+- **Data-Driven Evaluation (Texel Tuning)**
+  - Optimized 402 parameters including Material weights, Piece-Square Tables (PSTs), and Mobility.
+  - Calibrated the **K**-factor to 1.39, perfectly grounding the engine's internal scoring scale.
+- **Overhauled King Safety**
+  - King Attack weights were refined (with some values increasing by 10x), making the engine significantly more lethal in attacking configurations.
+- **Tapered Precision**
+  - Fine-tuned the interpolation between Middlegame and Endgame, resulting in much stronger conversion of winning advantages.
+- 👉 [**Download Floundroid.exe v0.4.7**](https://github.com/Phil-Brooks/Floundroid/releases/latest)
 
 ---
 
-## 📊 Calibration & Rating (v0.4.6 vs Halogen 6.0)
+## 📊 Benchmarks (v0.4.7 vs Halogen 6.0)
 
-To test the limits of our recent optimizations, Floundroid v0.4.6 was put through a 100-game gauntlet against **Halogen 6.0 (2440 Elo)** at `tc=30`.
-
-### **Performance Comparison**
+Floundroid v0.4.7 was tested in a 100-game match against **Halogen 6.0 (2440 Elo)**. The tuning has effectively closed the gap, bringing Floundroid within striking distance of a 2450+ rating.
 
 | Metric | Result vs Halogen 6.0 |
 | :--- | :--- |
-| **Score** | 24.0% |
-| **Elo Difference** | -200.2 +/- 72.2 |
-| **Estimated Performance** | **~2240 Elo** |
-| **Wins** | 16 |
-| **Draws** | 16 |
-| **Losses** | 68 |
+| **Score** | 47.0% |
+| **Elo Difference** | **-20.9 +/- 58.3** |
+| **Estimated Performance** | **~2420 Elo** |
+| **Wins** | 33 |
+| **Draws** | 28 |
+| **Losses** | 39 |
 
-### **Interpretation**
-Testing against a 2440-rated opponent is a "stress test." Floundroid v0.4.6 successfully held its own in nearly 1/3 of the games (32% non-loss rate). These results highlight that while our **search speed** (NPS) is now competitive, the next leap in strength must come from **Evaluation Tuning**—specifically refining how the engine perceives King Safety and Pawn Structures to close the 200-point gap.
+*Note: Floundroid showed particular strength as White, scoring a 58% win rate, highlighting its newfound aggressive attacking style.*
+
+---
+
+## 🧩 Feature List
+
+Floundroid combines functional programming patterns with high-performance chess theory.
+
+### **Architecture**
+- **Bitboard Engine:** Full bitboard representation for pieces and occupancy.
+- **Magic Bitboards:** Optimized sliding piece attack generation.
+- **Zobrist Hashing:** Fast incremental position hashing for transposition table lookups and draw detection.
+- **Monolithic Assembly:** Fully inlined evaluation and search hot-paths to maximize NPS (Nodes Per Second).
+
+### **Search**
+- **Principal Variation Search (PVS):** Efficiently prunes the search tree by focusing on the best line.
+- **Transposition Table (TT):** Large-scale caching with aging and depth-preferred replacement.
+- **Late Move Reductions (LMR):** Reduces search depth for moves statistically unlikely to be the best.
+- **Null-Move Pruning (NMP):** Aggressive pruning in positions where "passing the move" still results in a lead.
+- **Reverse Futility Pruning (RFP):** Static pruning at nodes near the leaves to save search time.
+- **Aspiration Windows:** Narrowed search bounds to speed up alpha-beta cutoffs.
+
+### **Evaluation**
+- **Texel Tuned Weights:** All constants optimized against 725k quiet positions.
+- **Tapered Evaluation:** Smooth transition between Middlegame (MG) and Endgame (EG) scores.
+- **King Safety:** Attacker-based scaling system that penalizes proximity to the enemy king.
+- **Advanced PSTs:** Separate 64-square tables for every piece type, optimized for both MG and EG.
+- **Mobility:** Piece-specific activity scoring for all minor and major pieces.
+- **Passed Pawn Logic:** Rank-based advancement bonuses.
 
 ---
 
@@ -58,20 +83,14 @@ Testing against a 2440-rated opponent is a "stress test." Floundroid v0.4.6 succ
 ### **Stage 1 — Functional Core** ✅  
 ### **Stage 2 — UCI Engine Interface** ✅  
 ### **Stage 3 — Mechanical Brain** ✅  
+### **Stage 4 — Strength Phase** ✅  
+- [x] Mobility & Tapered Evaluation
+- [x] Search Pruning (NMP, RFP, LMR)
+- [x] Tapered PSTs
+- [x] **Automated Texel Tuning (v0.4.7)**
+- [ ] Pawn shield & Rook bonuses (Next steps for the Tuner)
 
-### **Stage 4 — Strength Phase** 🏗️ *In Progress*  
-- [x] Mobility & Tapered Evaluation (v0.4.3)
-- [x] Reverse Futility Pruning (v0.4.4)
-- [x] Aspiration Windows (v0.4.4)
-- [x] BenchmarkDotNet Performance Tuning (v0.4.5)
-- [x] **Further Benchmarking Fixes (v0.4.6)** 
-- [x] Tapered PSTs (Middlegame vs Endgame tables)
-- [x] Passed pawn advancement bonuses  
-- [ ] **Strength Tuning (SPSA/Texel)** 🔵 *Next Priority*
-- [ ] Pawn shield & King safety refinement 
-- [ ] Rook bonuses (Open/Half-open files)
-
-### **Stage 5 — Innovation & Optimization** ⚪ *Planned*
+### **Stage 5 — Innovation & Optimization** 🏗️ *Planned*
+- [ ] Binary Data Caching for Tuner
 - [ ] SIMD/BMI2 Bitboard Optimizations
-- [ ] Singular Extensions
-- [ ] NNUE Neural Evaluation core
+- [ ] **NNUE Neural Evaluation core** (Bootstrap training using v0.4.7 evaluation)

@@ -1,8 +1,0 @@
-04/07/2026 11:57:32.02 - Perft suite depth 5 completed in 00:00:45.9800000 
-04/07/2026 17:41:13.27 - Perft suite depth 5 completed in 00:00:47.3900000 
-04/07/2026 18:56:14.72 - Perft suite depth 5 completed in 00:00:44.9700000 
-04/07/2026 20:02:14.23 - Perft suite depth 5 completed in 00:00:48.1300000 
-04/07/2026 20:59:19.09 - Perft suite depth 5 completed in 00:00:47.6200000 
-04/07/2026 21:41:54.09 - Perft suite depth 5 completed in 00:00:46.6100000 
-05/07/2026 14:42:19.01 - Perft suite depth 5 completed in 00:00:49.9100000 
-05/07/2026 15:15:21.92 - Perft suite depth 5 completed in 00:00:48.2400000 

@@ -13,42 +13,41 @@
 
 ---
 
-# Stage 4 — Strength Phase 🏗️
+#### Stage 4 — Strength Phase ✅
+*Refocused on data-driven evaluation.*
 
-## 4.1 Evaluation Overhaul
+**4.1 Evaluation Overhaul**
 - [x] **Direct Bitboard Iteration:** 12-layer loop for cache-friendly evaluation.
-- [x] **Mobility:** PopCount-based piece activity scoring.
+- [x] **Mobility:** Tuned PopCount-based piece activity scoring.
 - [x] **Tapered Eval:** Phase-based interpolation between MG and EG.
-- [x] **King Safety (Offense):** Attacker scaling based on proximity to enemy King.
-- [x] **Tapered PSTs:** Distinct MG and EG tables.
-- [x] **Passed Pawns:** Basic detection and rank-based bonuses.
-- [ ] **Pawn Shield:** (Deferred - Requires tuning).
-- [ ] **Rook Bonuses:** Open and half-open file detection. (Likely covered by mobility).
+- [x] **King Safety (Offense):** Mathematically optimized attacker scaling (Weights tuned from 3 $\rightarrow$ 35).
+- [x] **Tapered PSTs:** Full 768-entry table optimization via Texel Tuning.
+- [x] **Passed Pawns:** Basic detection integrated into tuning.
+- [ ] **Pawn Shield:** (Ready for tuning — add indices to Texel Tuner).
+- [ ] **Rook Bonuses:** Open and half-open file detection (Ready for tuning).
 
-## 4.2 Search Enhancements (The "Big Five") ✅
+**4.2 Search Enhancements (The "Big Five") ✅**
 - [x] **Null‑move pruning (NMP)**
 - [x] **Late Move Reductions (LMR)**
 - [x] **Principal Variation Search (PVS)**
 - [x] **Reverse Futility Pruning (RFP)**
-- [x] **Aspiration Windows** (v0.4.4)
-- [ ] **Singular extensions** (Advanced - Save for Stage 5)
-- [ ] **Static Exchange Evaluation (SEE)** (Deferred - Stability priority)
+- [x] **Aspiration Windows**
 
-## 4.3 Strength Tuning 🔵 *In Progress*
-- [ ] **Parameter Calibration:** Tune material values (matsMG/EG) against test suites.
-- [ ] **PST Optimization:** Refine piece-square tables for better positional play.
-- [ ] **Automated Tuning:** Explore Texel Tuning or SPSA framework.
+**4.3 Strength Tuning ✅**
+- [x] **Automated Tuning Framework:** Texel Tuning engine implemented with K-factor calibration.
+- [x] **Parameter Calibration:** Initial material (matsMG/EG) and Mobility weights mathematically grounded.
+- [x] **PST Optimization:** All piece-square tables refined against 725k quiet positions.
+- [ ] **SPSA Implementation:** Upgrade tuning loop for faster multi-parameter optimization (Stage 5).
 
 ---
 
-# Stage 5 — Innovation & Optimization
+#### Stage 5 — Innovation & Optimization 🏗️
 
-## 5.1 Performance Experiments
-- [ ] SIMD intrinsics for bitboard operations.
-- [ ] BMI2 PEXT Intrinsics for magic indexing.
-- [ ] Struct-based Move representation to reduce allocations.
+**5.1 Performance & Architecture**
+- [ ] **SIMD/BMI2:** Explore intrinsics for magic bitboard lookups.
+- [ ] **Binary Data Caching:** Implement binary format for tuning datasets to skip FEN parsing.
 
-## 5.2 Neural Evaluation
-- [ ] NNUE network architecture.
-- [ ] ONNX runtime integration for F#.
+**5.2 Neural Evaluation**
+- [ ] **NNUE network architecture.**
+- [ ] **Data Generation:** Use tuned classical eval to bootstrap NNUE training data.
 
