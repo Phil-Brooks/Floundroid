@@ -305,8 +305,8 @@ module Board =
               SideToMove = Colour.fromChar parts.[1].[0]
               CastlingRights = CastlingRights.fromString parts.[2]
               EnPassantSquare = if parts.[3] = "-" then -1 else Square.fromString parts.[3]
-              HalfmoveClock = int parts.[4]
-              FullmoveNumber = int parts.[5]
+              HalfmoveClock = if parts.Length > 4 then int parts.[4] else 0
+              FullmoveNumber = if parts.Length > 5 then int parts.[5] else 1
               ScoreMG = scmg
               ScoreEG = sceg
               Hash = 0UL }

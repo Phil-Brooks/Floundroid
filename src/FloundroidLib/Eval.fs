@@ -4,10 +4,11 @@ module Evaluation =
     // --- Weights & Phase Constants ---
     let MaxPhase = 24 // 4 knights (1), 4 bishops (1), 4 rooks (2), 2 queens (4)
     
-    /// Weights for each square of mobility (tuning values)
-    let mobWeights = [| 0; 4; 4; 3; 2; 1; 0 |] // Index matches PieceType (Knight=1, Bishop=2, etc.)
+    /// Weights for each square of mobility. Index matches PieceType (Knight=1, Bishop=2, etc.
+    let mobWeights = [| 0; 2; 5; 5; 0; 1 |]
+    
     // King Attack weights: How scary is each piece near the king?
-    let kingAttackWeights = [| 0; 2; 2; 3; 5; 0 |] 
+    let kingAttackWeights = [| 0; 26; 19; 35; 10; 0 |]
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Texel": {
+      "commandName": "Project",
+      "commandLineArgs": "d:\\epd5000.epd"
+    }
+  }
+}
