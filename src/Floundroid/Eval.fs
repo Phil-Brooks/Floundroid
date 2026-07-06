@@ -33,58 +33,96 @@ module Evaluation =
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
-        
-        let evaluatePawnSide (colour: int) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
-            let mutable mg = 0
-            let mutable eg = 0
-            let cIdx = if colour = Colour.White then 0 else 1
-
-            // --- 1. Doubled Pawns (Set-wise) ---
-            // A pawn is doubled if there's another friendly pawn "north" of it.
-            let doubled = 
-                if colour = Colour.White then friendlyPawns &&& (friendlyPawns <<< 8)
-                else friendlyPawns &&& (friendlyPawns >>> 8)
-            // Your logic: score -6 for every "extra" pawn on a file.
-            mg <- mg - (Bitboard.count doubled * DoubledPawnPenaltyMG)
-            eg <- eg - (Bitboard.count doubled * DoubledPawnPenaltyEG)
-
-            // --- 2. Isolated Pawns (Set-wise) ---
-            // A pawn is isolated if (FriendlyPawns AND AdjacentFileMask) is empty.
-            // We identify which files have pawns, then find files with no neighbors.
-            let mutable fileMapping = friendlyPawns
-            fileMapping <- fileMapping ||| (fileMapping >>> 32)
-            fileMapping <- fileMapping ||| (fileMapping >>> 16)
-            fileMapping <- fileMapping ||| (fileMapping >>> 8)
-            let filesWithPawns = uint32 (fileMapping &&& 0xFFuL)
-
-            let neighborFiles = ((filesWithPawns <<< 1) ||| (filesWithPawns >>> 1)) &&& 0xFFu
-            let isolatedFilesMask = filesWithPawns &&& ~~~neighborFiles
-
-            // Count how many pawns are on isolated files
-            let mutable isolatedPawnCount = 0
-            let mutable tempIsoFiles = isolatedFilesMask
-            while tempIsoFiles <> 0u do
-                let file = System.Numerics.BitOperations.TrailingZeroCount(tempIsoFiles)
-                tempIsoFiles <- tempIsoFiles &&& (tempIsoFiles - 1u)
-                isolatedPawnCount <- isolatedPawnCount + Bitboard.count (friendlyPawns &&& BitboardGen.FileMasks.[file])
-            let totalPawns = Bitboard.count friendlyPawns
-            mg <- mg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyMG)
-            eg <- eg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyEG)
-
-            // --- 3. Passed Pawns (The only remaining loop) ---
-            // We only loop through pawns to check for passers.
-            let mutable remaining = friendlyPawns
-            while remaining <> 0uL do
-                let sq = Bitboard.popLsb &remaining
-                if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
-                    mg <- mg + BitboardGen.passedPawnBonusTableMG.[cIdx, sq]
-                    eg <- eg + BitboardGen.passedPawnBonusTableEG.[cIdx, sq]
-            mg,eg
-
         let bbs = b.Bitboards
-        let whiteScoreMG, whiteScoreEG = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
-        let blackScoreMG, blackScoreEG = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
-        (whiteScoreMG - blackScoreMG, whiteScoreEG - blackScoreEG)
+        //WHITE
+        let mutable friendlyPawns = bbs.WhitePawns
+        let mutable enemyPawns = bbs.BlackPawns
+        let mutable mg = 0
+        let mutable eg = 0
+        let mutable cIdx = 0
+
+        // --- 1. Doubled Pawns (Set-wise) ---
+        // A pawn is doubled if there's another friendly pawn "north" of it.
+        let doubled = friendlyPawns &&& (friendlyPawns <<< 8)
+        // Your logic: score -6 for every "extra" pawn on a file.
+        mg <- mg - (Bitboard.count doubled * DoubledPawnPenaltyMG)
+        eg <- eg - (Bitboard.count doubled * DoubledPawnPenaltyEG)
+
+        // --- 2. Isolated Pawns (Set-wise) ---
+        // A pawn is isolated if (FriendlyPawns AND AdjacentFileMask) is empty.
+        // We identify which files have pawns, then find files with no neighbors.
+        let mutable fileMapping = friendlyPawns
+        fileMapping <- fileMapping ||| (fileMapping >>> 32)
+        fileMapping <- fileMapping ||| (fileMapping >>> 16)
+        fileMapping <- fileMapping ||| (fileMapping >>> 8)
+        let filesWithPawns = uint32 (fileMapping &&& 0xFFuL)
+
+        let neighborFiles = ((filesWithPawns <<< 1) ||| (filesWithPawns >>> 1)) &&& 0xFFu
+        let isolatedFilesMask = filesWithPawns &&& ~~~neighborFiles
+
+        // Count how many pawns are on isolated files
+        let mutable isolatedPawnCount = 0
+        let mutable tempIsoFiles = isolatedFilesMask
+        while tempIsoFiles <> 0u do
+            let file = System.Numerics.BitOperations.TrailingZeroCount(tempIsoFiles)
+            tempIsoFiles <- tempIsoFiles &&& (tempIsoFiles - 1u)
+            isolatedPawnCount <- isolatedPawnCount + Bitboard.count (friendlyPawns &&& BitboardGen.FileMasks.[file])
+        let totalPawns = Bitboard.count friendlyPawns
+        mg <- mg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyMG)
+        eg <- eg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyEG)
+
+        // --- 3. Passed Pawns (The only remaining loop) ---
+        // We only loop through pawns to check for passers.
+        let mutable remaining = friendlyPawns
+        while remaining <> 0uL do
+            let sq = Bitboard.popLsb &remaining
+            if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
+                mg <- mg + BitboardGen.passedPawnBonusTableMG.[cIdx, sq]
+                eg <- eg + BitboardGen.passedPawnBonusTableEG.[cIdx, sq]
+        
+        //BLACK
+        friendlyPawns <- bbs.BlackPawns
+        enemyPawns <- bbs.WhitePawns
+        cIdx <- 1
+        // --- 1. Doubled Pawns (Set-wise) ---
+        // A pawn is doubled if there's another friendly pawn "north" of it.
+        let doubled = friendlyPawns &&& (friendlyPawns >>> 8)
+        // Your logic: score -6 for every "extra" pawn on a file.
+        mg <- mg + (Bitboard.count doubled * DoubledPawnPenaltyMG)
+        eg <- eg + (Bitboard.count doubled * DoubledPawnPenaltyEG)
+
+        // --- 2. Isolated Pawns (Set-wise) ---
+        // A pawn is isolated if (FriendlyPawns AND AdjacentFileMask) is empty.
+        // We identify which files have pawns, then find files with no neighbors.
+        let mutable fileMapping = friendlyPawns
+        fileMapping <- fileMapping ||| (fileMapping >>> 32)
+        fileMapping <- fileMapping ||| (fileMapping >>> 16)
+        fileMapping <- fileMapping ||| (fileMapping >>> 8)
+        let filesWithPawns = uint32 (fileMapping &&& 0xFFuL)
+
+        let neighborFiles = ((filesWithPawns <<< 1) ||| (filesWithPawns >>> 1)) &&& 0xFFu
+        let isolatedFilesMask = filesWithPawns &&& ~~~neighborFiles
+
+        // Count how many pawns are on isolated files
+        let mutable isolatedPawnCount = 0
+        let mutable tempIsoFiles = isolatedFilesMask
+        while tempIsoFiles <> 0u do
+            let file = System.Numerics.BitOperations.TrailingZeroCount(tempIsoFiles)
+            tempIsoFiles <- tempIsoFiles &&& (tempIsoFiles - 1u)
+            isolatedPawnCount <- isolatedPawnCount + Bitboard.count (friendlyPawns &&& BitboardGen.FileMasks.[file])
+        let totalPawns = Bitboard.count friendlyPawns
+        mg <- mg - (totalPawns * 2) + (isolatedPawnCount * IsolatedPawnPenaltyMG)
+        eg <- eg - (totalPawns * 2) + (isolatedPawnCount * IsolatedPawnPenaltyEG)
+
+        // --- 3. Passed Pawns (The only remaining loop) ---
+        // We only loop through pawns to check for passers.
+        let mutable remaining = friendlyPawns
+        while remaining <> 0uL do
+            let sq = Bitboard.popLsb &remaining
+            if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
+                mg <- mg - BitboardGen.passedPawnBonusTableMG.[cIdx, sq]
+                eg <- eg - BitboardGen.passedPawnBonusTableEG.[cIdx, sq]
+        mg,eg
     
     let getAttackBitboard (sq: int) (kind: int) (occ: Bitboard) =
         match kind with
@@ -134,6 +172,7 @@ module Evaluation =
         let mutable blackKingAttackWeightMG = 0
         let mutable blackKingAttackWeightEG = 0
 
+        //TODO: tidy up as vary by piece so do not put in a function
         let evalLayerW (bb: Bitboard) (kIdx: int) =
             let mutable tempBb = bb
             let usTotal = bbs.WhiteTotal
