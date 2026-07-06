@@ -23,8 +23,8 @@
 - [x] **King Safety (Offense):** Mathematically optimized attacker scaling (Weights tuned from 3 $\rightarrow$ 35).
 - [x] **Tapered PSTs:** Full 768-entry table optimization via Texel Tuning.
 - [x] **Passed Pawns:** Basic detection integrated into tuning.
-- [ ] **Pawn Shield:** (Ready for tuning — add indices to Texel Tuner).
-- [ ] **Rook Bonuses:** Open and half-open file detection (Ready for tuning).
+- [x] **Pawn Shield:** 
+- [x] **Rook Bonuses:** Open and half-open file detection.
 
 **4.2 Search Enhancements (The "Big Five") ✅**
 - [x] **Null‑move pruning (NMP)**
@@ -35,7 +35,7 @@
 
 **4.3 Strength Tuning ✅**
 - [x] **Automated Tuning Framework:** Texel Tuning engine implemented with K-factor calibration.
-- [x] **Parameter Calibration:** Initial material (matsMG/EG) and Mobility weights mathematically grounded.
+- [x] **Parameter Calibration:** 
 - [x] **PST Optimization:** All piece-square tables refined against 725k quiet positions.
 - [ ] **SPSA Implementation:** Upgrade tuning loop for faster multi-parameter optimization (Stage 5).
 
@@ -45,7 +45,6 @@
 
 **5.1 Performance & Architecture**
 - [ ] **SIMD/BMI2:** Explore intrinsics for magic bitboard lookups.
-- [ ] **Binary Data Caching:** Implement binary format for tuning datasets to skip FEN parsing.
 
 **5.2 Neural Evaluation**
 - [ ] **NNUE network architecture.**

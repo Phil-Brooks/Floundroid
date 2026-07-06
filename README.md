@@ -88,9 +88,8 @@ Floundroid combines functional programming patterns with high-performance chess 
 - [x] Search Pruning (NMP, RFP, LMR)
 - [x] Tapered PSTs
 - [x] **Automated Texel Tuning (v0.4.7)**
-- [ ] Pawn shield & Rook bonuses (Next steps for the Tuner)
+- [x] Pawn shield & Rook bonuses 
 
 ### **Stage 5 — Innovation & Optimization** 🏗️ *Planned*
-- [ ] Binary Data Caching for Tuner
 - [ ] SIMD/BMI2 Bitboard Optimizations
 - [ ] **NNUE Neural Evaluation core** (Bootstrap training using v0.4.7 evaluation)
