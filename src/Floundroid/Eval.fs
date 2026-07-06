@@ -5,15 +5,38 @@ module Evaluation =
     let MaxPhase = 24 // 4 knights (1), 4 bishops (1), 4 rooks (2), 2 queens (4)
     
     /// Weights for each square of mobility. Index matches PieceType (Knight=1, Bishop=2, etc.
-    let mobWeights = [| 0; 2; 5; 5; 0; 1 |]
+    let mobWeightsMG = [| 0; 3; 6; 5; 1; 1 |]
+    let mobWeightsEG = [| 0; 2; 4; 3; 9; 1 |]
     
     // King Attack weights: How scary is each piece near the king?
-    let kingAttackWeights = [| 0; 26; 19; 35; 10; 0 |]
+    let kingAttackWeightsMG = [| 0; 15; 12; 21; 9; 0 |]
+    //let kingAttackWeightsEG = [| 0; -4; 0; -5; 33; 0 |] - manually fixed
+    let kingAttackWeightsEG = [| 0; 0; 0; 0; 33; 0 |]
+
+    //Bishop Pair Bonus.
+    let mutable BishopPairBonusMG = 38
+    let mutable BishopPairBonusEG = 56
+    //Rook on Open/Half-Open File.
+    let mutable RookOpenFileMG = 55
+    let mutable RookOpenFileEG = -3
+    let mutable RookHalfOpenFileMG = 14
+    let mutable RookHalfOpenFileEG = 14
+    //Pawn Shield: (Bonus for pawns in front of the King).
+    let mutable PawnShieldBonusMG = 18
+    let mutable PawnShieldBonusEG = -8
+    //doubled pawns
+    let mutable DoubledPawnPenaltyMG = 18
+    let mutable DoubledPawnPenaltyEG = 27
+    //isolated pawns
+    let mutable IsolatedPawnPenaltyMG = 18
+    let mutable IsolatedPawnPenaltyEG = 9
 
     /// Evaluates the pawn structure of the board, returning a score from White's perspective.
     let pawnStructureScore (b: Board) =
+        
         let evaluatePawnSide (colour: int) (friendlyPawns: Bitboard) (enemyPawns: Bitboard) =
-            let mutable score = 0
+            let mutable mg = 0
+            let mutable eg = 0
             let cIdx = if colour = Colour.White then 0 else 1
 
             // --- 1. Doubled Pawns (Set-wise) ---
@@ -22,7 +45,8 @@ module Evaluation =
                 if colour = Colour.White then friendlyPawns &&& (friendlyPawns <<< 8)
                 else friendlyPawns &&& (friendlyPawns >>> 8)
             // Your logic: score -6 for every "extra" pawn on a file.
-            score <- score - (Bitboard.count doubled * 6)
+            mg <- mg - (Bitboard.count doubled * DoubledPawnPenaltyMG)
+            eg <- eg - (Bitboard.count doubled * DoubledPawnPenaltyEG)
 
             // --- 2. Isolated Pawns (Set-wise) ---
             // A pawn is isolated if (FriendlyPawns AND AdjacentFileMask) is empty.
@@ -43,9 +67,9 @@ module Evaluation =
                 let file = System.Numerics.BitOperations.TrailingZeroCount(tempIsoFiles)
                 tempIsoFiles <- tempIsoFiles &&& (tempIsoFiles - 1u)
                 isolatedPawnCount <- isolatedPawnCount + Bitboard.count (friendlyPawns &&& BitboardGen.FileMasks.[file])
-
             let totalPawns = Bitboard.count friendlyPawns
-            score <- score + (totalPawns * 2) - (isolatedPawnCount * 7)
+            mg <- mg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyMG)
+            eg <- eg + (totalPawns * 2) - (isolatedPawnCount * IsolatedPawnPenaltyEG)
 
             // --- 3. Passed Pawns (The only remaining loop) ---
             // We only loop through pawns to check for passers.
@@ -53,14 +77,14 @@ module Evaluation =
             while remaining <> 0uL do
                 let sq = Bitboard.popLsb &remaining
                 if (BitboardGen.passedPawnMasks.[cIdx, sq] &&& enemyPawns) = 0uL then
-                    score <- score + BitboardGen.passedPawnBonusTable.[cIdx, sq]
-
-            score
+                    mg <- mg + BitboardGen.passedPawnBonusTableMG.[cIdx, sq]
+                    eg <- eg + BitboardGen.passedPawnBonusTableEG.[cIdx, sq]
+            mg,eg
 
         let bbs = b.Bitboards
-        let whiteScore = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
-        let blackScore = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
-        whiteScore - blackScore
+        let whiteScoreMG, whiteScoreEG = evaluatePawnSide Colour.White bbs.WhitePawns bbs.BlackPawns
+        let blackScoreMG, blackScoreEG = evaluatePawnSide Colour.Black bbs.BlackPawns bbs.WhitePawns
+        (whiteScoreMG - blackScoreMG, whiteScoreEG - blackScoreEG)
     
     let getAttackBitboard (sq: int) (kind: int) (occ: Bitboard) =
         match kind with
@@ -104,9 +128,11 @@ module Evaluation =
         let blackKingZone = if blackKingSq < 64 then BitboardGen.kingAttacks.[blackKingSq] else 0uL
         
         let mutable whiteKingAttacksCount = 0
-        let mutable whiteKingAttackWeight = 0
+        let mutable whiteKingAttackWeightMG = 0
+        let mutable whiteKingAttackWeightEG = 0
         let mutable blackKingAttacksCount = 0
-        let mutable blackKingAttackWeight = 0
+        let mutable blackKingAttackWeightMG = 0
+        let mutable blackKingAttackWeightEG = 0
 
         let evalLayerW (bb: Bitboard) (kIdx: int) =
             let mutable tempBb = bb
@@ -116,17 +142,39 @@ module Evaluation =
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
 
+                if kIdx = PieceType.King then
+                    if sq < 16 then  // Only shield if on back two ranks
+                        // Get the area "in front" of the king
+                        let shieldMask = BitboardGen.kingAttacks.[sq] &&& 0xFFFFFF00uL // Ranks 2+
+                        mg <- mg + Bitboard.count (shieldMask &&& bbs.WhitePawns) * PawnShieldBonusMG
+                        eg <- eg + Bitboard.count (shieldMask &&& bbs.WhitePawns) * PawnShieldBonusEG
+
+                if kIdx = PieceType.Rook then
+                    let file = sq % 8
+                    let fileMask = BitboardGen.FileMasks.[file]
+    
+                    // Check if our pawns are on this file
+                    if (fileMask &&& bbs.WhitePawns) = 0uL then
+                        // If no enemy pawns either, it's fully open
+                        if (fileMask &&& bbs.BlackPawns) = 0uL then
+                            mg <- mg + RookOpenFileMG; eg <- eg + RookOpenFileEG
+                        else
+                            // Half-open
+                            mg <- mg + RookHalfOpenFileMG; eg <- eg + RookHalfOpenFileEG
+                
                 if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
                     let attacks = getAttackBitboard sq kIdx occ
                     let mob = Bitboard.count (attacks &&& ~~~usTotal)
                     
-                    mg <- mg + (mob * mobWeights.[kIdx])
-                    eg <- eg + (mob * mobWeights.[kIdx])
+                    mg <- mg + (mob * mobWeightsMG.[kIdx])
+                    eg <- eg + (mob * mobWeightsEG.[kIdx])
 
                     let attacksOnZone = attacks &&& enemyKingZone
                     if attacksOnZone <> 0uL then
                         blackKingAttacksCount <- blackKingAttacksCount + 1
-                        blackKingAttackWeight <- blackKingAttackWeight + kingAttackWeights.[kIdx]
+                        blackKingAttackWeightMG <- blackKingAttackWeightMG + kingAttackWeightsMG.[kIdx]
+                        blackKingAttackWeightEG <- blackKingAttackWeightEG + kingAttackWeightsEG.[kIdx]
+
         let evalLayerB (bb: Bitboard) (kIdx: int) =
             let mutable tempBb = bb
             let usTotal = bbs.BlackTotal
@@ -135,27 +183,48 @@ module Evaluation =
             while tempBb <> 0uL do
                 let sq = Bitboard.popLsb &tempBb
 
+                if kIdx = PieceType.King then
+                    if sq > 47 then  // Only shield if on back two ranks
+                        // Get the area "in front" of the king
+                        let shieldMask = BitboardGen.kingAttacks.[sq] &&& 0x00FFFFFFFFFFFF00uL // Ranks 7-
+                        mg <- mg - Bitboard.count (shieldMask &&& bbs.BlackPawns) * PawnShieldBonusMG
+                        eg <- eg - Bitboard.count (shieldMask &&& bbs.BlackPawns) * PawnShieldBonusEG
+
+                if kIdx = PieceType.Rook then
+                    let file = sq % 8
+                    let fileMask = BitboardGen.FileMasks.[file]
+    
+                    // Check if our pawns are on this file
+                    if (fileMask &&& bbs.BlackPawns) = 0uL then
+                        // If no enemy pawns either, it's fully open
+                        if (fileMask &&& bbs.WhitePawns) = 0uL then
+                            mg <- mg - RookOpenFileMG; eg <- eg - RookOpenFileEG
+                        else
+                            // Half-open
+                            mg <- mg - RookHalfOpenFileMG; eg <- eg - RookHalfOpenFileEG                
+                
                 if kIdx <> PieceType.Pawn && kIdx <> PieceType.King then
                     let attacks = getAttackBitboard sq kIdx occ
                     let mob = Bitboard.count (attacks &&& ~~~usTotal)
                     
-                    mg <- mg - (mob * mobWeights.[kIdx])
-                    eg <- eg - (mob * mobWeights.[kIdx])
+                    mg <- mg - (mob * mobWeightsMG.[kIdx])
+                    eg <- eg - (mob * mobWeightsEG.[kIdx])
 
                     let attacksOnZone = attacks &&& enemyKingZone
                     if attacksOnZone <> 0uL then
                         whiteKingAttacksCount <- whiteKingAttacksCount + 1
-                        whiteKingAttackWeight <- whiteKingAttackWeight + kingAttackWeights.[kIdx]
+                        whiteKingAttackWeightMG <- whiteKingAttackWeightMG + kingAttackWeightsMG.[kIdx]
+                        whiteKingAttackWeightEG <- whiteKingAttackWeightEG + kingAttackWeightsEG.[kIdx]
 
         // --- THE 12 LAYERS (Must include all) ---
-        evalLayerW bbs.WhitePawns    PieceType.Pawn
+        //evalLayerW bbs.WhitePawns    PieceType.Pawn
         evalLayerW bbs.WhiteKnights  PieceType.Knight
         evalLayerW bbs.WhiteBishops  PieceType.Bishop
         evalLayerW bbs.WhiteRooks    PieceType.Rook
         evalLayerW bbs.WhiteQueens   PieceType.Queen
         evalLayerW bbs.WhiteKings    PieceType.King
 
-        evalLayerB bbs.BlackPawns    PieceType.Pawn
+        //evalLayerB bbs.BlackPawns    PieceType.Pawn
         evalLayerB bbs.BlackKnights  PieceType.Knight
         evalLayerB bbs.BlackBishops  PieceType.Bishop
         evalLayerB bbs.BlackRooks    PieceType.Rook
@@ -163,22 +232,23 @@ module Evaluation =
         evalLayerB bbs.BlackKings    PieceType.King
 
         // King Safety Calculation
-        let whiteSafetyPenalty = (whiteKingAttacksCount * whiteKingAttackWeight)
-        let blackSafetyPenalty = (blackKingAttacksCount * blackKingAttackWeight)
-        mg <- mg + (blackSafetyPenalty - whiteSafetyPenalty)
+        let whiteSafetyPenaltyMG = (whiteKingAttacksCount * whiteKingAttackWeightMG)
+        let blackSafetyPenaltyMG = (blackKingAttacksCount * blackKingAttackWeightMG)
+        mg <- mg + (blackSafetyPenaltyMG - whiteSafetyPenaltyMG)
+        let whiteSafetyPenaltyEG = (whiteKingAttacksCount * whiteKingAttackWeightEG)
+        let blackSafetyPenaltyEG = (blackKingAttacksCount * blackKingAttackWeightEG)
+        eg <- eg + (blackSafetyPenaltyEG - whiteSafetyPenaltyEG)
 
-        // --- King Pawn Shield Bonus (Defenders) ---
-        //if whiteKingSq < 64 then
-        //    let shield = BitboardGen.kingAttacks.[whiteKingSq] &&& bbs.WhitePawns
-        //    mg <- mg + (System.Numerics.BitOperations.PopCount(shield) * 15)
-
-        //if blackKingSq < 64 then
-        //    let shield = BitboardGen.kingAttacks.[blackKingSq] &&& bbs.BlackPawns
-        //    mg <- mg - (System.Numerics.BitOperations.PopCount(shield) * 15)
-
-        let ps = pawnStructureScore b
-        mg <- mg + ps
-        eg <- eg + ps
+        let psMG, psEG = pawnStructureScore b
+        mg <- mg + psMG
+        eg <- eg + psEG
+        // Bishop Pair Bonus
+        if Bitboard.count bbs.WhiteBishops >= 2 then
+            mg <- mg + BishopPairBonusMG
+            eg <- eg + BishopPairBonusEG
+        if Bitboard.count bbs.BlackBishops >= 2 then
+            mg <- mg - BishopPairBonusMG
+            eg <- eg - BishopPairBonusEG
 
         // Tapered Result (White's perspective)
         let score = ((mg * p) + (eg * (MaxPhase - p))) / MaxPhase

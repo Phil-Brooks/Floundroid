@@ -6,12 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="output\texel_out.txt" />
     <Compile Include="texel_out.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Weights.fs" />
     <Compile Include="Trace.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <ProjectReference Include="..\Floundroid\Floundroid.fsproj" />
