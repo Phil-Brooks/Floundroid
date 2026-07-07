@@ -280,7 +280,49 @@ module UciLoop =
             | "uci" :: _ ->
                 printfn "id name Floundroid"
                 printfn "id author Phil Brooks"
-                printfn "uciok"
+                // Send options for tuning
+                printfn "option name RFP_Margin type spin default %d min 0 max 500" Search.RFP_Margin
+                printfn "option name RFP_MaxDepth type spin default %d min 1 max 10" Search.RFP_MaxDepth
+                printfn "option name NMP_MinDepth type spin default %d min 1 max 10" Search.NMP_MinDepth
+                printfn "option name NMP_DepthThreshold type spin default %d min 1 max 12" Search.NMP_DepthThreshold
+                printfn "option name NMP_BaseReduction type spin default %d min 1 max 5" Search.NMP_BaseReduction
+                printfn "option name NMP_DeepReduction type spin default %d min 1 max 7" Search.NMP_DeepReduction
+                printfn "option name LMR_MinDepth type spin default %d min 1 max 10" Search.LMR_MinDepth
+                printfn "option name LMR_MinMoves type spin default %d min 1 max 20" Search.LMR_MinMoves
+                printfn "option name LMR_Reduction type spin default %d min 1 max 5" Search.LMR_Reduction
+                printfn "option name LMR_DeepReduction type spin default %d min 1 max 7" Search.LMR_DeepReduction
+                printfn "option name LMR_Deep_Move_Threshold type spin default %d min 1 max 30" Search.LMR_Deep_Move_Threshold
+                printfn "option name Ordering_MVV_Multiplier type spin default %d min 1 max 100" Search.Ordering_MVV_Multiplier
+                printfn "option name Ordering_Killer_1 type spin default %d min 1000 max 20000" Search.Ordering_Killer_1
+                printfn "option name Ordering_Killer_2 type spin default %d min 1000 max 20000" Search.Ordering_Killer_2
+                printfn "option name Ordering_History_Max type spin default %d min 1000 max 20000" Search.Ordering_History_Max
+                printfn "option name Ordering_Capture_Base type spin default %d min 5000 max 30000" Search.Ordering_Capture_Base
+                printfn "option name Ordering_Promo_Base type spin default %d min 5000 max 30000" Search.Ordering_Promo_Base
+                printfn "option name Ordering_History_Bonus_Multiplier type string default %f" Search.Ordering_History_Bonus_Multiplier
+                printfn "option name Aspiration_Initial_Delta type spin default %d min 1 max 200" Search.Aspiration_Initial_Delta
+                printfn "uciok"            
+            | "setoption" :: "name" :: name :: "value" :: value :: _ ->
+                match name with
+                | "RFP_Margin" -> Search.RFP_Margin <- int value
+                | "RFP_MaxDepth" -> Search.RFP_MaxDepth <- int value
+                | "NMP_MinDepth" -> Search.NMP_MinDepth <- int value
+                | "NMP_DepthThreshold" -> Search.NMP_DepthThreshold <- int value
+                | "NMP_BaseReduction" -> Search.NMP_BaseReduction <- int value
+                | "NMP_DeepReduction" -> Search.NMP_DeepReduction <- int value
+                | "LMR_MinDepth" -> Search.LMR_MinDepth <- int value
+                | "LMR_MinMoves" -> Search.LMR_MinMoves <- int value
+                | "LMR_Reduction" -> Search.LMR_Reduction <- int value
+                | "LMR_DeepReduction" -> Search.LMR_DeepReduction <- int value
+                | "LMR_Deep_Move_Threshold" -> Search.LMR_Deep_Move_Threshold <- int value
+                | "Ordering_MVV_Multiplier" -> Search.Ordering_MVV_Multiplier <- int value
+                | "Ordering_Killer_1" -> Search.Ordering_Killer_1 <- int value
+                | "Ordering_Killer_2" -> Search.Ordering_Killer_2 <- int value
+                | "Ordering_History_Max" -> Search.Ordering_History_Max <- int value
+                | "Ordering_Capture_Base" -> Search.Ordering_Capture_Base <- int value
+                | "Ordering_Promo_Base" -> Search.Ordering_Promo_Base <- int value
+                | "Ordering_History_Bonus_Multiplier" -> Search.Ordering_History_Bonus_Multiplier <- float value
+                | "Aspiration_Initial_Delta" -> Search.Aspiration_Initial_Delta <- int value
+                | _ -> ()            
             | "isready" :: _ -> printfn "readyok"
             | "ucinewgame" :: _ -> 
                 searchCts.Cancel() // Stop any running search immediately

@@ -4,6 +4,37 @@ open System
 open System.Threading
 
 module Search =
+    //SPSA Tunining Parameters
+    // RFP
+    let mutable RFP_Margin = 120
+    let mutable RFP_MaxDepth = 3
+    
+    // NMP
+    let mutable NMP_MinDepth = 3
+    let mutable NMP_DepthThreshold = 6
+    let mutable NMP_BaseReduction = 2
+    let mutable NMP_DeepReduction = 3
+    
+    // LMR
+    let mutable LMR_MinDepth = 3
+    let mutable LMR_MinMoves = 4
+    let mutable LMR_Reduction = 1
+    let mutable LMR_DeepReduction = 2
+    let mutable LMR_Deep_Move_Threshold = 12
+    
+    // Move Ordering
+    let mutable Ordering_MVV_Multiplier = 10
+    let mutable Ordering_Killer_1 = 8000
+    let mutable Ordering_Killer_2 = 7000
+    let mutable Ordering_History_Max = 6000
+    let mutable Ordering_Capture_Base = 10000 
+    let mutable Ordering_Promo_Base = 9000 
+    let mutable Ordering_History_Bonus_Multiplier = 1.0 
+
+    // Aspiration (If you use it in the calling function)
+    let mutable Aspiration_Initial_Delta = 60
+
+    
     let mutable nodes = 0uL
     let MATE_VALUE = 30000
     let INF = 1000000
@@ -118,13 +149,13 @@ module Search =
                 let staticEval = Evaluation.evaluate b * sideMult
 
                 // --- Reverse Futility Pruning (RFP) ---
-                if not inCheck && depth <= 3 && abs beta < (MATE_VALUE - 100) && staticEval - (120 * depth) >= beta then
+                if not inCheck && depth <= RFP_MaxDepth && abs beta < (MATE_VALUE - 100) && staticEval - (RFP_Margin * depth) >= beta then
                     (beta, 0) // This is the "return" value for this branch
                 else
                     let mutable nmpCutoff = false
 
                     // 3. Null-Move Pruning
-                    if allowNull && depth >= 3 && not inCheck then
+                    if allowNull && depth >= NMP_MinDepth && not inCheck then
                         let bbs = b.Bitboards
                         let hasMaterial = 
                             if b.SideToMove = Colour.White then
@@ -133,7 +164,7 @@ module Search =
                                 bbs.BlackKnights <> 0uL || bbs.BlackBishops <> 0uL || bbs.BlackRooks <> 0uL || bbs.BlackQueens <> 0uL
                     
                         if hasMaterial then
-                            let R = if depth > 6 then 3 else 2
+                            let R = if depth > NMP_DepthThreshold then NMP_DeepReduction else NMP_BaseReduction
                             let nullBoard = Board.applyNullMove b
                             let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct
                             if not ct.IsCancellationRequested && -nullValue >= beta then
@@ -161,12 +192,12 @@ module Search =
                                     | 1 | 2 -> 
                                         let victimVal = let victim = Board.tryGetPiece b (Move.toSq m) in if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100
                                         let attackerVal = let attacker = Board.tryGetPiece b (Move.fromSq m) in if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
-                                        10000 + (victimVal * 10) - attackerVal
-                                    | 5 -> 9000 + Pst.matsMG[Move.promo m]
+                                        Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
+                                    | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
                                     | _ -> 
-                                        if m = killerMoves.[0, ply] then 8000
-                                        elif m = killerMoves.[1, ply] then 7000
-                                        else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], 6000)
+                                        if m = killerMoves.[0, ply] then Ordering_Killer_1
+                                        elif m = killerMoves.[1, ply] then Ordering_Killer_2
+                                        else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
                             scores.[i] <- -score 
 
                         System.Array.Sort(scores, moves)
@@ -196,8 +227,8 @@ module Search =
                                     let mutable moveScore = -INF
 
                                     // LMR and PVS
-                                    if depth >= 3 && legalMovesFound > 4 && not inCheck && (Move.kind m = 0) then
-                                        let reduction = if legalMovesFound > 12 then 2 else 1
+                                    if depth >= LMR_MinDepth && legalMovesFound > LMR_MinMoves && not inCheck && (Move.kind m = 0) then
+                                        let reduction = if legalMovesFound > LMR_Deep_Move_Threshold then LMR_DeepReduction else LMR_Reduction
                                         let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
                                         moveScore <- -sLMR
                                         if moveScore > currentAlpha then
@@ -221,7 +252,10 @@ module Search =
                                             if killerMoves.[0, ply] <> m then
                                                 killerMoves.[1, ply] <- killerMoves.[0, ply]
                                                 killerMoves.[0, ply] <- m
-                                            historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + (depth * depth)
+                                            
+                                            // We multiply the depth-based reward by your tunable multiplier
+                                            let bonus = int (float (depth * depth) * Ordering_History_Bonus_Multiplier)
+                                            historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + bonus
                                         cutoffFound <- true
                                     else
                                         i <- i + 1           
@@ -247,55 +281,62 @@ module Search =
             nodes <- 0uL
             clearKillers()
             clearHistory()
-            
+        
             let sw = Diagnostics.Stopwatch.StartNew()
             let legalMoves = MoveGen.getLegalMoves b
             let mutable absoluteBestMove = if legalMoves.Length > 0 then legalMoves.[0] else 0
 
             let mutable d = 1
             let mutable lastScore = 0
-            let window = 60 // Starting margin 
+        
+            // 1. Use your tuned variable here
+            let window = Aspiration_Initial_Delta 
 
             while d <= maxDepth && not ct.IsCancellationRequested do
                 let mutable alpha = -INF
                 let mutable beta = INF
 
-                // 1. Set Aspiration Window
-                // Only use windows after depth as early depths are too volatile
+                // 2. Initial Window Logic
+                // We only narrow the bounds if we are deep enough (usually depth 5+)
                 if d >= 5 then
                     alpha <- lastScore - window
                     beta <- lastScore + window
 
-                let mutable (score, move) = negamax b d 0 alpha beta history ct
+                let mutable (score, move) = negamax b d 0 alpha beta history ct 
 
-                // 2. Check for Window Failure
-                // If the score is outside our window, we must re-search with full bounds
-                if not ct.IsCancellationRequested && d >= 3 && (score <= alpha || score >= beta) then
+                // 3. Check for Window Failure
+                // LOGIC FIX: Only re-search if we actually set a window (d >= 5)
+                if not ct.IsCancellationRequested && d >= 5 && (score <= alpha || score >= beta) then
+                    // Fail high/low: reset to full bounds and search again
                     alpha <- -INF
                     beta <- INF
                     let (rescore, remove) = negamax b d 0 alpha beta history ct
                     score <- rescore
                     move <- remove
 
-                // 3. Process Results
+                // 4. Process Results
                 if not ct.IsCancellationRequested then
                     lastScore <- score
                     let elapsed = sw.Elapsed.TotalSeconds
                     let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
                     if move <> 0 then
                         absoluteBestMove <- move
+                        // Standard UCI output
                         printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci move)
 
-                // 4. Timer check
+                // 5. Timer check
                 let totalElapsed = sw.ElapsedMilliseconds
-                if totalElapsed > int64 (targetTimeMs * 6 / 10) then
+            
+                // OPTIONAL: You can even tune this '0.6' factor later!
+                if totalElapsed > int64 (float targetTimeMs * 0.6) then
                     d <- maxDepth + 1 
                 else
                     d <- d + 1
 
-            // Fallback for safety
             if absoluteBestMove = 0 && legalMoves.Length > 0 then
                 absoluteBestMove <- legalMoves.[0]
 
             return absoluteBestMove
-        }
+        }    
+    
+    
