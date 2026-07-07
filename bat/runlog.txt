@@ -2,326 +2,326 @@ Started game 1 of 100 (Floundroid vs Halogen6.0)
 Started game 2 of 100 (Halogen6.0 vs Floundroid)
 Started game 3 of 100 (Floundroid vs Halogen6.0)
 Started game 4 of 100 (Halogen6.0 vs Floundroid)
-Finished game 4 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 1 - 0 - 0  [1.000] 1
+Finished game 1 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 1  [0.500] 1
 Started game 5 of 100 (Floundroid vs Halogen6.0)
-Finished game 3 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 2 - 0 - 0  [1.000] 2
+Finished game 4 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 2  [0.500] 2
 Started game 6 of 100 (Halogen6.0 vs Floundroid)
-Finished game 1 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 3 - 0 - 0  [1.000] 3
+Finished game 2 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 3  [0.500] 3
 Started game 7 of 100 (Floundroid vs Halogen6.0)
-Finished game 2 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 4 - 0 - 0  [1.000] 4
+Finished game 3 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 4  [0.500] 4
 Started game 8 of 100 (Halogen6.0 vs Floundroid)
-Finished game 7 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 4 - 0 - 1  [0.900] 5
+Finished game 5 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 5  [0.500] 5
 Started game 9 of 100 (Floundroid vs Halogen6.0)
 Finished game 6 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Halogen6.0: 4 - 0 - 2  [0.833] 6
+Score of Floundroid vs Halogen6.0: 0 - 0 - 6  [0.500] 6
 Started game 10 of 100 (Halogen6.0 vs Floundroid)
-Finished game 8 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 4 - 1 - 2  [0.714] 7
+Finished game 8 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 0 - 0 - 7  [0.500] 7
 Started game 11 of 100 (Floundroid vs Halogen6.0)
-Finished game 5 (Floundroid vs Halogen6.0): 1-0 {Black makes an illegal move: a1a1}
-Score of Floundroid vs Halogen6.0: 5 - 1 - 2  [0.750] 8
+Finished game 7 (Floundroid vs Halogen6.0): 0-1 {White loses on time}
+Score of Floundroid vs Halogen6.0: 0 - 1 - 7  [0.438] 8
 Started game 12 of 100 (Halogen6.0 vs Floundroid)
 Finished game 9 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 5 - 2 - 2  [0.667] 9
+Score of Floundroid vs Halogen6.0: 0 - 2 - 7  [0.389] 9
 Started game 13 of 100 (Floundroid vs Halogen6.0)
-Finished game 10 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 5 - 3 - 2  [0.600] 10
+Finished game 10 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 1 - 2 - 7  [0.450] 10
 Started game 14 of 100 (Halogen6.0 vs Floundroid)
-Finished game 11 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 5 - 3 - 3  [0.591] 11
+Finished game 11 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 1 - 3 - 7  [0.409] 11
 Started game 15 of 100 (Floundroid vs Halogen6.0)
-Finished game 12 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 6 - 3 - 3  [0.625] 12
+Finished game 12 (Halogen6.0 vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 1 - 4 - 7  [0.375] 12
 Started game 16 of 100 (Halogen6.0 vs Floundroid)
-Finished game 13 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Halogen6.0: 6 - 3 - 4  [0.615] 13
+Finished game 13 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 2 - 4 - 7  [0.423] 13
 Started game 17 of 100 (Floundroid vs Halogen6.0)
 Finished game 14 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 6 - 3 - 5  [0.607] 14
+Score of Floundroid vs Halogen6.0: 2 - 4 - 8  [0.429] 14
 Started game 18 of 100 (Halogen6.0 vs Floundroid)
 Finished game 15 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 6 - 4 - 5  [0.567] 15
+Score of Floundroid vs Halogen6.0: 2 - 5 - 8  [0.400] 15
 Started game 19 of 100 (Floundroid vs Halogen6.0)
-Finished game 16 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 7 - 4 - 5  [0.594] 16
+Finished game 16 (Halogen6.0 vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 2 - 6 - 8  [0.375] 16
 Started game 20 of 100 (Halogen6.0 vs Floundroid)
-Finished game 18 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 7 - 4 - 6  [0.588] 17
-Started game 21 of 100 (Floundroid vs Halogen6.0)
-Finished game 19 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 8 - 4 - 6  [0.611] 18
-Started game 22 of 100 (Halogen6.0 vs Floundroid)
 Finished game 17 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 9 - 4 - 6  [0.632] 19
+Score of Floundroid vs Halogen6.0: 3 - 6 - 8  [0.412] 17
+Started game 21 of 100 (Floundroid vs Halogen6.0)
+Finished game 19 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 3 - 6 - 9  [0.417] 18
+Started game 22 of 100 (Halogen6.0 vs Floundroid)
+Finished game 18 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 4 - 6 - 9  [0.447] 19
 Started game 23 of 100 (Floundroid vs Halogen6.0)
 Finished game 20 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 10 - 4 - 6  [0.650] 20
+Score of Floundroid vs Halogen6.0: 5 - 6 - 9  [0.475] 20
 Started game 24 of 100 (Halogen6.0 vs Floundroid)
-Finished game 23 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 10 - 5 - 6  [0.619] 21
-Started game 25 of 100 (Floundroid vs Halogen6.0)
-Finished game 24 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 11 - 5 - 6  [0.636] 22
-Started game 26 of 100 (Halogen6.0 vs Floundroid)
 Finished game 21 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 11 - 6 - 6  [0.609] 23
-Started game 27 of 100 (Floundroid vs Halogen6.0)
+Score of Floundroid vs Halogen6.0: 5 - 7 - 9  [0.452] 21
+Started game 25 of 100 (Floundroid vs Halogen6.0)
 Finished game 22 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 11 - 6 - 7  [0.604] 24
+Score of Floundroid vs Halogen6.0: 5 - 7 - 10  [0.455] 22
+Started game 26 of 100 (Halogen6.0 vs Floundroid)
+Finished game 23 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 5 - 8 - 10  [0.435] 23
+Started game 27 of 100 (Floundroid vs Halogen6.0)
+Finished game 24 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 6 - 8 - 10  [0.458] 24
 Started game 28 of 100 (Halogen6.0 vs Floundroid)
-Finished game 25 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 12 - 6 - 7  [0.620] 25
+Finished game 25 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 6 - 9 - 10  [0.440] 25
 Started game 29 of 100 (Floundroid vs Halogen6.0)
-Finished game 28 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 12 - 6 - 8  [0.615] 26
+Finished game 27 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 6 - 10 - 10  [0.423] 26
 Started game 30 of 100 (Halogen6.0 vs Floundroid)
-Finished game 26 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 12 - 6 - 9  [0.611] 27
+Finished game 26 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 6 - 10 - 11  [0.426] 27
 Started game 31 of 100 (Floundroid vs Halogen6.0)
-Finished game 27 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 12 - 6 - 10  [0.607] 28
+Finished game 28 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 6 - 10 - 12  [0.429] 28
 Started game 32 of 100 (Halogen6.0 vs Floundroid)
-Finished game 29 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 12 - 7 - 10  [0.586] 29
+Finished game 29 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 6 - 10 - 13  [0.431] 29
 Started game 33 of 100 (Floundroid vs Halogen6.0)
-Finished game 30 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 12 - 8 - 10  [0.567] 30
+Finished game 30 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 6 - 10 - 14  [0.433] 30
 Started game 34 of 100 (Halogen6.0 vs Floundroid)
-Finished game 32 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 13 - 8 - 10  [0.581] 31
-Started game 35 of 100 (Floundroid vs Halogen6.0)
 Finished game 31 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 13 - 9 - 10  [0.563] 32
+Score of Floundroid vs Halogen6.0: 6 - 11 - 14  [0.419] 31
+Started game 35 of 100 (Floundroid vs Halogen6.0)
+Finished game 32 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 6 - 11 - 15  [0.422] 32
 Started game 36 of 100 (Halogen6.0 vs Floundroid)
-Finished game 35 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 13 - 9 - 11  [0.561] 33
+Finished game 33 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 6 - 11 - 16  [0.424] 33
 Started game 37 of 100 (Floundroid vs Halogen6.0)
 Finished game 34 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 13 - 10 - 11  [0.544] 34
+Score of Floundroid vs Halogen6.0: 6 - 12 - 16  [0.412] 34
 Started game 38 of 100 (Halogen6.0 vs Floundroid)
-Finished game 33 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 13 - 10 - 12  [0.543] 35
+Finished game 35 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 6 - 13 - 16  [0.400] 35
 Started game 39 of 100 (Floundroid vs Halogen6.0)
-Finished game 36 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 14 - 10 - 12  [0.556] 36
+Finished game 36 (Halogen6.0 vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 6 - 14 - 16  [0.389] 36
 Started game 40 of 100 (Halogen6.0 vs Floundroid)
-Finished game 37 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 15 - 10 - 12  [0.568] 37
+Finished game 37 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 6 - 15 - 16  [0.378] 37
 Started game 41 of 100 (Floundroid vs Halogen6.0)
-Finished game 38 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 15 - 10 - 13  [0.566] 38
+Finished game 38 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 7 - 15 - 16  [0.395] 38
 Started game 42 of 100 (Halogen6.0 vs Floundroid)
-Finished game 39 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 16 - 10 - 13  [0.577] 39
-Started game 43 of 100 (Floundroid vs Halogen6.0)
-Finished game 40 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 17 - 10 - 13  [0.588] 40
-Started game 44 of 100 (Halogen6.0 vs Floundroid)
 Finished game 41 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 17 - 10 - 14  [0.585] 41
+Score of Floundroid vs Halogen6.0: 7 - 15 - 17  [0.397] 39
+Started game 43 of 100 (Floundroid vs Halogen6.0)
+Finished game 39 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 7 - 15 - 18  [0.400] 40
+Started game 44 of 100 (Halogen6.0 vs Floundroid)
+Finished game 40 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 7 - 15 - 19  [0.402] 41
 Started game 45 of 100 (Floundroid vs Halogen6.0)
-Finished game 42 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 18 - 10 - 14  [0.595] 42
+Finished game 42 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 7 - 15 - 20  [0.405] 42
 Started game 46 of 100 (Halogen6.0 vs Floundroid)
 Finished game 43 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 19 - 10 - 14  [0.605] 43
+Score of Floundroid vs Halogen6.0: 8 - 15 - 20  [0.419] 43
 Started game 47 of 100 (Floundroid vs Halogen6.0)
 Finished game 44 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 20 - 10 - 14  [0.614] 44
+Score of Floundroid vs Halogen6.0: 9 - 15 - 20  [0.432] 44
 Started game 48 of 100 (Halogen6.0 vs Floundroid)
-Finished game 45 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 21 - 10 - 14  [0.622] 45
+Finished game 45 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 9 - 15 - 21  [0.433] 45
 Started game 49 of 100 (Floundroid vs Halogen6.0)
-Finished game 48 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 21 - 10 - 15  [0.620] 46
+Finished game 46 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 10 - 15 - 21  [0.446] 46
 Started game 50 of 100 (Halogen6.0 vs Floundroid)
-Finished game 46 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 21 - 11 - 15  [0.606] 47
+Finished game 47 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 10 - 15 - 22  [0.447] 47
 Started game 51 of 100 (Floundroid vs Halogen6.0)
-Finished game 47 (Floundroid vs Halogen6.0): 1-0 {Black makes an illegal move: a1a1}
-Score of Floundroid vs Halogen6.0: 22 - 11 - 15  [0.615] 48
+Finished game 49 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 10 - 16 - 22  [0.438] 48
 Started game 52 of 100 (Halogen6.0 vs Floundroid)
-Finished game 49 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 23 - 11 - 15  [0.622] 49
+Finished game 48 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 10 - 16 - 23  [0.439] 49
 Started game 53 of 100 (Floundroid vs Halogen6.0)
-Finished game 51 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 23 - 11 - 16  [0.620] 50
+Finished game 50 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 11 - 16 - 23  [0.450] 50
 Started game 54 of 100 (Halogen6.0 vs Floundroid)
-Finished game 50 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 23 - 11 - 17  [0.618] 51
+Finished game 51 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 12 - 16 - 23  [0.461] 51
 Started game 55 of 100 (Floundroid vs Halogen6.0)
-Finished game 52 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 23 - 11 - 18  [0.615] 52
-Started game 56 of 100 (Halogen6.0 vs Floundroid)
 Finished game 53 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 23 - 12 - 18  [0.604] 53
+Score of Floundroid vs Halogen6.0: 12 - 17 - 23  [0.452] 52
+Started game 56 of 100 (Halogen6.0 vs Floundroid)
+Finished game 52 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 12 - 17 - 24  [0.453] 53
 Started game 57 of 100 (Floundroid vs Halogen6.0)
 Finished game 54 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 24 - 12 - 18  [0.611] 54
+Score of Floundroid vs Halogen6.0: 13 - 17 - 24  [0.463] 54
 Started game 58 of 100 (Halogen6.0 vs Floundroid)
-Finished game 56 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 24 - 12 - 19  [0.609] 55
-Started game 59 of 100 (Floundroid vs Halogen6.0)
 Finished game 55 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 24 - 13 - 19  [0.598] 56
+Score of Floundroid vs Halogen6.0: 13 - 18 - 24  [0.455] 55
+Started game 59 of 100 (Floundroid vs Halogen6.0)
+Finished game 56 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 13 - 18 - 25  [0.455] 56
 Started game 60 of 100 (Halogen6.0 vs Floundroid)
 Finished game 57 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 24 - 14 - 19  [0.588] 57
+Score of Floundroid vs Halogen6.0: 13 - 19 - 25  [0.447] 57
 Started game 61 of 100 (Floundroid vs Halogen6.0)
-Finished game 58 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 24 - 14 - 20  [0.586] 58
+Finished game 58 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 13 - 19 - 26  [0.448] 58
 Started game 62 of 100 (Halogen6.0 vs Floundroid)
-Finished game 61 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 24 - 14 - 21  [0.585] 59
+Finished game 59 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 14 - 19 - 26  [0.458] 59
 Started game 63 of 100 (Floundroid vs Halogen6.0)
-Finished game 59 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 24 - 14 - 22  [0.583] 60
+Finished game 60 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 15 - 19 - 26  [0.467] 60
 Started game 64 of 100 (Halogen6.0 vs Floundroid)
-Finished game 60 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 24 - 15 - 22  [0.574] 61
+Finished game 61 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Halogen6.0: 15 - 19 - 27  [0.467] 61
 Started game 65 of 100 (Floundroid vs Halogen6.0)
-Finished game 62 (Halogen6.0 vs Floundroid): 0-1 {White makes an illegal move: a1a1}
-Score of Floundroid vs Halogen6.0: 25 - 15 - 22  [0.581] 62
+Finished game 62 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Halogen6.0: 15 - 19 - 28  [0.468] 62
 Started game 66 of 100 (Halogen6.0 vs Floundroid)
-Finished game 63 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 25 - 16 - 22  [0.571] 63
+Finished game 63 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 16 - 19 - 28  [0.476] 63
 Started game 67 of 100 (Floundroid vs Halogen6.0)
-Finished game 64 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 25 - 16 - 23  [0.570] 64
+Finished game 64 (Halogen6.0 vs Floundroid): 0-1 {White makes an illegal move: a1a1}
+Score of Floundroid vs Halogen6.0: 17 - 19 - 28  [0.484] 64
 Started game 68 of 100 (Halogen6.0 vs Floundroid)
 Finished game 65 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 25 - 16 - 24  [0.569] 65
+Score of Floundroid vs Halogen6.0: 17 - 19 - 29  [0.485] 65
 Started game 69 of 100 (Floundroid vs Halogen6.0)
-Finished game 66 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 26 - 16 - 24  [0.576] 66
+Finished game 66 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 17 - 19 - 30  [0.485] 66
 Started game 70 of 100 (Halogen6.0 vs Floundroid)
-Finished game 67 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Halogen6.0: 26 - 16 - 25  [0.575] 67
+Finished game 67 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 18 - 19 - 30  [0.493] 67
 Started game 71 of 100 (Floundroid vs Halogen6.0)
-Finished game 68 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 26 - 16 - 26  [0.574] 68
+Finished game 68 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 19 - 19 - 30  [0.500] 68
 Started game 72 of 100 (Halogen6.0 vs Floundroid)
 Finished game 69 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 26 - 16 - 27  [0.572] 69
+Score of Floundroid vs Halogen6.0: 19 - 19 - 31  [0.500] 69
 Started game 73 of 100 (Floundroid vs Halogen6.0)
-Finished game 70 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 26 - 16 - 28  [0.571] 70
+Finished game 70 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 20 - 19 - 31  [0.507] 70
 Started game 74 of 100 (Halogen6.0 vs Floundroid)
-Finished game 71 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 26 - 17 - 28  [0.563] 71
+Finished game 71 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 20 - 19 - 32  [0.507] 71
 Started game 75 of 100 (Floundroid vs Halogen6.0)
-Finished game 72 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 26 - 18 - 28  [0.556] 72
+Finished game 72 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 21 - 19 - 32  [0.514] 72
 Started game 76 of 100 (Halogen6.0 vs Floundroid)
-Finished game 73 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 26 - 18 - 29  [0.555] 73
+Finished game 73 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 22 - 19 - 32  [0.521] 73
 Started game 77 of 100 (Floundroid vs Halogen6.0)
 Finished game 74 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 26 - 19 - 29  [0.547] 74
+Score of Floundroid vs Halogen6.0: 22 - 20 - 32  [0.514] 74
 Started game 78 of 100 (Halogen6.0 vs Floundroid)
-Finished game 75 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 26 - 20 - 29  [0.540] 75
+Finished game 75 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 22 - 20 - 33  [0.513] 75
 Started game 79 of 100 (Floundroid vs Halogen6.0)
-Finished game 76 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 27 - 20 - 29  [0.546] 76
+Finished game 76 (Halogen6.0 vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 22 - 21 - 33  [0.507] 76
 Started game 80 of 100 (Halogen6.0 vs Floundroid)
-Finished game 77 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 27 - 21 - 29  [0.539] 77
+Finished game 77 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 23 - 21 - 33  [0.513] 77
 Started game 81 of 100 (Floundroid vs Halogen6.0)
-Finished game 79 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 27 - 22 - 29  [0.532] 78
+Finished game 78 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 23 - 21 - 34  [0.513] 78
 Started game 82 of 100 (Halogen6.0 vs Floundroid)
-Finished game 78 (Halogen6.0 vs Floundroid): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 27 - 23 - 29  [0.525] 79
+Finished game 80 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 24 - 21 - 34  [0.519] 79
 Started game 83 of 100 (Floundroid vs Halogen6.0)
-Finished game 80 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 27 - 23 - 30  [0.525] 80
+Finished game 79 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 24 - 21 - 35  [0.519] 80
 Started game 84 of 100 (Halogen6.0 vs Floundroid)
-Finished game 81 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 27 - 24 - 30  [0.519] 81
+Finished game 81 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by insufficient mating material}
+Score of Floundroid vs Halogen6.0: 24 - 21 - 36  [0.519] 81
 Started game 85 of 100 (Floundroid vs Halogen6.0)
-Finished game 82 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 27 - 24 - 31  [0.518] 82
+Finished game 82 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 25 - 21 - 36  [0.524] 82
 Started game 86 of 100 (Halogen6.0 vs Floundroid)
-Finished game 83 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 27 - 24 - 32  [0.518] 83
+Finished game 83 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 25 - 22 - 36  [0.518] 83
 Started game 87 of 100 (Floundroid vs Halogen6.0)
-Finished game 84 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 27 - 24 - 33  [0.518] 84
+Finished game 84 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 26 - 22 - 36  [0.524] 84
 Started game 88 of 100 (Halogen6.0 vs Floundroid)
-Finished game 85 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 27 - 24 - 34  [0.518] 85
+Finished game 85 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by fifty moves rule}
+Score of Floundroid vs Halogen6.0: 26 - 22 - 37  [0.524] 85
 Started game 89 of 100 (Floundroid vs Halogen6.0)
-Finished game 86 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 28 - 24 - 34  [0.523] 86
+Finished game 86 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 26 - 22 - 38  [0.523] 86
 Started game 90 of 100 (Halogen6.0 vs Floundroid)
 Finished game 87 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 28 - 25 - 34  [0.517] 87
+Score of Floundroid vs Halogen6.0: 26 - 23 - 38  [0.517] 87
 Started game 91 of 100 (Floundroid vs Halogen6.0)
-Finished game 88 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 29 - 25 - 34  [0.523] 88
+Finished game 88 (Halogen6.0 vs Floundroid): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 26 - 24 - 38  [0.511] 88
 Started game 92 of 100 (Halogen6.0 vs Floundroid)
-Finished game 89 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 29 - 26 - 34  [0.517] 89
+Finished game 89 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 27 - 24 - 38  [0.517] 89
 Started game 93 of 100 (Floundroid vs Halogen6.0)
-Finished game 92 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 29 - 26 - 35  [0.517] 90
+Finished game 90 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 28 - 24 - 38  [0.522] 90
 Started game 94 of 100 (Halogen6.0 vs Floundroid)
-Finished game 91 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 29 - 26 - 36  [0.516] 91
+Finished game 91 (Floundroid vs Halogen6.0): 1-0 {White mates}
+Score of Floundroid vs Halogen6.0: 29 - 24 - 38  [0.527] 91
 Started game 95 of 100 (Floundroid vs Halogen6.0)
-Finished game 90 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by fifty moves rule}
-Score of Floundroid vs Halogen6.0: 29 - 26 - 37  [0.516] 92
+Finished game 92 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 30 - 24 - 38  [0.533] 92
 Started game 96 of 100 (Halogen6.0 vs Floundroid)
-Finished game 93 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 30 - 26 - 37  [0.522] 93
+Finished game 93 (Floundroid vs Halogen6.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Floundroid vs Halogen6.0: 30 - 24 - 39  [0.532] 93
 Started game 97 of 100 (Floundroid vs Halogen6.0)
 Finished game 94 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
-Score of Floundroid vs Halogen6.0: 30 - 26 - 38  [0.521] 94
+Score of Floundroid vs Halogen6.0: 30 - 24 - 40  [0.532] 94
 Started game 98 of 100 (Halogen6.0 vs Floundroid)
 Finished game 95 (Floundroid vs Halogen6.0): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 30 - 27 - 38  [0.516] 95
+Score of Floundroid vs Halogen6.0: 30 - 25 - 40  [0.526] 95
 Started game 99 of 100 (Floundroid vs Halogen6.0)
-Finished game 96 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by insufficient mating material}
-Score of Floundroid vs Halogen6.0: 30 - 27 - 39  [0.516] 96
+Finished game 96 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 31 - 25 - 40  [0.531] 96
 Started game 100 of 100 (Halogen6.0 vs Floundroid)
-Finished game 97 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 31 - 27 - 39  [0.521] 97
-Finished game 98 (Halogen6.0 vs Floundroid): 1/2-1/2 {Draw by 3-fold repetition}
+Finished game 97 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 31 - 26 - 40  [0.526] 97
+Finished game 98 (Halogen6.0 vs Floundroid): 1-0 {White mates}
 Score of Floundroid vs Halogen6.0: 31 - 27 - 40  [0.520] 98
-Finished game 100 (Halogen6.0 vs Floundroid): 0-1 {Black mates}
-Score of Floundroid vs Halogen6.0: 32 - 27 - 40  [0.525] 99
-Finished game 99 (Floundroid vs Halogen6.0): 1-0 {White mates}
-Score of Floundroid vs Halogen6.0: 33 - 27 - 40  [0.530] 100
-...      Floundroid playing White: 15 - 18 - 17  [0.470] 50
-...      Floundroid playing Black: 18 - 9 - 23  [0.590] 50
-...      White vs Black: 24 - 36 - 40  [0.440] 100
-Elo difference: 20.9 +/- 53.1, LOS: 78.1 %, DrawRatio: 40.0 %
+Finished game 99 (Floundroid vs Halogen6.0): 0-1 {Black mates}
+Score of Floundroid vs Halogen6.0: 31 - 28 - 40  [0.515] 99
+Finished game 100 (Halogen6.0 vs Floundroid): 0-1 {White makes an illegal move: a1a1}
+Score of Floundroid vs Halogen6.0: 32 - 28 - 40  [0.520] 100
+...      Floundroid playing White: 11 - 20 - 19  [0.410] 50
+...      Floundroid playing Black: 21 - 8 - 21  [0.630] 50
+...      White vs Black: 19 - 41 - 40  [0.390] 100
+Elo difference: 13.9 +/- 53.1, LOS: 69.7 %, DrawRatio: 40.0 %
 SPRT: llr 0 (0.0%), lbound -inf, ubound inf
 
 Player: Floundroid
-   "Draw by 3-fold repetition": 30
-   "Draw by fifty moves rule": 6
-   "Draw by insufficient mating material": 4
-   "Loss: Black mates": 18
-   "Loss: White mates": 9
-   "Win: Black makes an illegal move: a1a1": 2
-   "Win: Black mates": 17
-   "Win: White makes an illegal move: a1a1": 1
-   "Win: White mates": 13
+   "Draw by 3-fold repetition": 29
+   "Draw by fifty moves rule": 4
+   "Draw by insufficient mating material": 7
+   "Loss: Black mates": 19
+   "Loss: White loses on time": 1
+   "Loss: White mates": 8
+   "Win: Black mates": 19
+   "Win: White makes an illegal move: a1a1": 2
+   "Win: White mates": 11
 Player: Halogen6.0
-   "Draw by 3-fold repetition": 30
-   "Draw by fifty moves rule": 6
-   "Draw by insufficient mating material": 4
-   "Loss: Black makes an illegal move: a1a1": 2
-   "Loss: Black mates": 17
-   "Loss: White makes an illegal move: a1a1": 1
-   "Loss: White mates": 13
-   "Win: Black mates": 18
-   "Win: White mates": 9
+   "Draw by 3-fold repetition": 29
+   "Draw by fifty moves rule": 4
+   "Draw by insufficient mating material": 7
+   "Loss: Black mates": 19
+   "Loss: White makes an illegal move: a1a1": 2
+   "Loss: White mates": 11
+   "Win: Black mates": 19
+   "Win: White loses on time": 1
+   "Win: White mates": 8
 Finished match
