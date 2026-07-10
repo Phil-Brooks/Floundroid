@@ -6,21 +6,21 @@ open System.Threading
 module Search =
     //SPSA Tunining Parameters
     // RFP
-    let mutable RFP_Margin = 120
-    let mutable RFP_MaxDepth = 3
+    let RFP_Margin = 60
+    let RFP_MaxDepth = 5
     
     // NMP
-    let mutable NMP_MinDepth = 3
-    let mutable NMP_DepthThreshold = 6
-    let mutable NMP_BaseReduction = 2
-    let mutable NMP_DeepReduction = 3
+    let NMP_MinDepth = 2
+    let NMP_DepthThreshold = 6
+    let NMP_BaseReduction = 5
+    let NMP_DeepReduction = 5
     
     // LMR
-    let mutable LMR_MinDepth = 3
-    let mutable LMR_MinMoves = 4
-    let mutable LMR_Reduction = 1
-    let mutable LMR_DeepReduction = 2
-    let mutable LMR_Deep_Move_Threshold = 12
+    let LMR_MinDepth = 2
+    let LMR_MinMoves = 7
+    let LMR_Reduction = 2
+    let LMR_DeepReduction = 3
+    let LMR_Deep_Move_Threshold = 16
     
     // Move Ordering
     let mutable Ordering_MVV_Multiplier = 10
@@ -31,7 +31,7 @@ module Search =
     let mutable Ordering_Promo_Base = 9000 
     let mutable Ordering_History_Bonus_Multiplier = 1.0 
 
-    // Aspiration (If you use it in the calling function)
+    // Aspiration
     let mutable Aspiration_Initial_Delta = 60
 
     
@@ -195,6 +195,7 @@ module Search =
                                         Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
                                     | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
                                     | _ -> 
+                                        if Ordering_Killer_1 <= Ordering_Killer_2 then Ordering_Killer_1 <- Ordering_Killer_2 + 1 // Ensure killer1 is bigger
                                         if m = killerMoves.[0, ply] then Ordering_Killer_1
                                         elif m = killerMoves.[1, ply] then Ordering_Killer_2
                                         else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
