@@ -2,6 +2,11 @@ namespace Benchmarks
 
 open BenchmarkDotNet.Attributes
 open Floundroid
+open System
+open System.Runtime.CompilerServices
+open Microsoft.FSharp.NativeInterop
+
+#nowarn "9" // For NativePtr usage
 
 [<MemoryDiagnoser>]
 type MoveGenBench() =
@@ -29,5 +34,12 @@ type MoveGenBench() =
 
     [<Benchmark>]
     member _.Captures() =
-        let moveslen = MoveGen.getCaptureMoves board 
-        moveslen
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+
+        // 2. Generate moves directly into the stack span
+        let moveCount = MoveGen.getCaptureMoves board moveSpan
+        moveCount
+        
+        
+        

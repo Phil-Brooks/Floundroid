@@ -3,6 +3,11 @@ namespace Floundroid.Tests
 open System.Threading
 open Xunit
 open Floundroid
+open System
+open System.Runtime.CompilerServices
+open Microsoft.FSharp.NativeInterop
+
+#nowarn "9" // For NativePtr usage
 
 module SearchTests =
 
@@ -234,8 +239,10 @@ module SearchTests =
 
         TranspositionTable.clear()
         TranspositionTable.store b.Hash 5 0 TranspositionTable.NodeExact 0 pvMove
-
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         // Score the moves the same way search does
         let scored =

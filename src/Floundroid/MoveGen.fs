@@ -13,10 +13,8 @@ module MoveGen =
               PieceType.King, [ (1, 1); (1, -1); (-1, 1); (-1, -1); (1, 0); (-1, 0); (0, 1); (0, -1) ] ]
 
     /// Generates pseudo-legal moves for White pieces, including pawns, knights, bishops, rooks, and queens.
-    let getpseudoW (b:Board) = 
+    let getpseudoW (b:Board) (span: Span<int>) = 
         #nowarn "9"
-        let buffer = NativePtr.stackalloc<int> 256
-        let span = Span<int>(NativePtr.toVoidPtr buffer, 256)
         let mutable ct = 0
         
         //let getpseudoWP () = 
@@ -154,15 +152,11 @@ module MoveGen =
                 if not (Board.isOccupied b d1) && not (Board.isOccupied b c1) && not (Board.isOccupied b b1) then
                     span[ct] <- Move.create(sq, c1, 4, 0)
                     ct <- ct + 1
-        let finalSpan = span.Slice(0, ct)
-        let resultArray: int array = finalSpan.ToArray()
-        resultArray
+        ct
 
     /// Generates all pseudo-legal moves for Black pieces on the board.
-    let getpseudoB (b:Board) = 
+    let getpseudoB (b:Board) (span: Span<int>) = 
         #nowarn "9"
-        let buffer = NativePtr.stackalloc<int> 256
-        let span = Span<int>(NativePtr.toVoidPtr buffer, 256)
         let mutable ct = 0
 
         //let getpseudoBP () = 
@@ -300,21 +294,23 @@ module MoveGen =
                 if not (Board.isOccupied b d8) && not (Board.isOccupied b c8) && not (Board.isOccupied b b8) then
                     span[ct] <- Move.create(sq, c8, 4, 0)
                     ct <- ct + 1
-        let finalSpan = span.Slice(0, ct)
-        let resultArray: int array = finalSpan.ToArray()
-        resultArray
+        ct
     
     // Gets all pseudo-legal moves for the current position using Bitboards.
-    let getPseudoLegalMoves (b: Board) =
+    let getPseudoLegalMoves (b: Board) (span: Span<int>) =
         if b.SideToMove = Colour.White then
-            getpseudoW b
+            getpseudoW b span
         else 
-            getpseudoB b
+            getpseudoB b span
 
     /// Gets all legal moves for the current position.
     let getLegalMoves (b: Board) =
         let us, them = b.SideToMove, Colour.opposite b.SideToMove
-        getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = getPseudoLegalMoves b moveSpan
+        let psmoves = moveSpan.Slice(0, moveCount).ToArray()
+        psmoves
         |> Array.filter (fun m ->
             let castlingCheck =
                 match Move.kind m with
@@ -340,10 +336,8 @@ module MoveGen =
             castlingCheck && not (Board.isInCheckFor us (Board.applyMove m b)))
 
     /// Generates all capture moves for White pieces, including pawns, knights, bishops, rooks, and queens.
-    let getcapW (b:Board) = 
+    let getcapW (b:Board) (span: Span<int>) = 
         #nowarn "9"
-        let buffer = NativePtr.stackalloc<int> 256
-        let span = Span<int>(NativePtr.toVoidPtr buffer, 256)
         let mutable ct = 0
 
         // getcapWP  
@@ -442,15 +436,11 @@ module MoveGen =
                 if Board.isOccupiedB b t then
                     span[ct] <- Move.create(sq, t, 1, 0)
                     ct <- ct + 1
-        let finalSpan = span.Slice(0, ct)
-        let resultArray: int array = finalSpan.ToArray()
-        resultArray
+        ct
     
     /// Generates all capture moves for Black pieces, including pawns, knights, bishops, rooks, and queens.
-    let getcapB (b:Board) = 
+    let getcapB (b:Board) (span: Span<int>) = 
         #nowarn "9"
-        let buffer = NativePtr.stackalloc<int> 256
-        let span = Span<int>(NativePtr.toVoidPtr buffer, 256)
         let mutable ct = 0
 
         //let getcapBP () = 
@@ -549,13 +539,11 @@ module MoveGen =
                 if Board.isOccupiedW b t then
                     span[ct] <- Move.create(sq, t, 1, 0)
                     ct <- ct + 1
-        let finalSpan = span.Slice(0, ct)
-        let resultArray: int array = finalSpan.ToArray()
-        resultArray
+        ct
     
     /// Optimized generator for Quiescence Search: Only returns Captures, En Passants, and Promotions.
-    let getCaptureMoves (b: Board)  =
+    let getCaptureMoves (b: Board) (span: Span<int>) =
         if b.SideToMove = Colour.White then
-            getcapW b
+            getcapW b span
         else
-            getcapB b
+            getcapB b span

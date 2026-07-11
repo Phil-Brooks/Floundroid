@@ -2,28 +2,40 @@ namespace Floundroid.Tests
 
 open Xunit
 open Floundroid
+open System
+open System.Runtime.CompilerServices
+open Microsoft.FSharp.NativeInterop
+
+#nowarn "9" // For NativePtr usage
 
 module MoveGenTests =
 
     [<Fact>]
     let ``Starting position has 20 pseudo-legal moves`` () =
         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
         Assert.Equal(20, moves.Length)
 
     [<Fact>]
     let ``Knight in center has 8 moves`` () =
         let b = Board.fromFen "8/8/8/8/4N3/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
         Assert.Equal(8, moves.Length)
 
     [<Fact>]
     let ``Pawn captures correctly`` () =
         let b = Board.fromFen "8/8/8/3p1p2/4P3/8/8/8 w - - 0 1"
 
-        let moves =
-            MoveGen.getPseudoLegalMoves b
-            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         Assert.Equal(3, moves.Length)
 
@@ -38,18 +50,21 @@ module MoveGenTests =
     let ``Pawn En Passant is detected`` () =
         let b = Board.fromFen "8/8/8/3pP3/8/8/8/8 w - d6 0 1"
 
-        let moves =
-            MoveGen.getPseudoLegalMoves b
-            |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e5")
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         Assert.Contains(moves, fun m -> Move.kind m = 2 && Square.toString (Move.toSq m) = "d6")
 
     [<Fact>]
     let ``Slider logic stops at edge and captures enemies`` () =
         let b = Board.fromFen "8/8/4p3/8/4R3/8/4P3/8 w - - 0 1"
-
-        let moves =
-            MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = 
+            moveSpan.Slice(0, moveCount).ToArray()
             |> Array.filter (fun m -> Move.fromSq m = Square.fromString "e4")
 
         Assert.Equal(10, moves.Length)
@@ -98,7 +113,11 @@ module MoveGenTests =
         // Position: White Pawn on e2 (can move to e3, e4), White Rook on a1. 
         // Black Pawn on d3.
         let b = Board.fromFen "8/8/8/8/8/3p4/4P3/R3K3 w Q - 0 1"
-        let captures = MoveGen.getCaptureMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getCaptureMoves b moveSpan
+        
+        let captures = moveSpan.Slice(0, moveCount).ToArray()
         
         // Should find e2xd3 but NOT e2e3 or e2e4
         Assert.Contains(captures, fun m -> Square.toString (Move.toSq m) = "d3")
@@ -110,7 +129,10 @@ module MoveGenTests =
         // FEN: White pawn on e2, Black Knight on e3. e4 is empty.
         let fen = "rnbqkbnr/pppp1ppp/8/8/4n3/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         let board = Board.fromFen fen
-        let moves = MoveGen.getPseudoLegalMoves board
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves board moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         // Check if the move e2-e4 (which jumps over e3) is generated
         let hasJump = moves |> Array.exists (fun m -> 
@@ -154,7 +176,10 @@ module MoveGenTests =
     [<Fact>]
     let ``White pawn generates 4 quiet promotion moves`` () =
         let b = Board.fromFen "8/4P3/8/8/8/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         let promos =
             moves
@@ -165,7 +190,10 @@ module MoveGenTests =
     [<Fact>]
     let ``White pawn generates 4 capture promotion moves`` () =
         let b = Board.fromFen "3p4/4P3/8/8/8/8/8/8 w - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         let promos =
             moves
@@ -176,7 +204,10 @@ module MoveGenTests =
     [<Fact>]
     let ``Black pawn generates 4 quiet promotion moves`` () =
         let b = Board.fromFen "8/8/8/8/8/8/4p3/8 b - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         let promos =
             moves
@@ -187,7 +218,10 @@ module MoveGenTests =
     [<Fact>]
     let ``Black pawn generates 4 capture promotion moves`` () =
         let b = Board.fromFen "8/8/8/8/8/8/4p3/5P2 b - - 0 1"
-        let moves = MoveGen.getPseudoLegalMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+        let moves = moveSpan.Slice(0, moveCount).ToArray()
 
         let promos =
             moves
@@ -230,7 +264,10 @@ module MoveGenTests =
 
         for fen in fens do
             let b = Board.fromFen fen
-            let pseudo = MoveGen.getPseudoLegalMoves b |> Set.ofArray
+            let movePtr = NativePtr.stackalloc<int> 256
+            let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+            let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
+            let pseudo = Set.ofArray (moveSpan.Slice(0, moveCount).ToArray())
             let legal = MoveGen.getLegalMoves b |> Set.ofArray
             Assert.True(Set.isSubset legal pseudo, $"Legal not subset of pseudo for FEN: {fen}")
 
@@ -256,7 +293,11 @@ module MoveGenTests =
         let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
         let b = Board.fromFen fen
         let legal = MoveGen.getLegalMoves b |> Set.ofArray
-        let caps = MoveGen.getCaptureMoves b
+        let movePtr = NativePtr.stackalloc<int> 256
+        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+        let moveCount = MoveGen.getCaptureMoves b moveSpan
+        
+        let caps = moveSpan.Slice(0, moveCount).ToArray()
 
         // All capture moves must be legal
         for m in caps do

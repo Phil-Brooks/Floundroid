@@ -2,9 +2,13 @@ namespace Floundroid
 
 open System
 open System.Threading
+open System.Runtime.CompilerServices
+open Microsoft.FSharp.NativeInterop
+
+#nowarn "9" // For NativePtr usage
 
 module Search =
-    //SPSA Tunining Parameters
+    // Tunining Parameters
     // RFP
     let RFP_Margin = 60
     let RFP_MaxDepth = 5
@@ -23,16 +27,16 @@ module Search =
     let LMR_Deep_Move_Threshold = 16
     
     // Move Ordering
-    let mutable Ordering_MVV_Multiplier = 10
-    let mutable Ordering_Killer_1 = 8000
-    let mutable Ordering_Killer_2 = 7000
-    let mutable Ordering_History_Max = 6000
-    let mutable Ordering_Capture_Base = 10000 
-    let mutable Ordering_Promo_Base = 9000 
-    let mutable Ordering_History_Bonus_Multiplier = 1.0 
+    let Ordering_MVV_Multiplier = 15
+    let Ordering_Killer_1 = 8800
+    let Ordering_Killer_2 = 6800
+    let Ordering_History_Max = 5600
+    let Ordering_Capture_Base = 10400 
+    let Ordering_Promo_Base = 9000 
+    let Ordering_History_Bonus_Multiplier = 1.0 
 
     // Aspiration
-    let mutable Aspiration_Initial_Delta = 60
+    let Aspiration_Initial_Delta = 50
 
     
     let mutable nodes = 0uL
@@ -61,7 +65,7 @@ module Search =
         history |> List.contains hash
     
     /// Quiescence search: plays out tactical moves until the position is stable.
-    let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken)  : int =
+    let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
         nodes <- nodes + 1uL
         if ct.IsCancellationRequested then alpha
         else
@@ -72,31 +76,53 @@ module Search =
             else
                 let mutable currentAlpha = Math.Max(alpha, standPat)
 
-                // 1. Generate only tactical moves
-                let moves = MoveGen.getCaptureMoves b
-                
-                // 2. Simple MVV-LVA Scoring for QS
-                let scores = Array.zeroCreate moves.Length
-                for i in 0 .. moves.Length - 1 do
-                    let m = moves.[i]
+                // 1. Stack Allocation for Moves and Scores (Max 256 moves)
+                let movePtr = NativePtr.stackalloc<int> 256
+                let scorePtr = NativePtr.stackalloc<int> 256
+                let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+                let scoreSpan = Span<int>(NativePtr.toVoidPtr scorePtr, 256)
+
+                // 2. Generate moves directly into the stack span
+                let moveCount = MoveGen.getCaptureMoves b moveSpan
+            
+                // 3. Score moves (MVV-LVA)
+                for i in 0 .. moveCount - 1 do
+                    let m = moveSpan.[i]
                     let victimVal = 
                         let victim = Board.tryGetPiece b (Move.toSq m)
-                        if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100 // En Passant
+                        if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100
                     let attackerVal = 
                         let attacker = Board.tryGetPiece b (Move.fromSq m)
                         if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
-                    scores.[i] <- -(10000 + (victimVal * 10) - attackerVal)
+                    // Simple score: high victim value first, then low attacker value
+                    scoreSpan.[i] <- (victimVal * 100) - attackerVal
 
-                System.Array.Sort(scores, moves)
-
+                // 4. Search Loop with Selection Sort (Pick Best)
                 let mutable i = 0
                 let mutable exitLoop = false
 
-                while i < moves.Length && not exitLoop do
-                    let m = moves.[i]
+                while i < moveCount && not exitLoop do
+                    // --- Selection Pick ---
+                    // Instead of sorting the whole array, we find the best move 
+                    // from the remaining unsorted part of the span.
+                    let mutable bestIdx = i
+                    for j in i + 1 .. moveCount - 1 do
+                        if scoreSpan.[j] > scoreSpan.[bestIdx] then
+                            bestIdx <- j
+                
+                    // Swap move and score to "position i"
+                    let tempMove = moveSpan.[i]
+                    moveSpan.[i] <- moveSpan.[bestIdx]
+                    moveSpan.[bestIdx] <- tempMove
+                
+                    let tempScore = scoreSpan.[i]
+                    scoreSpan.[i] <- scoreSpan.[bestIdx]
+                    scoreSpan.[bestIdx] <- tempScore
+                
+                    let m = moveSpan.[i]
+                    // -----------------------
+
                     let nextB = Board.applyMove m b
-                    
-                    // 3. Legality Check
                     if Board.isInCheckFor b.SideToMove nextB then
                         i <- i + 1
                     else
@@ -174,17 +200,17 @@ module Search =
                         (beta, 0)
                     else
                         // 4. Move Ordering
-                        let moves = MoveGen.getPseudoLegalMoves b
-                        let mutable bestScore = -INF
-                        let mutable bestMove = 0
-                        let mutable currentAlpha = alpha
-                        let originalAlpha = alpha
-                        let mutable legalMovesFound = 0
+                        let movePtr = NativePtr.stackalloc<int> 256
+                        let scorePtr = NativePtr.stackalloc<int> 256
+                        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+                        let scoreSpan = Span<int>(NativePtr.toVoidPtr scorePtr, 256)
+
+                        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
                         let sideIdx = if b.SideToMove = Colour.White then 0 else 1
 
-                        let scores = Array.zeroCreate moves.Length
-                        for i in 0 .. moves.Length - 1 do
-                            let m = moves.[i]
+                        // Initial Scoring (same logic, just into the span)
+                        for i in 0 .. moveCount - 1 do
+                            let m = moveSpan.[i]
                             let score = 
                                 if m = ttMove then 1000000 
                                 else
@@ -195,20 +221,38 @@ module Search =
                                         Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
                                     | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
                                     | _ -> 
-                                        if Ordering_Killer_1 <= Ordering_Killer_2 then Ordering_Killer_1 <- Ordering_Killer_2 + 1 // Ensure killer1 is bigger
                                         if m = killerMoves.[0, ply] then Ordering_Killer_1
                                         elif m = killerMoves.[1, ply] then Ordering_Killer_2
                                         else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
-                            scores.[i] <- -score 
-
-                        System.Array.Sort(scores, moves)
-
+                            scoreSpan.[i] <- score 
                         // 5. Search Loop
                         let mutable i = 0
+                        let mutable currentAlpha = alpha
+                        let originalAlpha = alpha
+                        let mutable bestScore = -INF
+                        let mutable bestMove = 0
+                        let mutable legalMovesFound = 0
                         let mutable cutoffFound = false
-                    
-                        while i < moves.Length && not cutoffFound do
-                            let m = moves.[i]
+
+                        while i < moveCount && not cutoffFound do
+                            // --- Selection Pick: Find best move from index i to moveCount-1 ---
+                            let mutable bestIdx = i
+                            for j in i + 1 .. moveCount - 1 do
+                                if scoreSpan.[j] > scoreSpan.[bestIdx] then
+                                    bestIdx <- j
+        
+                            // Swap move and score
+                            let tempM = moveSpan.[i]
+                            moveSpan.[i] <- moveSpan.[bestIdx]
+                            moveSpan.[bestIdx] <- tempM
+        
+                            let tempS = scoreSpan.[i]
+                            scoreSpan.[i] <- scoreSpan.[bestIdx]
+                            scoreSpan.[bestIdx] <- tempS
+
+                            let m = moveSpan.[i]
+                            // -----------------------------------------------------------------
+                        
                             let isIllegalCastle = 
                                 match Move.kind m with
                                 | 3 | 4 -> inCheck || 
