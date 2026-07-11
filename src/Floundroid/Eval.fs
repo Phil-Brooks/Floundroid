@@ -172,7 +172,6 @@ module Evaluation =
         let mutable blackKingAttackWeightMG = 0
         let mutable blackKingAttackWeightEG = 0
 
-        //TODO: tidy up as vary by piece so do not put in a function
         // doing bbs.WhiteKnights  PieceType.Knight
         let mutable kIdx = PieceType.Knight
         let mutable tempBb = bbs.WhiteKnights

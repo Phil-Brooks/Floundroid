@@ -38,6 +38,15 @@ module Search =
     // Aspiration
     let Aspiration_Initial_Delta = 50
 
+    // ProbCut
+    let ProbCut_Margin = 380
+
+    //Singule Extensions
+    let Singular_Beta_Margin = 5
+
+    // History Gravity
+    let History_Gravity = 32768
+
     
     let mutable nodes = 0uL
     let MATE_VALUE = 30000
@@ -64,6 +73,16 @@ module Search =
     let isRepetition (hash: uint64) (history: uint64 list) =
         history |> List.contains hash
     
+     // History Update Helper (with Gravity) ---
+    let updateHistory (side: int) (m: int) (depth: int) (isBonus: bool) =
+        let fromSq, toSq = Move.fromSq m, Move.toSq m
+        let bonus = if isBonus then depth * depth else -(depth * depth)
+        let current = historyTable.[side, fromSq, toSq]
+    
+        // Gravity formula: ensures values don't hit the cap and stay relevant
+        let newValue = current + bonus - (current * Math.Abs(bonus) / History_Gravity)
+        historyTable.[side, fromSq, toSq] <- Math.Clamp(newValue, -Ordering_History_Max, Ordering_History_Max)
+ 
     /// Quiescence search: plays out tactical moves until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
         nodes <- nodes + 1uL
@@ -138,185 +157,207 @@ module Search =
 
                 currentAlpha    
     
-    /// Internal negamax implementation with Null-Move Pruning (allowNull).
-    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (history: uint64 list) (ct: CancellationToken) : int * int =
+    /// Internal negamax implementation with advanced pruning, extensions, and zero-allocation move ordering.
+    let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (excludedMove: int) (history: uint64 list) (ct: CancellationToken) : int * int =
         nodes <- nodes + 1uL
-        
+    
         // 1. Terminal Conditions
-        if ct.IsCancellationRequested then 
-            (0, 0)
-        elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100 || Board.hasInsufficientMaterial b) then 
-            (0, 0)
+        if ct.IsCancellationRequested then (0, 0)
+        elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100 || Board.hasInsufficientMaterial b) then (0, 0)
         else
             // 2. Transposition Table Probe
             let ttEntry = TranspositionTable.probe b.Hash
             let mutable ttMove = 0
-            let mutable ttResult = None // Stores (value, flag) if we find a cutoff
+            let mutable ttValue = -INF
+            let mutable ttResult = None
 
             match ttEntry with
             | Some entry ->
                 ttMove <- entry.Move
-                let value = TranspositionTable.mateFromTT entry.Value ply
-                if entry.Depth >= depth then
+                ttValue <- TranspositionTable.mateFromTT entry.Value ply
+                // We skip TT cutoffs if we are currently searching for Singular Extensions (excludedMove <> 0)
+                if excludedMove = 0 && entry.Depth >= depth then
                     match entry.Flag with
-                    | TranspositionTable.NodeExact -> ttResult <- Some (value, entry.Move)
-                    | TranspositionTable.NodeAlpha when value <= alpha -> ttResult <- Some (alpha, entry.Move)
-                    | TranspositionTable.NodeBeta when value >= beta -> ttResult <- Some (beta, entry.Move)
+                    | TranspositionTable.NodeExact -> ttResult <- Some (ttValue, entry.Move)
+                    | TranspositionTable.NodeAlpha when ttValue <= alpha -> ttResult <- Some (alpha, entry.Move)
+                    | TranspositionTable.NodeBeta when ttValue >= beta -> ttResult <- Some (beta, entry.Move)
                     | _ -> ()
             | None -> ()
 
-            if ttResult.IsSome then 
-                ttResult.Value
-            elif depth <= 0 then 
-                (quiesce b ply alpha beta ct, 0)
+            if ttResult.IsSome then ttResult.Value
+            elif depth <= 0 then (quiesce b ply alpha beta ct, 0)
             else
                 let inCheck = Board.isInCheck b
                 let sideMult = if b.SideToMove = Colour.White then 1 else -1
                 let staticEval = Evaluation.evaluate b * sideMult
+                let sideIdx = if b.SideToMove = Colour.White then 0 else 1
 
-                // --- Reverse Futility Pruning (RFP) ---
-                if not inCheck && depth <= RFP_MaxDepth && abs beta < (MATE_VALUE - 100) && staticEval - (RFP_Margin * depth) >= beta then
-                    (beta, 0) // This is the "return" value for this branch
+                // --- 3. ProbCut ---
+                let mutable probCutoff = false
+                if not inCheck && depth >= 5 && Math.Abs(beta) < MATE_VALUE - 100 then
+                    let pcBeta = Math.Min(beta + ProbCut_Margin, MATE_VALUE - 1)
+                    // Search at significantly reduced depth (Depth - 4)
+                    let (pcScore, _) = negamaxInternal b (depth - 4) ply (pcBeta - 1) pcBeta true 0 history ct
+                    if not ct.IsCancellationRequested && pcScore >= pcBeta then
+                        probCutoff <- true
+
+                if probCutoff then (beta, 0)
                 else
-                    let mutable nmpCutoff = false
-
-                    // 3. Null-Move Pruning
-                    if allowNull && depth >= NMP_MinDepth && not inCheck then
-                        let bbs = b.Bitboards
-                        let hasMaterial = 
-                            if b.SideToMove = Colour.White then
-                                bbs.WhiteKnights <> 0uL || bbs.WhiteBishops <> 0uL || bbs.WhiteRooks <> 0uL || bbs.WhiteQueens <> 0uL
-                            else
-                                bbs.BlackKnights <> 0uL || bbs.BlackBishops <> 0uL || bbs.BlackRooks <> 0uL || bbs.BlackQueens <> 0uL
-                    
-                        if hasMaterial then
-                            let R = if depth > NMP_DepthThreshold then NMP_DeepReduction else NMP_BaseReduction
-                            let nullBoard = Board.applyNullMove b
-                            let (nullValue, _) = negamaxInternal nullBoard (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false history ct
-                            if not ct.IsCancellationRequested && -nullValue >= beta then
-                                nmpCutoff <- true
-
-                    if nmpCutoff then 
+                    // --- 4. Reverse Futility Pruning (RFP) ---
+                    if excludedMove = 0 && not inCheck && depth <= RFP_MaxDepth && abs beta < (MATE_VALUE - 100) && staticEval - (RFP_Margin * depth) >= beta then
                         (beta, 0)
                     else
-                        // 4. Move Ordering
-                        let movePtr = NativePtr.stackalloc<int> 256
-                        let scorePtr = NativePtr.stackalloc<int> 256
-                        let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
-                        let scoreSpan = Span<int>(NativePtr.toVoidPtr scorePtr, 256)
+                        // --- 5. Null-Move Pruning (NMP) ---
+                        let mutable nmpCutoffFound = false
+                        if allowNull && excludedMove = 0 && depth >= NMP_MinDepth && not inCheck then
+                            let hasMaterial = 
+                                let bbs = b.Bitboards
+                                if b.SideToMove = Colour.White then (bbs.WhiteTotal ^^^ bbs.WhitePawns) <> 0uL
+                                else (bbs.BlackTotal ^^^ bbs.BlackPawns) <> 0uL
+                    
+                            if hasMaterial then
+                                let R = if depth > NMP_DepthThreshold then NMP_DeepReduction else NMP_BaseReduction
+                                let (nullValue, _) = negamaxInternal (Board.applyNullMove b) (depth - 1 - R) (ply + 1) (-beta) (-beta + 1) false 0 history ct
+                                if not ct.IsCancellationRequested && -nullValue >= beta then
+                                    nmpCutoffFound <- true
 
-                        let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
-                        let sideIdx = if b.SideToMove = Colour.White then 0 else 1
+                        if nmpCutoffFound then (beta, 0)
+                        else
+                            // --- 6. Singular Extensions ---
+                            let mutable extension = 0
+                            if excludedMove = 0 && depth >= 8 && ttMove <> 0 && Math.Abs(ttValue) < MATE_VALUE - 100 then
+                                let entry = ttEntry.Value
+                                // If TT depth is sufficient, check if the move is singular
+                                if entry.Depth >= depth - 3 && entry.Flag <> TranspositionTable.NodeAlpha then
+                                    let singularBeta = ttValue - (depth * Singular_Beta_Margin)
+                                    let (sScore, _) = negamaxInternal b (depth - 3) ply (singularBeta - 1) singularBeta true ttMove history ct
+                                    if sScore < singularBeta then
+                                        extension <- 1
 
-                        // Initial Scoring (same logic, just into the span)
-                        for i in 0 .. moveCount - 1 do
-                            let m = moveSpan.[i]
-                            let score = 
-                                if m = ttMove then 1000000 
-                                else
-                                    match Move.kind m with
-                                    | 1 | 2 -> 
-                                        let victimVal = let victim = Board.tryGetPiece b (Move.toSq m) in if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100
-                                        let attackerVal = let attacker = Board.tryGetPiece b (Move.fromSq m) in if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
-                                        Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
-                                    | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
-                                    | _ -> 
-                                        if m = killerMoves.[0, ply] then Ordering_Killer_1
-                                        elif m = killerMoves.[1, ply] then Ordering_Killer_2
-                                        else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
-                            scoreSpan.[i] <- score 
-                        // 5. Search Loop
-                        let mutable i = 0
-                        let mutable currentAlpha = alpha
-                        let originalAlpha = alpha
-                        let mutable bestScore = -INF
-                        let mutable bestMove = 0
-                        let mutable legalMovesFound = 0
-                        let mutable cutoffFound = false
+                            // 7. Move Generation & Ordering (Zero-Allocation)
+                            let movePtr = NativePtr.stackalloc<int> 256
+                            let scorePtr = NativePtr.stackalloc<int> 256
+                            let moveSpan = Span<int>(NativePtr.toVoidPtr movePtr, 256)
+                            let scoreSpan = Span<int>(NativePtr.toVoidPtr scorePtr, 256)
+                            let moveCount = MoveGen.getPseudoLegalMoves b moveSpan
 
-                        while i < moveCount && not cutoffFound do
-                            // --- Selection Pick: Find best move from index i to moveCount-1 ---
-                            let mutable bestIdx = i
-                            for j in i + 1 .. moveCount - 1 do
-                                if scoreSpan.[j] > scoreSpan.[bestIdx] then
-                                    bestIdx <- j
-        
-                            // Swap move and score
-                            let tempM = moveSpan.[i]
-                            moveSpan.[i] <- moveSpan.[bestIdx]
-                            moveSpan.[bestIdx] <- tempM
-        
-                            let tempS = scoreSpan.[i]
-                            scoreSpan.[i] <- scoreSpan.[bestIdx]
-                            scoreSpan.[bestIdx] <- tempS
+                            // Buffer for History Malus: tracks quiet moves that didn't cause a cutoff
+                            let triedQuietPtr = NativePtr.stackalloc<int> 256
+                            let triedQuietSpan = Span<int>(NativePtr.toVoidPtr triedQuietPtr, 256)
+                            let mutable triedQuietCount = 0
 
-                            let m = moveSpan.[i]
-                            // -----------------------------------------------------------------
-                        
-                            let isIllegalCastle = 
-                                match Move.kind m with
-                                | 3 | 4 -> inCheck || 
-                                           let rnk = if b.SideToMove = Colour.White then Rank.R1 else Rank.R8
-                                           let midFile = if Move.kind m = 3 then File.F else File.D
-                                           Board.isSquareAttacked b (Square.ofFileRank midFile rnk) (Colour.opposite b.SideToMove)
-                                | _ -> false
+                            for i in 0 .. moveCount - 1 do
+                                let m = moveSpan.[i]
+                                scoreSpan.[i] <- 
+                                    if m = ttMove then 1000000 
+                                    else
+                                        match Move.kind m with
+                                        | 1 | 2 -> // Captures
+                                            let victim = Board.tryGetPiece b (Move.toSq m)
+                                            let victimVal = if victim <> -1 then Pst.matsMG[Piece.kind victim] else 100
+                                            let attacker = Board.tryGetPiece b (Move.fromSq m)
+                                            let attackerVal = if attacker <> -1 then Pst.matsMG[Piece.kind attacker] else 0
+                                            Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
+                                        | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
+                                        | _ -> // Quiet Moves
+                                            if m = killerMoves.[0, ply] then Ordering_Killer_1
+                                            elif m = killerMoves.[1, ply] then Ordering_Killer_2
+                                            else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
 
-                            if isIllegalCastle then
-                                i <- i + 1
-                            else
-                                let nextB = Board.applyMove m b
-                                if Board.isInCheckFor b.SideToMove nextB then
+                            // 8. Search Loop
+                            let mutable i = 0
+                            let mutable currentAlpha = alpha
+                            let originalAlpha = alpha
+                            let mutable bestScore = -INF
+                            let mutable bestMove = 0
+                            let mutable legalMovesFound = 0
+                            let mutable cutoffFound = false
+
+                            while i < moveCount && not cutoffFound do
+                                // --- Selection Pick ---
+                                let mutable bestIdx = i
+                                for j in i + 1 .. moveCount - 1 do
+                                    if scoreSpan.[j] > scoreSpan.[bestIdx] then bestIdx <- j
+                                let m = moveSpan.[bestIdx]
+                                // Swap used move/score to end of 'already checked' section
+                                moveSpan.[bestIdx] <- moveSpan.[i]; scoreSpan.[bestIdx] <- scoreSpan.[i] 
+
+                                if m = excludedMove then 
                                     i <- i + 1
                                 else
-                                    legalMovesFound <- legalMovesFound + 1
-                                    let mutable moveScore = -INF
+                                    // Legality Checks
+                                    let isIllegalCastle = 
+                                        match Move.kind m with
+                                        | 3 | 4 -> inCheck || 
+                                                   let rnk = if b.SideToMove = Colour.White then Rank.R1 else Rank.R8
+                                                   let midFile = if Move.kind m = 3 then File.F else File.D
+                                                   Board.isSquareAttacked b (Square.ofFileRank midFile rnk) (Colour.opposite b.SideToMove)
+                                        | _ -> false
 
-                                    // LMR and PVS
-                                    if depth >= LMR_MinDepth && legalMovesFound > LMR_MinMoves && not inCheck && (Move.kind m = 0) then
-                                        let reduction = if legalMovesFound > LMR_Deep_Move_Threshold then LMR_DeepReduction else LMR_Reduction
-                                        let (sLMR, _) = negamaxInternal nextB (depth - 1 - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                        moveScore <- -sLMR
-                                        if moveScore > currentAlpha then
-                                            let (sFull, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                            moveScore <- -sFull
-                                    elif legalMovesFound > 1 then
-                                        let (sPVS, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true (b.Hash :: history) ct
-                                        moveScore <- -sPVS
-                                
-                                    if moveScore > currentAlpha || legalMovesFound = 1 then
-                                        let (sFullWindow, _) = negamaxInternal nextB (depth - 1) (ply + 1) (-beta) (-currentAlpha) true (b.Hash :: history) ct
-                                        moveScore <- -sFullWindow
-
-                                    if moveScore > bestScore then
-                                        bestScore <- moveScore
-                                        bestMove <- m
-                                        if moveScore > currentAlpha then currentAlpha <- moveScore
-
-                                    if currentAlpha >= beta then
-                                        if Move.kind m = 0 || Move.kind m = 3 || Move.kind m = 4 then
-                                            if killerMoves.[0, ply] <> m then
-                                                killerMoves.[1, ply] <- killerMoves.[0, ply]
-                                                killerMoves.[0, ply] <- m
-                                            
-                                            // We multiply the depth-based reward by your tunable multiplier
-                                            let bonus = int (float (depth * depth) * Ordering_History_Bonus_Multiplier)
-                                            historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] <- historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)] + bonus
-                                        cutoffFound <- true
+                                    if isIllegalCastle then i <- i + 1
                                     else
-                                        i <- i + 1           
+                                        let nextB = Board.applyMove m b
+                                        if Board.isInCheckFor b.SideToMove nextB then i <- i + 1
+                                        else
+                                            legalMovesFound <- legalMovesFound + 1
+                                            let isQuiet = Move.kind m = 0 || Move.kind m = 3 || Move.kind m = 4
+                                            if isQuiet then 
+                                                triedQuietSpan.[triedQuietCount] <- m
+                                                triedQuietCount <- triedQuietCount + 1
 
-                        // 6. Final Result Scoring
-                        if legalMovesFound = 0 then
-                            if inCheck then (-MATE_VALUE + ply, 0) else (0, 0)
-                        else
-                            if not ct.IsCancellationRequested then
-                                let flag = if bestScore <= originalAlpha then TranspositionTable.NodeAlpha elif bestScore >= beta then TranspositionTable.NodeBeta else TranspositionTable.NodeExact
-                                TranspositionTable.store b.Hash depth ply flag bestScore bestMove
-                            (bestScore, bestMove)
+                                            let mutable moveScore = -INF
+                                            let searchDepth = depth - 1 + extension
+
+                                            // PVS (Principal Variation Search) and LMR (Late Move Reduction)
+                                            if depth >= LMR_MinDepth && legalMovesFound > LMR_MinMoves && not inCheck && isQuiet then
+                                                let reduction = if legalMovesFound > LMR_Deep_Move_Threshold then LMR_DeepReduction else LMR_Reduction
+                                                let (sLMR, _) = negamaxInternal nextB (searchDepth - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true 0 (b.Hash :: history) ct
+                                                moveScore <- -sLMR
+                                                if moveScore > currentAlpha then
+                                                    let (sFull, _) = negamaxInternal nextB searchDepth (ply + 1) (-currentAlpha - 1) (-currentAlpha) true 0 (b.Hash :: history) ct
+                                                    moveScore <- -sFull
+                                            elif legalMovesFound > 1 then
+                                                let (sPVS, _) = negamaxInternal nextB searchDepth (ply + 1) (-currentAlpha - 1) (-currentAlpha) true 0 (b.Hash :: history) ct
+                                                moveScore <- -sPVS
+                                    
+                                            if moveScore > currentAlpha || legalMovesFound = 1 then
+                                                let (sFullWindow, _) = negamaxInternal nextB searchDepth (ply + 1) (-beta) (-currentAlpha) true 0 (b.Hash :: history) ct
+                                                moveScore <- -sFullWindow
+
+                                            if moveScore > bestScore then
+                                                bestScore <- moveScore
+                                                bestMove <- m
+                                                if moveScore > currentAlpha then currentAlpha <- moveScore
+
+                                            if currentAlpha >= beta then
+                                                // --- 9. History Refinement (Bonus + Malus) ---
+                                                if isQuiet then
+                                                    // Standard Killer Update
+                                                    if killerMoves.[0, ply] <> m then
+                                                        killerMoves.[1, ply] <- killerMoves.[0, ply]
+                                                        killerMoves.[0, ply] <- m
+                                                
+                                                    // Bonus for the move that caused the cutoff
+                                                    updateHistory sideIdx m depth true
+                                                    // Malus for all quiet moves that were tried before this one and failed
+                                                    for j in 0 .. triedQuietCount - 2 do
+                                                        updateHistory sideIdx triedQuietSpan.[j] depth false
+                                            
+                                                cutoffFound <- true
+                                            else i <- i + 1           
+
+                            // 10. Final Scoring & TT Storage
+                            if legalMovesFound = 0 then
+                                if inCheck then (-MATE_VALUE + ply, 0) else (0, 0)
+                            else
+                                if not ct.IsCancellationRequested && excludedMove = 0 then
+                                    let flag = if bestScore <= originalAlpha then TranspositionTable.NodeAlpha elif bestScore >= beta then TranspositionTable.NodeBeta else TranspositionTable.NodeExact
+                                    TranspositionTable.store b.Hash depth ply flag bestScore bestMove
+                                (bestScore, bestMove)
 
     /// Negamax search with alpha-beta pruning and Transposition Table integration.
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int =
-        negamaxInternal b depth ply alpha beta true history ct
+        negamaxInternal b depth ply alpha beta true 0 history ct
 
     /// Iterative Deepening with Aspiration Windows
     let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =

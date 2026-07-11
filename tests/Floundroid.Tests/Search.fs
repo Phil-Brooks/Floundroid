@@ -80,7 +80,7 @@ module SearchTests =
 
         // Search with NMP disabled (allowNull = false)
         Search.nodes <- 0uL
-        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] System.Threading.CancellationToken.None
+        let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false 0 [] System.Threading.CancellationToken.None
         
         // Clear 
         TranspositionTable.clear()
@@ -89,7 +89,7 @@ module SearchTests =
         
         // Search with NMP enabled (allowNull = true)
         Search.nodes <- 0uL
-        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] System.Threading.CancellationToken.None
+        let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true 0 [] System.Threading.CancellationToken.None
         
         Assert.Equal(scoreWithout, scoreWith)
 
@@ -201,7 +201,7 @@ module SearchTests =
     let ``Null move pruning is disabled when in check`` () =
         let fen = "4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1" // Black in check
         let b = Board.fromFen fen
-        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true [] CancellationToken.None
+        let score, _ = Search.negamaxInternal b 3 0 -Search.INF Search.INF true 0 [] CancellationToken.None
 
         // If NMP incorrectly triggers, it returns beta immediately.
         Assert.NotEqual(Search.INF, score)
@@ -211,8 +211,8 @@ module SearchTests =
         let fen = "8/8/8/8/8/8/5k2/6K1 w - - 0 1"
         let b = Board.fromFen fen
 
-        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true [] CancellationToken.None
-        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false [] CancellationToken.None
+        let scoreWithNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF true 0 [] CancellationToken.None
+        let scoreWithoutNMP, _ = Search.negamaxInternal b 4 0 -Search.INF Search.INF false 0 [] CancellationToken.None
 
         Assert.Equal(scoreWithoutNMP, scoreWithNMP)
 

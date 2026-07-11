@@ -300,6 +300,9 @@ module UciLoop =
                 //printfn "option name Ordering_Promo_Base type spin default %d min 5000 max 30000" Search.Ordering_Promo_Base
                 //printfn "option name Ordering_History_Bonus_Multiplier type string default %f" Search.Ordering_History_Bonus_Multiplier
                 //printfn "option name Aspiration_Initial_Delta type spin default %d min 1 max 200" Search.Aspiration_Initial_Delta
+                //printfn "option name ProbCut_Margin type spin default %d min 0 max 500" Search.ProbCut_Margin
+                //printfn "option name Singular_Beta_Margin type spin default %d min 0 max 10" Search.Singular_Beta_Margin
+                //printfn "option name History_Gravity type spin default %d min 1000 max 32768" Search.History_Gravity
                 printfn "uciok"            
             | "setoption" :: "name" :: "Hash" :: "value" :: _ -> 
                 () // Just ignore it for now, but it stops the warning
@@ -329,6 +332,9 @@ module UciLoop =
                 //| "Ordering_Promo_Base" -> Search.Ordering_Promo_Base <- int (System.Math.Round(parseF value))
                 //| "Ordering_History_Bonus_Multiplier" -> Search.Ordering_History_Bonus_Multiplier <- parseF value
                 //| "Aspiration_Initial_Delta" -> Search.Aspiration_Initial_Delta <- int (System.Math.Round(parseF value))
+                //| "ProbCut_Margin" -> Search.ProbCut_Margin <- int (System.Math.Round(parseF value))
+                //| "Singular_Beta_Margin" -> Search.Singular_Beta_Margin <- int (System.Math.Round(parseF value))
+                //| "History_Gravity" -> Search.History_Gravity <- int (System.Math.Round(parseF value))
                 | _ -> ()            
             
             | "isready" :: _ -> printfn "readyok"

@@ -66,11 +66,11 @@ Floundroid v0.4.9 was tested in a 100-game match against **Halogen 6.0 (2440 Elo
 - **Late Move Reductions (LMR):** Reduces search depth for non-critical moves.
 - **Null-Move Pruning (NMP):** Aggressive pruning with depth-based reduction scaling.
 - **Aspiration Windows:** Narrowed search bounds to speed up alpha-beta cutoffs.
+- **Optuuna Tuning:** All search constants optimized
 
 ### **Evaluation**
 - **Comprehensive Texel Tuning:** All evaluation constants optimized against 725k positions.
 - **Tapered Evaluation:** Smooth transition between Middlegame (MG) and Endgame (EG).
-- **King Safety:** Attacker-based scaling system targeting the enemy king.
 - **Advanced PSTs:** Separate MG/EG 64-square tables for every piece.
 
 ---
@@ -81,13 +81,10 @@ Floundroid v0.4.9 was tested in a 100-game match against **Halogen 6.0 (2440 Elo
 ### **Stage 2 — UCI Engine Interface** ✅  
 ### **Stage 3 — Mechanical Brain** ✅  
 ### **Stage 4 — Strength Phase** ✅  
-- [x] Search Pruning (NMP, RFP, LMR)
-- [x] Comprehensive Texel Tuning
-- [x] **Zero-Allocation Move Generation (v0.4.9)**
-- [x] **Iterative Selection-Pick Ordering (v0.4.9)**
 
 ### **Stage 5 — Innovation & Optimization** 🏗️ *Planned*
-- [ ] **History Malus & Refinement** (Penalizing quiet moves that fail to cause cutoffs)
-- [ ] **Singular Extensions** (Detecting forced moves and extending depth)
-- [ ] **NNUE Neural Evaluation core** (Bootstrap training using v0.4.9 data)
+- [ ] **SIMD/BMI2:** Explore intrinsics for magic bitboard lookups.
+- [ ] **Lazy SMP:** Implement parallel search.
+- [ ] **Syzygy Support:** Probe 3-4-5-6 piece tablebases.
+- [ ] **NNUE Neural Evaluation core** (Bootstrap training using self generated data)
 

@@ -37,9 +37,7 @@
 - [x] **Automated Tuning Framework:** Texel Tuning engine implemented with K-factor calibration.
 - [x] **Parameter Calibration:** 
 - [x] **PST Optimization:** All piece-square tables refined against 725k quiet positions.
-- [ ] **Optuna Implementation:** Upgrade tuning loop for faster multi-parameter optimization.
-- [ ] **Advanced  Search:** Add Singular Extensions, ProbCut and History Refinement.
-- [ ] **Optuna Retune:** Retune for the new search features.
+- [x] **Optuna Implementation:** Tuning of search parameters.
 
 ---
 
