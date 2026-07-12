@@ -80,6 +80,7 @@ module ZobristTests =
 
 module TTTests =
     open TranspositionTable   
+    
     [<Fact>]
     let ``TT can store and retrieve an entry`` () =
         let hash = 12345UL
@@ -122,18 +123,18 @@ module TTTests =
 
     [<Fact>]
     let ``TT reduces node count in transpositions`` () =
-        let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    
-        // Search depth 4 from startpos
-        Search.nodes <- 0uL
-        TranspositionTable.clear()
-        let cts = new System.Threading.CancellationTokenSource()
-        Search.negamax b 4 0 -1000000 1000000 [] cts.Token |> ignore
-        let nodesWithTT = Search.nodes
-    
-        // This is hard to assert exactly, but nodesWithTT will be significantly 
-        // lower than a pure perft(4) because identical branches are pruned.
-        Assert.True(nodesWithTT < 197281uL) // 197281 is the perft count for depth 4
+         let b = Board.fromFen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+ 
+         // Search depth 4 from startpos
+         Search.resetNodes() // Use the helper to reset
+         TranspositionTable.clear()
+         let cts = new System.Threading.CancellationTokenSource()
+         Search.negamax b 4 0 -1000000 1000000 [] cts.Token |> ignore
+         let nodesWithTT = Search.nodes() // Call as a function
+ 
+         // This is hard to assert exactly, but nodesWithTT will be significantly 
+         // lower than a pure perft(4) because identical branches are pruned.
+         Assert.True(uint64 nodesWithTT < 197281uL)
 
     [<Fact>]
     let ``Search does not poison TT when cancelled`` () =

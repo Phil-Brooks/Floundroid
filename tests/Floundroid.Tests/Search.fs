@@ -79,7 +79,7 @@ module SearchTests =
         Search.clearHistory() 
 
         // Search with NMP disabled (allowNull = false)
-        Search.nodes <- 0uL
+        Search.resetNodes()
         let scoreWithout = Search.negamaxInternal b 4 0 -Search.INF Search.INF false 0 [] System.Threading.CancellationToken.None
         
         // Clear 
@@ -88,7 +88,7 @@ module SearchTests =
         Search.clearHistory() 
         
         // Search with NMP enabled (allowNull = true)
-        Search.nodes <- 0uL
+        Search.resetNodes()
         let scoreWith = Search.negamaxInternal b 4 0 -Search.INF Search.INF true 0 [] System.Threading.CancellationToken.None
         
         Assert.Equal(scoreWithout, scoreWith)
@@ -185,17 +185,19 @@ module SearchTests =
     let ``Killer table is writable`` () =
         Search.clearKillers()
         let m = Move.create(0, 1, 0, 0)
-        Search.killerMoves.[0, 0] <- m
-        Assert.Equal(m, Search.killerMoves.[0, 0])
+        let k = Search.killerMoves()
+        k.[0, 0] <- m
+        Assert.Equal(m, k.[0, 0])
 
     [<Fact>]
     let ``History table is writable`` () =
         let idxSide = 0
         let fromSq = 0
         let toSq = 1
+        let index = (idxSide <<< 12) + (fromSq <<< 6) + toSq
 
-        Search.historyTable.[idxSide, fromSq, toSq] <- 42
-        Assert.Equal(42, Search.historyTable.[idxSide, fromSq, toSq])
+        Search.historyTable.[index] <- 42
+        Assert.Equal(42, Search.historyTable.[index])
     
     [<Fact>]
     let ``Null move pruning is disabled when in check`` () =

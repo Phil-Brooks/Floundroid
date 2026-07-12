@@ -48,44 +48,59 @@ module Search =
     let History_Gravity = 32768
 
     
-    let mutable nodes = 0uL
+    let mutable Threads = 1
+    let threadNodes = new System.Threading.ThreadLocal<int64>((fun () -> 0L), true)
+    let nodes () = threadNodes.Values |> Seq.sum    
+    let currentThreadId = new System.Threading.ThreadLocal<int>(fun () -> 0)
     let MATE_VALUE = 30000
     let INF = 1000000
 
-    // Stores two quiet moves per ply that caused a beta cutoff
-    let killerMoves: int [,] = Array2D.create 2 256 0
+    let resetNodes () = 
+        for value in threadNodes.Values do
+            threadNodes.Value <- 0L    
+
+    // Stores two quiet moves per ply that caused a beta cutoff (Thread-local)
+    let threadKillerMoves = new System.Threading.ThreadLocal<int[,]>(fun () -> Array2D.create 2 256 0)
+    let inline killerMoves () = threadKillerMoves.Value
 
     // Add this to clear killers at the start of every search
     let clearKillers () =
+        let k = killerMoves()
         for i in 0 .. 1 do
             for j in 0 .. 255 do
-                killerMoves.[i, j] <- 0
+                k.[i, j] <- 0
     
-    // History table: [Side][From][To]
-    let historyTable = Array3D.create 2 64 64 0
+    // History table: Shared flat 1D array for lock-free Interlocked/CAS access
+    let historyTable = Array.create 8192 0
 
     let clearHistory () =
-        for c in 0..1 do
-            for f in 0..63 do
-                for t in 0..63 do
-                    historyTable.[c, f, t] <- 0    
+        Array.fill historyTable 0 8192 0
     
     let isRepetition (hash: uint64) (history: uint64 list) =
         history |> List.contains hash
     
-     // History Update Helper (with Gravity) ---
+     // History Update Helper (with Gravity) --- Thread-safe CAS Loop
     let updateHistory (side: int) (m: int) (depth: int) (isBonus: bool) =
         let fromSq, toSq = Move.fromSq m, Move.toSq m
         let bonus = if isBonus then depth * depth else -(depth * depth)
-        let current = historyTable.[side, fromSq, toSq]
-    
-        // Gravity formula: ensures values don't hit the cap and stay relevant
-        let newValue = current + bonus - (current * Math.Abs(bonus) / History_Gravity)
-        historyTable.[side, fromSq, toSq] <- Math.Clamp(newValue, -Ordering_History_Max, Ordering_History_Max)
+        let index = (side <<< 12) + (fromSq <<< 6) + toSq
+        
+        let mutable current = historyTable.[index]
+        let mutable newValue = 0
+        let mutable lockFreeSuccess = false
+        
+        while not lockFreeSuccess do
+            newValue <- current + bonus - (current * Math.Abs(bonus) / History_Gravity)
+            newValue <- Math.Clamp(newValue, -Ordering_History_Max, Ordering_History_Max)
+            let previous = System.Threading.Interlocked.CompareExchange(&historyTable.[index], newValue, current)
+            if previous = current then
+                lockFreeSuccess <- true
+            else
+                current <- previous
  
     /// Quiescence search: plays out tactical moves until the position is stable.
     let rec quiesce (b: Board) (ply: int) (alpha: int) (beta: int) (ct: CancellationToken) : int =
-        nodes <- nodes + 1uL
+        threadNodes.Value <- threadNodes.Value + 1L
         if ct.IsCancellationRequested then alpha
         else
             let sideMult = if b.SideToMove = Colour.White then 1 else -1
@@ -159,8 +174,8 @@ module Search =
     
     /// Internal negamax implementation with advanced pruning, extensions, and zero-allocation move ordering.
     let rec negamaxInternal (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (allowNull: bool) (excludedMove: int) (history: uint64 list) (ct: CancellationToken) : int * int =
-        nodes <- nodes + 1uL
-    
+        threadNodes.Value <- threadNodes.Value + 1L
+
         // 1. Terminal Conditions
         if ct.IsCancellationRequested then (0, 0)
         elif ply > 0 && (isRepetition b.Hash history || b.HalfmoveClock >= 100 || Board.hasInsufficientMaterial b) then (0, 0)
@@ -204,7 +219,8 @@ module Search =
                 if probCutoff then (beta, 0)
                 else
                     // --- 4. Reverse Futility Pruning (RFP) ---
-                    if excludedMove = 0 && not inCheck && depth <= RFP_MaxDepth && abs beta < (MATE_VALUE - 100) && staticEval - (RFP_Margin * depth) >= beta then
+                    let rfpMargin = RFP_Margin + (currentThreadId.Value * 10)
+                    if excludedMove = 0 && not inCheck && depth <= RFP_MaxDepth && abs beta < (MATE_VALUE - 100) && staticEval - (rfpMargin * depth) >= beta then
                         (beta, 0)
                     else
                         // --- 5. Null-Move Pruning (NMP) ---
@@ -260,9 +276,10 @@ module Search =
                                             Ordering_Capture_Base + (victimVal * Ordering_MVV_Multiplier) - attackerVal
                                         | 5 -> Ordering_Promo_Base + Pst.matsMG[Move.promo m]
                                         | _ -> // Quiet Moves
-                                            if m = killerMoves.[0, ply] then Ordering_Killer_1
-                                            elif m = killerMoves.[1, ply] then Ordering_Killer_2
-                                            else Math.Min(historyTable.[sideIdx, (Move.fromSq m), (Move.toSq m)], Ordering_History_Max)
+                                             let k = killerMoves()
+                                             if m = k.[0, ply] then Ordering_Killer_1
+                                             elif m = k.[1, ply] then Ordering_Killer_2
+                                             else Math.Min(historyTable.[(sideIdx <<< 12) + ((Move.fromSq m) <<< 6) + (Move.toSq m)], Ordering_History_Max)
 
                             // 8. Search Loop
                             let mutable i = 0
@@ -310,7 +327,8 @@ module Search =
 
                                             // PVS (Principal Variation Search) and LMR (Late Move Reduction)
                                             if depth >= LMR_MinDepth && legalMovesFound > LMR_MinMoves && not inCheck && isQuiet then
-                                                let reduction = if legalMovesFound > LMR_Deep_Move_Threshold then LMR_DeepReduction else LMR_Reduction
+                                                let threadLmrOffset = if currentThreadId.Value % 2 = 1 then 1 else 0
+                                                let reduction = (if legalMovesFound > LMR_Deep_Move_Threshold then LMR_DeepReduction else LMR_Reduction) + threadLmrOffset
                                                 let (sLMR, _) = negamaxInternal nextB (searchDepth - reduction) (ply + 1) (-currentAlpha - 1) (-currentAlpha) true 0 (b.Hash :: history) ct
                                                 moveScore <- -sLMR
                                                 if moveScore > currentAlpha then
@@ -333,9 +351,10 @@ module Search =
                                                 // --- 9. History Refinement (Bonus + Malus) ---
                                                 if isQuiet then
                                                     // Standard Killer Update
-                                                    if killerMoves.[0, ply] <> m then
-                                                        killerMoves.[1, ply] <- killerMoves.[0, ply]
-                                                        killerMoves.[0, ply] <- m
+                                                    let k = killerMoves()
+                                                    if k.[0, ply] <> m then
+                                                        k.[1, ply] <- k.[0, ply]
+                                                        k.[0, ply] <- m
                                                 
                                                     // Bonus for the move that caused the cutoff
                                                     updateHistory sideIdx m depth true
@@ -359,70 +378,92 @@ module Search =
     let negamax (b: Board) (depth: int) (ply: int) (alpha: int) (beta: int) (history: uint64 list) (ct: CancellationToken) : int * int =
         negamaxInternal b depth ply alpha beta true 0 history ct
 
-    /// Iterative Deepening with Aspiration Windows
-    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
+    /// Single thread worker search for Lazy SMP
+    let searchWorker (b: Board) (threadId: int) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
         async {
-            do! Async.SwitchToThreadPool()
-
-            nodes <- 0uL
-            clearKillers()
-            clearHistory()
-        
             let sw = Diagnostics.Stopwatch.StartNew()
+            threadNodes.Value <- 0L
+            currentThreadId.Value <- threadId
+            clearKillers()
+            
             let legalMoves = MoveGen.getLegalMoves b
             let mutable absoluteBestMove = if legalMoves.Length > 0 then legalMoves.[0] else 0
 
             let mutable d = 1
             let mutable lastScore = 0
-        
-            // 1. Use your tuned variable here
-            let window = Aspiration_Initial_Delta 
+            // Helper threads get slightly wider aspiration delta
+            let window = Aspiration_Initial_Delta + (threadId * 15)
 
             while d <= maxDepth && not ct.IsCancellationRequested do
                 let mutable alpha = -INF
                 let mutable beta = INF
 
-                // 2. Initial Window Logic
-                // We only narrow the bounds if we are deep enough (usually depth 5+)
                 if d >= 5 then
                     alpha <- lastScore - window
                     beta <- lastScore + window
 
-                let mutable (score, move) = negamax b d 0 alpha beta history ct 
+                // Apply a sophisticated depth offset to helper threads to diversify the search
+                let depthOffset = if threadId = 0 then 0 elif threadId % 2 = 1 then 1 else -1
+                let searchDepth = Math.Max(1, d + depthOffset)
 
-                // 3. Check for Window Failure
-                // LOGIC FIX: Only re-search if we actually set a window (d >= 5)
+                let mutable (score, move) = negamax b searchDepth 0 alpha beta history ct 
+
                 if not ct.IsCancellationRequested && d >= 5 && (score <= alpha || score >= beta) then
-                    // Fail high/low: reset to full bounds and search again
                     alpha <- -INF
                     beta <- INF
-                    let (rescore, remove) = negamax b d 0 alpha beta history ct
+                    let (rescore, remove) = negamax b searchDepth 0 alpha beta history ct
                     score <- rescore
                     move <- remove
 
-                // 4. Process Results
                 if not ct.IsCancellationRequested then
                     lastScore <- score
                     let elapsed = sw.Elapsed.TotalSeconds
-                    let nps = if elapsed > 0.001 then uint64 (float nodes / elapsed) else 0uL
+                    let currentNodes = nodes()
+                    let nps = if elapsed > 0.001 then uint64 (float currentNodes / elapsed) else 0uL
+                    
                     if move <> 0 then
                         absoluteBestMove <- move
-                        // Standard UCI output
-                        printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score nodes nps (Move.toUci move)
+                        
+                        // Only the main thread prints search status to UCI
+                        if threadId = 0 then
+                            printfn "info depth %d score cp %d nodes %d nps %d pv %s" d score currentNodes nps (Move.toUci move)
 
-                // 5. Timer check
+                // Timer check (only main thread terminates early based on elapsed time)
                 let totalElapsed = sw.ElapsedMilliseconds
-            
-                // OPTIONAL: You can even tune this '0.6' factor later!
-                if totalElapsed > int64 (float targetTimeMs * 0.6) then
+                if threadId = 0 && totalElapsed > int64 (float targetTimeMs * 0.6) then
                     d <- maxDepth + 1 
                 else
                     d <- d + 1
 
-            if absoluteBestMove = 0 && legalMoves.Length > 0 then
-                absoluteBestMove <- legalMoves.[0]
-
             return absoluteBestMove
+        }
+
+    /// Iterative Deepening with Aspiration Windows and Lazy SMP
+    let findBestMove (b: Board) (maxDepth: int) (targetTimeMs: int) (history: uint64 list) (ct: CancellationToken) =
+        async {
+            do! Async.SwitchToThreadPool()
+
+            clearKillers()
+            clearHistory()
+
+            // Use a linked cancellation source to cancel helpers when the main thread finishes
+            use linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct)
+
+            // Define workers for all available threads
+            let workers = 
+                [0 .. (Threads - 1)] 
+                |> List.map (fun threadId -> 
+                    async {
+                        let! res = searchWorker b threadId maxDepth targetTimeMs history linkedCts.Token
+                        if threadId = 0 then
+                            linkedCts.Cancel()
+                        return res
+                    })
+
+            // Run workers concurrently
+            let! results = Async.Parallel workers
+
+            // The main thread (worker 0) decides the final best move
+            return results.[0]
         }    
-    
-    
+        

@@ -44,8 +44,8 @@
 #### Stage 5 — Innovation & Optimization 🏗️
 
 **5.1 Performance & Architecture**
-- [ ] **SIMD/BMI2:** Explore intrinsics for magic bitboard lookups.
-- [ ] **Lazy SMP:** Implement parallel search.
+- [x] **SIMD/BMI2:** Explore intrinsics for magic bitboard lookups.
+- [x] **Lazy SMP:** Implement parallel search.
 - [ ] **Syzygy Support:** Probe 3-4-5-6 piece tablebases.
 
 **5.2 Neural Evaluation**

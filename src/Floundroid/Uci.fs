@@ -303,9 +303,14 @@ module UciLoop =
                 //printfn "option name ProbCut_Margin type spin default %d min 0 max 500" Search.ProbCut_Margin
                 //printfn "option name Singular_Beta_Margin type spin default %d min 0 max 10" Search.Singular_Beta_Margin
                 //printfn "option name History_Gravity type spin default %d min 1000 max 32768" Search.History_Gravity
+                printfn "option name Threads type spin default 1 min 1 max 128"
                 printfn "uciok"            
             | "setoption" :: "name" :: "Hash" :: "value" :: _ -> 
                 () // Just ignore it for now, but it stops the warning
+            | "setoption" :: "name" :: "Threads" :: "value" :: value :: _ ->
+                match System.Int32.TryParse(value) with
+                | true, n -> Search.Threads <- Math.Clamp(n, 1, 128)
+                | _ -> ()
             | "setoption" :: "name" :: name :: "value" :: value :: _ ->
                 let inline parseF (v: string) = 
                     match System.Double.TryParse v with 

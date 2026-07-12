@@ -2,6 +2,7 @@ namespace Floundroid
 
 open System
 open System.Text
+open System.Runtime.Intrinsics.X86
 
 module Bitboard =
     let empty: Bitboard = 0uL
@@ -315,30 +316,54 @@ module Magic =
     let bishopEntries = Array.zeroCreate<MagicEntry> 64
     let rookEntries = Array.zeroCreate<MagicEntry> 64
 
+    /// Portable PEXT: uses BMI2.Pext when available, falls back to software implementation.
+    let pext (src: uint64) (mask: uint64) : uint64 =
+        if mask = 0uL then 0uL
+        elif Bmi2.X64.IsSupported then
+            Bmi2.X64.ParallelBitExtract(src, mask)
+        else
+            let mutable result = 0uL
+            let mutable bit = 1uL
+            let mutable m = mask
+            while m <> 0uL do
+                // lowest set bit of m
+                let lsb = m &&& (uint64 (-(int64 m)))
+                if (src &&& lsb) <> 0uL then result <- result ||| bit
+                bit <- bit <<< 1
+                m <- m &&& (m - 1uL)
+            result
+
+    /// Portable PDEP: uses BMI2.Pdep when available, falls back to software implementation.
+    let pdep (src: uint64) (mask: uint64) : uint64 =
+        if mask = 0uL then 0uL
+        elif Bmi2.X64.IsSupported then
+            Bmi2.X64.ParallelBitDeposit(src, mask)
+        else
+            let mutable result = 0uL
+            let mutable s = src
+            let mutable m = mask
+            while m <> 0uL do
+                let lsb = m &&& (uint64 (-(int64 m)))
+                if (s &&& 1uL) <> 0uL then result <- result ||| lsb
+                s <- s >>> 1
+                m <- m &&& (m - 1uL)
+            result
+    
     /// This maps an occupancy bitboard to a unique index from 0 to 2^bits-1
-    /// It is essentially a manual "PEXT" instruction.
+    /// Prefer hardware PEXT via Intrinsics when available; fallback to software if not.
     let getIndex (occ: Bitboard) (mask: Bitboard) : int =
-        let mutable index = 0
-        let mutable tempMask = mask
-        let bits = Bitboard.count mask
-        for i in 0 .. bits - 1 do
-            let bitIdx = System.Numerics.BitOperations.TrailingZeroCount(tempMask)
-            tempMask <- tempMask &&& (tempMask - 1uL)
-            if (occ &&& (1uL <<< bitIdx)) <> 0uL then
-                index <- index ||| (1 <<< i)
-        index
+        if mask = 0uL then 0
+        else
+            let idx = pext occ mask
+            int idx
 
     /// Generates every possible blocker pattern for a mask (reverse of getIndex)
+    /// Prefer hardware PDEP via Intrinsics when available; fallback to software when not.
     let private getBlockers (index: int) (mask: Bitboard) : Bitboard =
-        let mutable blockers = 0uL
-        let mutable tempMask = mask
-        let bits = Bitboard.count mask
-        for i in 0 .. bits - 1 do
-            let bitIdx = System.Numerics.BitOperations.TrailingZeroCount(tempMask)
-            tempMask <- tempMask &&& (tempMask - 1uL)
-            if (index &&& (1 <<< i)) <> 0 then
-                blockers <- blockers ||| (1uL <<< bitIdx)
-        blockers
+        if mask = 0uL then 0uL
+        else
+            let src = uint64 index
+            pdep src mask
 
     /// Initializes the sliding attack tables for bishops and rooks.
     let init () =
