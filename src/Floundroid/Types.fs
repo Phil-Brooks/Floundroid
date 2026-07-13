@@ -1,5 +1,8 @@
 namespace Floundroid
 
+open System.Runtime.InteropServices
+open System.Numerics // For BitOperations
+
 [<AutoOpen>]
 module Types =
 
@@ -38,6 +41,18 @@ module Types =
           ScoreEG: int
           Hash: uint64 }
 
+    [<Struct; StructLayout(LayoutKind.Sequential, Pack = 1)>]
+    type MarlinRecord =
+        [<DefaultValue>] val mutable Occupancy: uint64
+        [<DefaultValue>] val mutable WhitePieces: uint64
+        [<DefaultValue>] val mutable Score: int16
+        [<DefaultValue>] val mutable Result: byte
+        [<DefaultValue>] val mutable SideToMove: byte
+        [<DefaultValue>] val mutable WhiteKingSq: byte
+        [<DefaultValue>] val mutable BlackKingSq: byte
+        [<DefaultValue>] val mutable Padding: uint64
+        [<DefaultValue>] val mutable FullMove: uint16    
+    
     /// Represents a single test case for the perft suite, including the position (FEN), expected node counts at various depths, and a name for identification.
     type PerftSuiteItem =
         { Name: string

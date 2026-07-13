@@ -2,6 +2,7 @@ namespace Floundroid
 
 open System
 open System.Text
+open System.Numerics
 
 module Zobrist =
 
@@ -606,3 +607,36 @@ module Board =
                     printf ". "
             printfn ""
         printfn "  a b c d e f g h"
+
+    /// Packs a position and its metadata into a 32-byte MarlinRecord for Bullet
+    let toMarlinRecord (b: Board) (searchScore: int) (finalResult: float) =
+        let mutable r = MarlinRecord()
+        
+        // 1. Bitboards
+        r.Occupancy <- b.Bitboards.Occupancy
+        r.WhitePieces <- b.Bitboards.WhiteTotal
+        
+        // 2. Score: Bullet expects the score relative to WHITE.
+        // Most engines return scores relative to SideToMove (Internal Perspective).
+        let whiteRelativeScore = 
+            if b.SideToMove = Colour.White then searchScore else -searchScore
+        
+        // Clamp score to int16 range to avoid overflow
+        r.Score <- int16 (Math.Clamp(whiteRelativeScore, -32767, 32767))
+        
+        // 3. Side to Move (0=W, 1=B)
+        r.SideToMove <- if b.SideToMove = Colour.White then 0uy else 1uy
+        
+        // 4. Result (0=B Win, 1=Draw, 2=W Win)
+        r.Result <- 
+            if finalResult = 1.0 then 2uy      // White Win
+            elif finalResult = 0.0 then 0uy    // Black Win
+            else 1uy                           // Draw
+            
+        // 5. King Squares (Using .NET BitOperations for speed)
+        r.WhiteKingSq <- byte (BitOperations.TrailingZeroCount b.Bitboards.WhiteKings)
+        r.BlackKingSq <- byte (BitOperations.TrailingZeroCount b.Bitboards.BlackKings)
+        
+        // 6. Metadata
+        r.FullMove <- uint16 b.FullmoveNumber
+        r
